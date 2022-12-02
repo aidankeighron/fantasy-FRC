@@ -1,19 +1,23 @@
+from configparser import ConfigParser
 import mysql.connector as mc
-import scripts.server_info as server_info
 import requests
 
-db = mc.connect(host="192.168.1.101", user="aidan", password=server_info.SQL_passw, auth_plugin='mysql_native_password', database="fantasy")
+config = ConfigParser()
+config.read("server_info.ini")
+db = mc.connect(host="192.168.1.101", user="aidan", password=config.get("SQL", "SQL_passw"), auth_plugin='mysql_native_password', database="fantasy")
 my_cursor = db.cursor()
+
 EVENT = "2022ilch"
+
 def get_team_number(number):
     site = "https://www.thebluealliance.com/api/v3/team/frc"
-    api = {"X-TBA-Auth-Key": server_info.BLUE_ALLIANCE}
+    api = {"X-TBA-Auth-Key": config.get("TBA", "BLUE_ALLIANCE")}
     request = requests.get(url=site+str(number), headers=api)
     return request.json()
 
 def get_event(key, value):
     site = "https://www.thebluealliance.com/api/v3/event/"
-    api = {"X-TBA-Auth-Key": server_info.BLUE_ALLIANCE}
+    api = {"X-TBA-Auth-Key": config.get("TBA", "BLUE_ALLIANCE")}
     request = requests.get(url=site+str(key)+"/"+value, headers=api)
     return request.json()
 
