@@ -17,7 +17,7 @@ function login() {
 function checkLogin(user, passw) {
     sessionStorage.setItem("username", user);
 
-    window.location = "home.html";
+    window.location = "home.php";
     return true;
 }
 

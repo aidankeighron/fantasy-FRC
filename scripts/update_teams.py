@@ -3,8 +3,8 @@ import mysql.connector as mc
 import requests
 
 config = ConfigParser()
-config.read("server_info.ini")
-db = mc.connect(host="192.168.1.101", user="aidan", password=config.get("SQL", "SQL_passw"), auth_plugin='mysql_native_password', database="fantasy")
+config.read("scripts/server_info.ini")
+db = mc.connect(host=config.get("SQL", "SQL_IP"), user=config.get("SQL", "SQL_User"), password=config.get("SQL", "SQL_Passw"), auth_plugin='mysql_native_password', database=config.get("SQL", "SQL_Database"))
 my_cursor = db.cursor()
 
 EVENT = "2022ilch"

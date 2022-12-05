@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Teams</title>
+        <title>Fantasy FRC</title>
         <style>
             /* Add a black background color to the top navigation */
             .topnav {
@@ -31,13 +31,17 @@
                 color: white;
             }
         </style>
-        <script src="loadTeams.js"></script>
+        <script src="scripts/user.js"></script>
+        <script src="scripts/login.js"></script>
     </head>
     <body>
         <div class="topnav">
-            <a class="active" href="login.html">Logout</a>
-            <a href="home.html">Home</a>
+            <a class="active" href="login.php">Logout</a>
+            <a href="home.php">Home</a>
+            <a href="rankings.php">Rankings</a>
+            <a href="teams.php">Teams</a>
         </div>
+        <h3 id="name">My Team</h3>
         <table id="teams" border=5>
             <thead>
                 <tr>
@@ -51,7 +55,16 @@
 
             </tbody>
         </table>
-          <script>loadTeams()</script>
-          <br><button id="login" onClick="loadTeams()">Refresh</button>
+        <br><button id="login" onClick="loadUser()">Refresh</button>
+        <h3>Stats</h3>
+        <p id="totalPoints">
+            Total Points:
+        </p>
+        <p id="rank">
+            Current Rank:
+        </p>
+        <script>
+            loadUser();
+        </script>
     </body>
 </html>
