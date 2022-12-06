@@ -49,7 +49,7 @@
                 exit();
             }
 
-            $sql = "SELECT * FROM users ORDER BY number";
+            $sql = "SELECT * FROM users ORDER BY position";
             $result = $mysqli -> query($sql);
 
             // rank, name, teams, score
@@ -60,7 +60,7 @@
 
             echo "<table border=5><tr><td>Rank</td><td>Name</td><td>Teams</td><td>Score</td></tr>";
             foreach ($teams as $team){
-                echo "<tr><td>".$team["rank"]."</td><td>".$team["name"]."</td><td>".$team["teams"]."</td><td>".$team["score"]."</td></tr>";
+                echo "<tr><td>".$team["position"]."</td><td>".$team["name"]."</td><td>".$team["teams"]."</td><td>".$team["score"]."</td></tr>";
             }
             echo "</table></div>";
 
