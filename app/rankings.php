@@ -31,7 +31,6 @@
                 color: white;
             }
         </style>
-        <script src="loadRankings.js"></script>
     </head>
     <body>
         <div class="topnav">

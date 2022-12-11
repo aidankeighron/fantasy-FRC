@@ -11,7 +11,6 @@ from datetime import datetime
 # db = mc.connect(host=config.get("SQL", "SQL_IP"), user=config.get("SQL", "SQL_User"), password=config.get("SQL", "SQL_Passw"), auth_plugin='mysql_native_password', database=config.get("SQL", "SQL_Database"))
 # my_cursor = db.cursor()
 
-#"INSERT INTO users (name, password, teams, score, position) VALUES ('aidan', 'pass', '2451,111', 23.5, 1)"
 EVENTS = {"9":["2023isde1","2023bcvi", "2023isde2"],
           "10":[],
           "11":[],
@@ -24,7 +23,7 @@ EVENTS = {"9":["2023isde1","2023bcvi", "2023isde2"],
           }
 YEAR = "2022"
 
-def get_team(number):
+def get_team_score(number):
     site = "https://www.thebluealliance.com/api/v3/team/frc"
     api = {"X-TBA-Auth-Key": config.get("TBA", "BLUE_ALLIANCE")}
     request = requests.get(url=site+str(number), headers=api)
@@ -47,7 +46,7 @@ def get_location(team):
                 return district["abbreviation"]
     
     location = ""
-    team = get_team(team)
+    team = get_team_score(team)
     if location == "": # State
         location = team["country"]
         
@@ -79,6 +78,30 @@ def team_exists(number):
     
     return my_cursor.rowcount > 0
 
+def get_users():
+    sql = "SELECT * FROM user"
+    my_cursor.execute(sql)
+
+    db.commit()
+    
+    return my_cursor.fetchall()
+
+def get_team_score(number):
+    sql = "SELECT score FROM team WHERE number = %s"
+    val = (number)
+    my_cursor.execute(sql, val)
+
+    db.commit()
+    
+    return my_cursor.fetchall()
+
+def update_user(name, score):
+    sql = "UPDATE user SET score = %s WHERE name = %s"
+    val = (score, name)
+    my_cursor.execute(sql, val)
+
+    db.commit()
+
 def update_event(event):
     rankings = get_event(event, "rankings")["rankings"] # qual # loss, win, ties
     alliances = get_event(event, "alliances") # elims
@@ -107,6 +130,18 @@ def update_event(event):
 def update_events(week):
     for event in EVENTS[week]:
         update_event(event)
+    update_users()
+
+#(name, *, teams, score, position)
+def update_users():
+    users = get_users()
+    for user in users:
+        score = 0
+        teams = user[2].split(",")
+        for team in teams:
+            score += get_team_score(team)
+        score /= len(teams)
+        update_user(user[0], score)
 
 my_calendar = CustomizedCalendar(start_weekday=WEEKDAY.SUN) # TODO march 4th
 print(my_calendar.calculate(datetime(2023, 4, 23))[1])
@@ -117,5 +152,4 @@ print(my_calendar.calculate(datetime(2023, 3, 4))[1])
 print()
 print(my_calendar.calculate(datetime(2023, 3, 4))[1])
 print(my_calendar.calculate(datetime(2023, 3, 5))[1])
-print()
 # update_events(str(my_calendar.calculate(datetime.now())[1]))

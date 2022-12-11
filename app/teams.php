@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Fantasy FRC</title>
+        <title>Teams</title>
         <style>
             /* Add a black background color to the top navigation */
             .topnav {
@@ -31,8 +31,6 @@
                 color: white;
             }
         </style>
-        <script src="scripts/user.js"></script>
-        <script src="scripts/login.js"></script>
     </head>
     <body>
         <div class="topnav">
@@ -41,30 +39,34 @@
             <a href="rankings.php">Rankings</a>
             <a href="teams.php">Teams</a>
         </div>
-        <h3 id="name">My Team</h3>
-        <table id="teams" border=5>
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Number</th>
-                    <th>Stats(W/L/T)</th>
-                    <th>Points</th>
-                </tr>
-            </thead>
-            <tbody>
+        <?php
+            $ini = parse_ini_file("scripts/server_info.ini");
+            $mysqli = new mysqli($ini['SQL_IP'], $ini['SQL_User'], $ini['SQL_Passw'], $ini['SQL_Database']);
 
-            </tbody>
-        </table>
-        <br><button id="login" onClick="loadUser()">Refresh</button>
-        <h3>Stats</h3>
-        <p id="totalPoints">
-            Total Points:
-        </p>
-        <p id="rank">
-            Current Rank:
-        </p>
-        <script>
-            loadUser();
-        </script>
+            if ($mysqli -> connect_errno) {
+                echo "Failed to connect to MySQL: " . $mysqli -> connect_error;
+                exit();
+            }
+
+            $sql = "SELECT * FROM teams ORDER BY number";
+            $result = $mysqli -> query($sql);
+
+            // name, number, ranking, alliance, awards
+            $teams[] = $result -> fetch_array(MYSQLI_BOTH);
+            while ($row = $result -> fetch_array()) {
+                $teams[] = $row;
+            }
+
+            echo "<table border=5><tr><td>Name</td><td>Number</td><td>Ranking</td><td>Alliance</td><td>Awards</td></tr>";
+            foreach ($teams as $team){
+                echo "<tr><td>".$team["name"]."</td><td>".$team["number"]."</td><td>".$team["ranking"]."</td><td>".$team["alliance"]."</td><td>".$team["awards"]."</td></tr>";
+            }
+            echo "</table></div>";
+
+            // Free result set
+            $result -> free_result();
+
+            $mysqli -> close();
+        ?>
     </body>
 </html>

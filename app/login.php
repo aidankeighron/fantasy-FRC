@@ -2,7 +2,7 @@
 <html>
     <head>
         <title>Login</title>
-        <script src="login.js"></script>
+        <script src="../server/login.js"></script>
     </head>
     <body>
         <h1>Login</h1>
