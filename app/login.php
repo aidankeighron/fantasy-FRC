@@ -2,7 +2,6 @@
 <html>
     <head>
         <title>Login</title>
-        <script src="../server/login.js"></script>
     </head>
     <body>
         <h1>Login</h1>
@@ -14,6 +13,5 @@
             <input type="text" id="passw" name="passw">
             <input type="submit" name="Submit" id="Submit" value="Submit">
         </form><br>
-        <button id="login" onClick="login()">Login</button>
     </body>
 </html>

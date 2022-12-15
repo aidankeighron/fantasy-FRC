@@ -31,8 +31,8 @@
                 color: white;
             }
         </style>
-        <script src="../server/user.js"></script>
-        <script src="../server/login.js"></script>
+        <script src="https://cdn.socket.io/socket.io-3.0.0.js"></script>
+        <script defer src="server/app.js"></script>
     </head>
     <body>
         <div class="topnav">
@@ -41,6 +41,12 @@
             <a href="rankings.php">Rankings</a>
             <a href="teams.php">Teams</a>
         </div>
+        <ul>
+
+        </ul>
+        <input placeholder="message">
+        <button>Send</button>
+
         <h3 id="name">My Team</h3>
         <table id="teams" border=5>
             <thead>
@@ -55,7 +61,6 @@
 
             </tbody>
         </table>
-        <br><button id="login" onClick="loadUser()">Refresh</button>
         <h3>Stats</h3>
         <p id="totalPoints">
             Total Points:
@@ -63,8 +68,5 @@
         <p id="rank">
             Current Rank:
         </p>
-        <script>
-            loadUser();
-        </script>
     </body>
 </html>
