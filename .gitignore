@@ -1,4 +1,2 @@
 
-server_info.txt
-scripts/server_info.py
-scripts/server_info.ini
+server/server_info.ini

@@ -11,8 +11,8 @@ from datetime import datetime
 # db = mc.connect(host=config.get("SQL", "SQL_IP"), user=config.get("SQL", "SQL_User"), password=config.get("SQL", "SQL_Passw"), auth_plugin='mysql_native_password', database=config.get("SQL", "SQL_Database"))
 # my_cursor = db.cursor()
 
-EVENTS = {"9":["2023isde1","2023bcvi", "2023isde2"],
-          "10":[],
+EVENTS = {"9":["2023isde1", "2023bcvi", "2023isde2"],
+          "10":["2023flwp", "2023arli", "2023mndu", "2023mndu2", "2023mxmo", "2023utwv", "2023gaalb", "2023miesc", "2023mifor", "2023mijac", "2023miket", "2023mimil", "2023nhgrs", "2023txwac", "2023orore", "2023caph", "2023tuis3", "2023inmis", "2023mabri", "2023ncash", "2023onbar", "2023onnew", "2023pahat", "2023vabla", "2023txdal", "2023wasno"],
           "11":[],
           "12":[],
           "13":[],
@@ -143,13 +143,13 @@ def update_users():
         score /= len(teams)
         update_user(user[0], score)
 
-my_calendar = CustomizedCalendar(start_weekday=WEEKDAY.SUN) # TODO march 4th
-print(my_calendar.calculate(datetime(2023, 4, 23))[1])
+my_calendar = CustomizedCalendar(start_weekday=WEEKDAY.SUN) # TODO week 2
+print(my_calendar.calculate(datetime(2023, 2, 28))[1])
 print(my_calendar.calculate(datetime(2023, 3, 1))[1])
 print()
 print(my_calendar.calculate(datetime(2023, 3, 3))[1])
 print(my_calendar.calculate(datetime(2023, 3, 4))[1])
 print()
-print(my_calendar.calculate(datetime(2023, 3, 4))[1])
 print(my_calendar.calculate(datetime(2023, 3, 5))[1])
-# update_events(str(my_calendar.calculate(datetime.now())[1]))
+print(my_calendar.calculate(datetime(2023, 3, 6))[1])
+# update_events(str(my_calendar.calculate(datetime.now())[1]-1))
