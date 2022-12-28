@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Login</title>
+    </head>
+    <body>
+        <h1>Login</h1>
+        <p id="loginError" style="color:red;"></p>
+        <form name="sign-in" action="", method="GET">
+            <label for="user">Username:</label>
+            <input type="text" name="user"><br>
+            <label for="passw">Password:</label>
+            <input type="text" name="passw"><br>
+            <input type="button" name="Submit" value="Click" onClick="login(this.form)">
+        </form>
+        <script>
+            async function login(form) {
+                const user = form.user.value;
+                const passw = form.passw.value;
+                if (user === null || user === "") {
+                    document.getElementById('loginError').innerHTML = "Please enter username";
+                    return;
+                }
+                if (passw === null || passw === "") {
+                    document.getElementById('loginError').innerHTML = "Please enter password";
+                    return;
+                }
+                const data = {username: user, password: passw};
+
+                await fetch('http://localhost:3000', {
+                    method: "POST",
+                    followAllRedirects: true,
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify(data)
+                }).then(res => {
+                    if (res.redirected) {
+                        window.location.href = res.url;
+                    }
+                    else {
+                        console.log("Incorrect username/password combo");
+                        document.getElementById('loginError').innerHTML = "Incorrect username/password combo";
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
