@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Admin | Fantasy FRC</title>
+    </head>
+    <body>
+        <h1>Admin</h1>
+
+        <button onclick="startDraft()">Start Draft</button>
+        <input type='text' id='number' placeholder='Number' autocomplete='off'>
+        <input type='text' id='name' placeholder='Name' autocomplete='off'>
+        <button onclick="test()">Test</button>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+        var socket = io();
+
+        function startDraft() {
+            socket.emit("start_draft");
+        }
+
+        function test() {
+            input1 = document.getElementById("number");
+            number = input.value.toLowerCase();
+            input2 = document.getElementById("name");
+            name = input.value.toLowerCase();
+            socket.emit("")
+        }
+        </script>
+    </body>
+</html>

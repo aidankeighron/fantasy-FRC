@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Drafting | Fantasy FRC</title>
+        <link rel="stylesheet" href="./css/topnav.css">
+        <script type="text/javascript" src="./js/drafting.js"></script>
+        <style>
+            div {
+                color: #fff;
+                font-family: Tahoma, Verdana, Segoe, sans-serif;
+                padding: 10px;
+            }
+            .right-container {
+                background-color:#2E4272;
+                display:flex;
+            }
+            .left-container {
+                background-color:#2E4272;
+                display:grid;
+            }
+            .queue {
+                background-color:#4F628E;
+                width: 400px;
+            }
+            .my-team {
+                background-color:#4F628E;
+                width: 400px;
+            }
+            .team-list {
+                background-color:#7887AB;
+                flex-grow: 1;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="topnav">
+            <a class="active" href="logout">Logout</a>
+            <a href="home">Home</a>
+            <a href="rankings">Rankings</a>
+            <a href="teams">Teams</a>
+            <a href="drafting">Drafting</a>
+        </div>
+
+        <div class="right-container">
+            <div class="team-list" id="team-list">Teams</div>
+            <div class="left-container">
+                <div class="queue">
+                    <h3>Queue</h3>
+                    <table border='1|1' id="queue">
+                        <tr>
+                            <th>Name</th>
+                            <th>Number</th>
+                        </tr>
+                    </table>
+                </div>
+                <div class="my-team">
+                    <h3>My Team</h3>
+                    <table border='1|1' id="my-team">
+                        <tr>
+                            <th>Name</th>
+                            <th>Number</th>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+        var socket = io();
+
+        socket.on('team removed', (number) => {
+            removeFromTable(number+"queue");
+            removeFromTable(number+"team-list");
+        });
+        socket.on('team added', (number, name) => {
+            addToMyTeam(number, name, "my-team");
+        });
+        loadTeams();
+        sortTable(0, 1, "team-list-table")
+        </script>
+    </body>
+</html>
+

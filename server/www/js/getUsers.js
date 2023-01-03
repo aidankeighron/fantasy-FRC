@@ -4,7 +4,14 @@ async function getUsers() {
   await fetch('http://localhost:'+port+'/allow-cors/users', {mode:'cors'}).then(resp => {
   resp.json().then(data => {
     
-    var html = "<table border='1|1'>";
+    var html = "<table border='1|1' id='users-table'>";
+    html+= "<tr>";
+    html+= '<th>Name<button onclick="sortTable(0, 0, '+"'"+'users-table'+"'"+')">Sort</button></th>';
+    html+= '<th>Teams<button onclick="sortTable(1, 0, '+"'"+'users-table'+"'"+')">Sort</button></th>';
+    html+= '<th>Score<button onclick="sortTable(2, 1, '+"'"+'users-table'+"'"+')">Sort</button></th>';
+    html+= '<th>Position<button onclick="sortTable(3, 1, '+"'"+'users-table'+"'"+')">Sort</button></th>';
+    html+= "</tr>";
+
     data.forEach(element => {
       html+="<tr>";
       html+="<td>"+element.name+"</td>";
@@ -24,7 +31,16 @@ async function getUser() {
 
   await fetch('http://localhost:'+port+'/allow-cors/teams?user=true', {mode:'cors'}).then(resp => {
     resp.json().then(data => {
-      var html = "<table border='1|1'>";
+      var html = "<table border='1|1' id='user-table'>";
+      html+= "<tr>";
+      html+= '<th>Name<button onclick="sortTable(0, 0, '+"'"+'user-table'+"'"+')">Sort</button></th>';
+      html+= '<th>Number<button onclick="sortTable(1, 1, '+"'"+'user-table'+"'"+')">Sort</button></th>';
+      html+= '<th>OPR<button onclick="sortTable(2, 1, '+"'"+'user-table'+"'"+')">Sort</button></th>';
+      html+= '<th>Average<button onclick="sortTable(3, 1, '+"'"+'user-table'+"'"+')">Sort</button></th>';
+      html+= '<th>Score<button onclick="sortTable(4, 1, '+"'"+'user-table'+"'"+')">Sort</button></th>';
+      html+= '<th>Location<button onclick="sortTable(5, 0, '+"'"+'user-table'+"'"+')">Sort</button></th>';
+      html+= "</tr>";
+
       data.forEach(element => {
         html+="<tr>";
         html+="<td>"+element.name+"</td>";
@@ -47,3 +63,35 @@ async function getUser() {
     });
   });
 };
+
+// type: 0 = string, 1 = double
+function sortTable(row, type, table) {
+  var table, rows, switching, i, x, y, shouldSwitch;
+  table = document.getElementById(table);
+  switching = true;
+  while (switching) {
+    switching = false;
+    rows = table.rows;
+    for (i = 1; i < (rows.length - 1); i++) {
+      shouldSwitch = false;
+      x = rows[i].getElementsByTagName("td")[row];
+      y = rows[i + 1].getElementsByTagName("td")[row];
+      if (type == 0) {
+          if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+            shouldSwitch = true;
+            break;
+          }
+      }
+      else {
+          if (parseFloat(x.innerHTML) > parseFloat(y.innerHTML)) {
+              shouldSwitch = true;
+              break;
+            }
+      }
+    }
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+    }
+  }
+}

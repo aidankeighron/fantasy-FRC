@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Fantasy FRC</title>
+        <title>Home | Fantasy FRC</title>
         <link rel="stylesheet" href="./css/topnav.css">
         <script type="text/javascript" src="./js/getUsers.js"></script>
     </head>
     <body>
-        <div class="topnav">
+        <div class="topnav" id="topnav">
             <a class="active" href="logout">Logout</a>
             <a href="home">Home</a>
             <a href="rankings">Rankings</a>
@@ -25,11 +25,14 @@
         <p id="rank">
             Rank:
         </p>
-        
-        <!-- <script src="/socket.io/socket.io.js"></script> -->
+        <script src="/socket.io/socket.io.js"></script>
         <script>
-        //var socket = io();
-        </script>
+            var socket = io();
+        
+            socket.on("draft_started", () => {
+                document.getElementById("topnav").innerHTML += '<a href="drafting">Drafting</a>';
+            });
+            getUser()
+            </script>
     </body>
-    <script>getUser()</script>
 </html>

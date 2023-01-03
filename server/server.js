@@ -92,14 +92,14 @@ app.get('/home', (req, res) => {
   }
 });
 
-io.on('connection', (socket) => {
-  console.log('a user connected');
-  socket.on('start draft', () => {
-
-  });
-  socket.on('team picked', (team) => {
-
-  });
+app.get('/admin', (req, res) => {
+  user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+  if (user === "Aidan") {
+    res.sendFile('www/admin.html', { root: __dirname });
+  }
+  else {
+    res.sendStatus(401);
+  }
 });
 
 app.get('/rankings', (req, res) => {
@@ -114,6 +114,15 @@ app.get('/rankings', (req, res) => {
 app.get('/teams', (req, res) => {
   if (req.isAuthenticated()) {
     res.sendFile('www/teams.html', { root: __dirname });
+  }
+  else {
+    res.redirect('/');
+  }
+});
+
+app.get('/drafting', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.sendFile('www/drafting.html', { root: __dirname });
   }
   else {
     res.redirect('/');
@@ -154,6 +163,16 @@ app.get('/allow-cors/users', async (req, res) => {
   }
 });
 
-app.listen(port, () =>
+server.listen(port, () =>
   console.log(`Server listening on port ${port}`),
 );
+
+io.on('connection', (socket) => {
+  socket.on('start_draft', () => {
+    io.emit("draft_started");
+  });
+  socket.on('team picked', (team, user) => {
+    console.log("Team: " + team);
+    console.log("User: " + user);
+  });
+});
