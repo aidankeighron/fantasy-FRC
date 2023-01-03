@@ -19,10 +19,10 @@ async function getUsers() {
 });
 };
 
-async function getUser(user) {
+async function getUser() {
   const port = 3000;
 
-  await fetch('http://localhost:'+port+'/allow-cors/teams?user='+user, {mode:'cors'}).then(resp => {
+  await fetch('http://localhost:'+port+'/allow-cors/teams?user=true', {mode:'cors'}).then(resp => {
     resp.json().then(data => {
       var html = "<table border='1|1'>";
       data.forEach(element => {
@@ -40,7 +40,7 @@ async function getUser(user) {
     });
   });
 
-  await fetch('http://localhost:'+port+'/allow-cors/users?user='+user, {mode:'cors'}).then(resp => {
+  await fetch('http://localhost:'+port+'/allow-cors/users?user=true', {mode:'cors'}).then(resp => {
     resp.json().then(data => {
       document.getElementById("totalPoints").innerHTML = "Score: " + data[0].score;
       document.getElementById("rank").innerHTML = "Rank: " + data[0].position;

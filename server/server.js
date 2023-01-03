@@ -6,11 +6,15 @@ const FileStore = require('session-file-store')(session);
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
-const ini = require('ini')
-const fs = require('fs')
+const ini = require('ini');
+const fs = require('fs');
+const http = require('http');
+const app = express();
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
 
 const config = ini.parse(fs.readFileSync('server_info.ini', 'utf-8'))
-const app = express();
 const connection = sqlConnection.setupSQLConnection();
 const port = 3000;
 
@@ -56,8 +60,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// curl http://localhost:3000 -H "Content-Type: application/json" -d "{\"username\":"Aidan\", \"password\":\"pasword1\"}" -L
-
 app.get('/', (req, res) => {
   res.sendFile('www/login.html', { root: __dirname });
 });
@@ -74,6 +76,13 @@ app.post('/', (req, res, next) => {
   })(req, res, next);
 });
 
+app.get('/logout', (req, res) => {
+  req.logout(function(err) {
+    if (err) { return; }
+    res.redirect('/');
+  });
+});
+
 app.get('/home', (req, res) => {
   if (req.isAuthenticated()) {
     res.sendFile('www/home.html', { root: __dirname });
@@ -81,6 +90,16 @@ app.get('/home', (req, res) => {
   else {
     res.redirect('/');
   }
+});
+
+io.on('connection', (socket) => {
+  console.log('a user connected');
+  socket.on('start draft', () => {
+
+  });
+  socket.on('team picked', (team) => {
+
+  });
 });
 
 app.get('/rankings', (req, res) => {
@@ -103,14 +122,36 @@ app.get('/teams', (req, res) => {
 
 app.get('/allow-cors/teams', async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
-  message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
-  res.send(message);
+  if (req.isAuthenticated()) {
+    if (req.query.user === "" || req.query.user === null) {
+      message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
+    }
+    else {
+      user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+      message = await sqlConnection.SQLResponse.getTeams(connection, user);
+    }
+    res.send(message);
+  }
+  else {
+    res.sendStatus(401);
+  }
 });
 
 app.get('/allow-cors/users', async (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
-  message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
-  res.send(message);
+  if (req.isAuthenticated()) {
+    if (req.query.user === "" || req.query.user === null) {
+      message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
+    }
+    else {
+      user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+      message = await sqlConnection.SQLResponse.getUsers(connection, user);
+    }
+    res.send(message);
+  }
+  else {
+    res.sendStatus(401);
+  }
 });
 
 app.listen(port, () =>
