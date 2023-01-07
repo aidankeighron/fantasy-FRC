@@ -194,8 +194,8 @@ var teamList = new Array();
 var pickedTeamsList = new Array();
 var userList = {};
 var draftStarted = false;
-const roundLength = 5; // seconds
-const maxTeams = 3;
+const roundLength = 20; // seconds
+const maxTeams = 8;
 
 io.on('connection', (socket) => {
   if (draftStarted) {
@@ -359,6 +359,6 @@ function startTimer(clicked) {
 
 async function saveData() {
   console.log("Draft ended");
-  //await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
+  await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
   io.emit("draft_ended")
 }

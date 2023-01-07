@@ -73,12 +73,8 @@ class SQLResponse {
 
     static async draftEnded(conn, users, teams) {
         for (user in users) {
-            console.log(user);
-            console.log(users["Aidan"]);
             user = users[user];
-            console.log(user.teams);
-            console.log(String(user.teams).slice(0, -1));
-            await conn.query('UPDATE users SET teams = '+'"'+String(user.teams).slice(0, -1)+'" WHERE name = '+'"'+user.name+'"',  (queryError, res)=>{
+            await conn.query('UPDATE users SET teams = '+'"'+String(user.current_teams).slice(0, -1)+'" WHERE name = '+'"'+user.name+'"',  (queryError, res)=>{
                 if(queryError){
                     console.log(queryError);
                 }
