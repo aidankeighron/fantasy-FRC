@@ -28,7 +28,7 @@ class SQLResponse {
     static async getUsers(conn, user) {
         if (user == null) {
             return new Promise((resolve, reject)=>{
-                conn.query('SELECT * FROM users ORDER BY position ASC',  (queryError, res)=>{
+                conn.query('SELECT name, teams, score, position FROM users ORDER BY position ASC',  (queryError, res)=>{
                     if(queryError){
                         return reject(queryError);
                     }
@@ -42,6 +42,7 @@ class SQLResponse {
                     if(queryError){
                         return reject(queryError);
                     }
+                    console.log(res);
                     return resolve(res);
                 });
             });
@@ -68,6 +69,29 @@ class SQLResponse {
                 return resolve(res);
             });
         });
+    }
+
+    static async draftEnded(conn, users, teams) {
+        for (user in users) {
+            console.log(user);
+            console.log(users["Aidan"]);
+            user = users[user];
+            console.log(user.teams);
+            console.log(String(user.teams).slice(0, -1));
+            await conn.query('UPDATE users SET teams = '+'"'+String(user.teams).slice(0, -1)+'" WHERE name = '+'"'+user.name+'"',  (queryError, res)=>{
+                if(queryError){
+                    console.log(queryError);
+                }
+            });
+        }
+        for (team in teams) {
+            team = teams[team];
+            await conn.query('INSERT INTO teams (name, number, opr, average, score, location, owner) VALUES ('+'"'+team.name+'", '+team.number+', 0, 0, 0'+', "'+team.location+'"'+', "'+team.owner+'")',  (queryError, res)=>{
+                if(queryError){
+                    console.log(queryError);
+                }
+            });
+        }
     }
 };
 

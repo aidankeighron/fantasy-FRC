@@ -7,11 +7,11 @@ async function getUsers() {
     var html = "<table border='1|1' id='users-table'>";
     html+= "<tr>";
     html+= '<th>Name<button onclick="sortTable(0, 0, '+"'"+'users-table'+"'"+')">Sort</button></th>';
-    html+= '<th>Teams<button onclick="sortTable(1, 0, '+"'"+'users-table'+"'"+')">Sort</button></th>';
+    html+= '<th>Teams</th>';
     html+= '<th>Score<button onclick="sortTable(2, 1, '+"'"+'users-table'+"'"+')">Sort</button></th>';
     html+= '<th>Position<button onclick="sortTable(3, 1, '+"'"+'users-table'+"'"+')">Sort</button></th>';
     html+= "</tr>";
-
+    console.log("users");
     data.forEach(element => {
       html+="<tr>";
       html+="<td>"+element.name+"</td>";
@@ -38,9 +38,9 @@ async function getUser() {
       html+= '<th>OPR<button onclick="sortTable(2, 1, '+"'"+'user-table'+"'"+')">Sort</button></th>';
       html+= '<th>Average<button onclick="sortTable(3, 1, '+"'"+'user-table'+"'"+')">Sort</button></th>';
       html+= '<th>Score<button onclick="sortTable(4, 1, '+"'"+'user-table'+"'"+')">Sort</button></th>';
-      html+= '<th>Location<button onclick="sortTable(5, 0, '+"'"+'user-table'+"'"+')">Sort</button></th>';
       html+= "</tr>";
 
+      console.log(data);
       data.forEach(element => {
         html+="<tr>";
         html+="<td>"+element.name+"</td>";
@@ -48,7 +48,6 @@ async function getUser() {
         html+="<td>"+element.opr+"</td>";
         html+="<td>"+element.average+"</td>";
         html+="<td>"+element.score+"</td>";
-        html+="<td>"+element.location+"</td>";
         html+="</tr>";
       });
       html+="</table>";

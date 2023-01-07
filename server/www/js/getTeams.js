@@ -12,7 +12,6 @@ async function getTeams() {
       html+= '<th>OPR<button onclick="sortTable(2, 1, '+"'"+'team-table'+"'"+')">Sort</button></th>';
       html+= '<th>Average<button onclick="sortTable(3, 1, '+"'"+'team-table'+"'"+')">Sort</button></th>';
       html+= '<th>Score<button onclick="sortTable(4, 1, '+"'"+'team-table'+"'"+')">Sort</button></th>';
-      html+= '<th>Location<button onclick="sortTable(5, 0, '+"'"+'team-table'+"'"+')">Sort</button></th>';
       html+= '<th>Owner<button onclick="sortTable(6, 0, '+"'"+'team-table'+"'"+')">Sort</button></th>';
       html+= "</tr>";
 
@@ -23,7 +22,6 @@ async function getTeams() {
         html+="<td>"+element.opr+"</td>";
         html+="<td>"+element.average+"</td>";
         html+="<td>"+element.score+"</td>";
-        html+="<td>"+element.location+"</td>";
         html+="<td>"+element.owner+"</td>";
         html+="</tr>";
       });
@@ -65,14 +63,14 @@ function sortTable(row, type, table) {
   }
 }
 
-function search(table_id, name_col, num_col) {
+function search(tableID, nameCol, numCol) {
   var input, filter, table, tr, td, i, txtValue;
   input = document.getElementById("search");
   filter = input.value.toLowerCase();
-  table = document.getElementById(table_id);
+  table = document.getElementById(tableID);
   tr = table.getElementsByTagName("tr");
   for (i = 0; i < tr.length; i++) {
-    td = tr[i].getElementsByTagName("td")[num_col];
+    td = tr[i].getElementsByTagName("td")[numCol];
     if (td) {
       txtValue = td.textContent || td.innerText;
       if (!isNaN(parseInt(filter))) {
@@ -83,7 +81,7 @@ function search(table_id, name_col, num_col) {
           }
           continue;
       }
-      td = tr[i].getElementsByTagName("td")[name_col];
+      td = tr[i].getElementsByTagName("td")[nameCol];
       if (td) {
         txtValue = td.textContent || td.innerText;
           if (txtValue.toLowerCase().indexOf(filter) > -1) {

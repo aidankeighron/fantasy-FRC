@@ -7,23 +7,28 @@
         <h1>Admin</h1>
 
         <button onclick="startDraft()">Start Draft</button>
-        <input type='text' id='number' placeholder='Number' autocomplete='off'>
+        <br>
+        <p>Name</p>
         <input type='text' id='name' placeholder='Name' autocomplete='off'>
-        <button onclick="test()">Test</button>
+        <br>
+        <p>Password</p>
+        <input type='text' id='passw' placeholder='Password' autocomplete='off'>
+        <br>
+        <button onclick="addUser()">Add User</button>
         <script src="/socket.io/socket.io.js"></script>
         <script>
         var socket = io();
 
         function startDraft() {
-            socket.emit("start_draft");
+            socket.emit("start_draft", "Aidan");
         }
 
-        function test() {
-            input1 = document.getElementById("number");
-            number = input.value.toLowerCase();
-            input2 = document.getElementById("name");
+        async function addUser() {
+            input1 = document.getElementById("name");
             name = input.value.toLowerCase();
-            socket.emit("")
+            input2 = document.getElementById("passw");
+            passw = input.value.toLowerCase();
+            await fetch('http://localhost:'+port+'/allow-cors/add_user?name='+name+'&passw'+passw, {mode:'cors'})
         }
         </script>
     </body>

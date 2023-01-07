@@ -1,9 +1,20 @@
-function teamAdded(team) {
+const port = 3000;
 
+function getPickedTeam(index) {
+    try {
+        table = document.getElementById("queue");
+        number = table.rows[1].cells[index];
+        return number.textContent || number.innerText;
+    } catch (error) {
+        return -1;
+    }
 }
 
-function addToTable(number, name, table) {
-    var table = document.getElementById(table);
+function addToTable(number, name, tableID) {
+    var table = document.getElementById(tableID);
+    if (tableID === "queue" && table.rows.length > 10) { // max teams
+        return;
+    }
     for (let i in table.rows) {
         let row = table.rows[i]
         for (let j in row.cells) {
@@ -19,11 +30,21 @@ function addToTable(number, name, table) {
     row.id = number+"queue";
     row.insertCell(0).innerHTML = name;
     row.insertCell(1).innerHTML = number;
-    row.insertCell(2).innerHTML = '<td><button onclick="removeFromTable('+"'"+number+'queue'+"'"+')">Remove</button></td>';
+    if (tableID !== "my-team") {
+        row.insertCell(2).innerHTML = '<td><button onclick="removeFromTable('+"'"+number+'queue'+"'"+')">Remove</button></td>';
+    }
+    if (tableID === "queue") {
+        pickNextTeam();
+    }
 }
 
 function removeFromTable(id) {
-    document.getElementById(id).remove();
+    try {
+        document.getElementById(id).remove();
+        if (id === "queue") {
+            pickNextTeam();
+        }
+    } catch (error) { }
 }
 
 // type: 0 = string, 1 = int
@@ -58,14 +79,14 @@ function sortTable(row, type, table) {
     }
 }
 
-function search(table_id, name_col, num_col) {
+function search(tableID, nameCol, numCol) {
     var input, filter, table, tr, td, i, txtValue;
     input = document.getElementById("search");
     filter = input.value.toLowerCase();
-    table = document.getElementById(table_id);
+    table = document.getElementById(tableID);
     tr = table.getElementsByTagName("tr");
     for (i = 0; i < tr.length; i++) {
-      td = tr[i].getElementsByTagName("td")[num_col];
+      td = tr[i].getElementsByTagName("td")[numCol];
       if (td) {
         txtValue = td.textContent || td.innerText;
         if (!isNaN(parseInt(filter))) {
@@ -76,7 +97,7 @@ function search(table_id, name_col, num_col) {
             }
             continue;
         }
-        td = tr[i].getElementsByTagName("td")[name_col];
+        td = tr[i].getElementsByTagName("td")[nameCol];
         if (td) {
           txtValue = td.textContent || td.innerText;
             if (txtValue.toLowerCase().indexOf(filter) > -1) {
@@ -89,36 +110,31 @@ function search(table_id, name_col, num_col) {
     }
 }
 
-function loadTeams() {
-    var html = "<input type='text' id='search' onkeyup='search("+'"team-list-table"'+", 1, 0)' placeholder='Search in table...' autocomplete='off'>";
-    html+="<table border='1|1' id='team-list-table'>";
-    html+= "<tr>";
-    html+= '<th>Number<button onclick="sortTable(0, 1, '+"'"+'team-list-table'+"'"+')">Sort</button></th>';
-    html+= '<th>Name<button onclick="sortTable(1, 0, '+"'"+'team-list-table'+"'"+')">Sort</button></th>';
-    html+= '<th>OPR<button onclick="sortTable(2, 1, '+"'"+'team-list-table'+"'"+')">Sort</button></th>';
-    html+= "</tr>";
+async function loadTeams() {
 
-    html+="<tr id=111>";
-    html+="<td>111</td>";
-    html+="<td>Wildstang</td>";
-    html+="<td>62.3</td>";
-    html+='<td><button onclick="addToTable(111, '+"'Wildstang'"+', '+"'queue'"+')">Add</button></td>';
-    html+="</tr>";
-
-    html+="<tr id=254>";
-    html+="<td>254</td>";
-    html+="<td>Cheesy Poofs</td>";
-    html+="<td>30.2</td>";
-    html+='<td><button onclick="addToTable(254, '+"'Cheesy Poofs'"+', '+"'queue'"+')">Add</button></td>';
-    html+="</tr>";
-
-    html+="<tr id=2451>";
-    html+="<td>2451</td>";
-    html+="<td>PWNAGE</td>";
-    html+="<td>90.6</td>";
-    html+='<td><button onclick="addToTable(2541, '+"'PWNAGE'"+', '+"'queue'"+')">Add</button></td>';
-    html+="</tr>";
-
-    html+="</table>";
-    document.getElementById("team-list").innerHTML = html;
+    await fetch('http://localhost:'+port+'/allow-cors/all-teams', {mode:'cors'}).then(resp => {
+    resp.json().then(data => {
+        var html = "<input type='text' id='search' onkeyup='search("+'"team-list-table"'+", 1, 0)' placeholder='Search in table...' autocomplete='off'>";
+        html+="<table border='1|1' id='team-list-table'>";
+        html+= "<tr>";
+        html+= '<th>Number<button onclick="sortTable(0, 1, '+"'"+'team-list-table'+"'"+')">Sort</button></th>';
+        html+= '<th>Name<button onclick="sortTable(1, 0, '+"'"+'team-list-table'+"'"+')">Sort</button></th>';
+        html+= '<th>OPR<button onclick="sortTable(2, 1, '+"'"+'team-list-table'+"'"+')">Sort</button></th>';
+        html+= '<th>Location</th>'
+        html+= "</tr>";
+        for (let i = 0; i < data["teams"].length; i++) {
+                team = data["teams"][i]
+                html+="<tr id="+team.number+"team-list>";
+                html+="<td>"+team.number+"</td>";
+                html+="<td>"+team.name+"</td>";
+                html+="<td>"+team.opr+"</td>";
+                html+="<td>"+team.location+"</td>"
+                html+='<td><button onclick="addToTable('+team.number+', '+"'"+team.name+"'"+', '+"'queue'"+')">Add</button></td>';
+                html+="</tr>";
+            }
+        
+            html+="</table>";
+            document.getElementById("team-list").innerHTML = html;
+        });
+    });
 }

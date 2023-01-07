@@ -7,7 +7,7 @@ from datetime import datetime
 
 
 config = ConfigParser()
-config.read("scripts/server_info.ini")
+config.read("server_info.ini")
 db = mc.connect(host=config.get("SQL", "SQL_IP"), user=config.get("SQL", "SQL_User"), password=config.get("SQL", "SQL_Passw"), auth_plugin='mysql_native_password', database=config.get("SQL", "SQL_Database"))
 my_cursor = db.cursor()
 

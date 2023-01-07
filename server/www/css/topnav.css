@@ -2,6 +2,7 @@
 .topnav {
     background-color: #333;
     overflow: hidden;
+    height:5vh
 }
 
 /* Style the links inside the navigation bar */

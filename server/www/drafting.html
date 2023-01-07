@@ -29,6 +29,8 @@
             .team-list {
                 background-color:#7887AB;
                 flex-grow: 1;
+                overflow-y:auto;
+                height:85vh;
             }
         </style>
     </head>
@@ -43,6 +45,11 @@
 
         <div class="right-container">
             <div class="team-list" id="team-list">Teams</div>
+            <div>
+                <h2 id="time">0s</h2>
+                <h3 id="current">Picking: </h3>
+                <h4 id="next">Next: </h4>
+            </div>
             <div class="left-container">
                 <div class="queue">
                     <h3>Queue</h3>
@@ -67,17 +74,66 @@
 
         <script src="/socket.io/socket.io.js"></script>
         <script>
+        let seconds;
+        let timeout;
+        function startTimer(clicked) {
+            if (clicked) {
+                clearTimeout(timeout);
+                seconds = 20;
+            }
+            document.getElementById("time").innerHTML = seconds+"s";
+            seconds--;
+            if (seconds >= 0) {
+            timeout = setTimeout(startTimer, 1000);
+            }
+        }
+
+        function pickNextTeam() {
+            name = getPickedTeam(0);
+            number = getPickedTeam(1);
+            if (name !== -1 && number !== -1) {
+                socket.emit('team_picked', number, name, "Aidan");
+            }
+        }
+
         var socket = io();
 
-        socket.on('team removed', (number) => {
+        
+        socket.on('get_next_team', async () => {
+            startTimer(true);
+            if (getPickedTeam(0) !== "" && getPickedTeam(0) !== null) {
+                await new Promise(res => setTimeout(res, 2000));
+                pickNextTeam();
+            }
+        });
+        
+        socket.on('team_added', (number, name) => {
+            addToTable(number, name, "my-team");
+        });
+        
+        socket.on('team_removed', (number, current, next) => {
             removeFromTable(number+"queue");
             removeFromTable(number+"team-list");
+            document.getElementById("current").innerHTML = "Picking: "+current;
+            document.getElementById("next").innerHTML = "Next: "+next;
         });
-        socket.on('team added', (number, name) => {
-            addToMyTeam(number, name, "my-team");
+
+        socket.on('wrong_next_team', () => {
+            startTimer(true);
+            alert("You can't have 2 teams with the same location");
+        });
+
+        socket.on('draft_ended', () => {
+            alert("Draft finished");
+        });
+
+        socket.on("set_start", (current, next) => {
+            document.getElementById("current").innerHTML = "Picking: "+current;
+            document.getElementById("next").innerHTML = "Next: "+next;
+            startTimer(true);
         });
         loadTeams();
-        sortTable(0, 1, "team-list-table")
+        socket.emit("get_start");
         </script>
     </body>
 </html>
