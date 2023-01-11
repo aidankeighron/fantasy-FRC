@@ -1,28 +1,53 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
+
+:root {
+    --black-1: #050505;
+    --green-1: #16a085;
+    --green-2: #12876f;
+    --white-1: #FFF;
+    --grey-1: #808080;
+}
+
+* {
+    font-family: "JetBrains Mono", monospace;
+}
+
 /* Add a black background color to the top navigation */
 .topnav {
-    background-color: #333;
+    background-color: var(--black-1);
     overflow: hidden;
-    height:5vh
+    height: 10%;
+    border-radius: 5px;
 }
 
 /* Style the links inside the navigation bar */
 .topnav a {
     float: left;
-    color: #f2f2f2;
+    color: var(--white-1);
     text-align: center;
-    padding: 14px 16px;
+    padding: 25px 16px;
     text-decoration: none;
     font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+    -webkit-transition:0.5s;
+    -webkit-transform: perspective(1px) scale(1);
+    transition:0.5s;
+    transform: perspective(1px) scale(1);
 }
 
 /* Change the color of links on hover */
 .topnav a:hover {
     background-color: #ddd;
-    color: black;
+    color: var(--black-1);
+    -webkit-font-smoothing: antialiased;
+    -webkit-transition:0.5s;
+    -webkit-transform: perspective(1px) scale(1.05);
+    transition:0.5s;
+    transform: perspective(1px) scale(1.05);
 }
 
 /* Add a color to the active/current link */
 .topnav a.active {
-    background-color: #04AA6D;
+    background-color: var(--green-1);
     color: white;
 }

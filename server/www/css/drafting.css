@@ -1,0 +1,126 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
+
+:root {
+    --black-1: #050505;
+    --green-1: #16a085;
+    --green-2: #12876f;
+    --green-3: #80ADA4;
+    --white-1: #FFF;
+    --grey-1: #808080;
+    --grey-2: #B0B0B0;
+}
+
+* {
+    font-family: "JetBrains Mono", monospace;
+    border-radius: 5px;
+}
+
+body {
+    background: var(--green-2);
+}
+
+.right-container {
+    display:flex;
+    height:90vh;
+}
+.left-container {
+    display:flex;
+    flex-direction: column;
+    height:90vh;
+    margin: 0 25px 0 25px;
+    min-width: 35%;
+}
+
+.time {
+    min-width: 10%;
+}
+
+.queue {
+    background-color: var(--green-1);
+    margin: 25px 0;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    -ms-overflow-style: none; /* for Internet Explorer, Edge */
+    scrollbar-width: none; /* for Firefox */
+    overflow-y: scroll; 
+    border-collapse: collapse;
+    height: 50%;
+}
+
+.queue::-webkit-scrollbar {
+    display: none; /* for Chrome, Safari, and Opera */
+}
+
+.queue table, h3 {
+    margin: 10px;
+}
+
+.my-team {
+    background-color:var(--green-1);
+    -ms-overflow-style: none; /* for Internet Explorer, Edge */
+    scrollbar-width: none; /* for Firefox */
+    overflow-y: scroll; 
+    border-collapse: collapse;
+    margin: 25px 0;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    height: 50%;
+}
+
+.my-team::-webkit-scrollbar {
+    display: none; /* for Chrome, Safari, and Opera */
+}
+
+.my-team table, h3 {
+    margin: 10px;
+}
+
+.table {
+    background-color:var(--green-1);
+    -ms-overflow-style: none; /* for Internet Explorer, Edge */
+    scrollbar-width: none; /* for Firefox */
+    overflow-y: scroll; 
+    border-collapse: collapse;
+    margin: 25px 25px 25px 25px;
+    font-size: 0.9em;
+    width: calc(100% - 50px);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    border-radius: 5px;
+}
+
+.table table {
+    table-layout: auto;
+    width: calc(100% - 50px);
+}
+
+.table thead tr {
+    background-color: var(--green-1);
+    color: var(--white-1);
+    text-align: left;
+    font-weight: bold;
+}
+
+.table::-webkit-scrollbar {
+    display: none; /* for Chrome, Safari, and Opera */
+}
+
+.table th,
+.table td {
+    padding: 12px 15px;
+    font-family: "Roboto Condensed", sans-serif;
+    border: 2px solid black;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #dddddd;
+}
+
+.table tbody tr:nth-of-type(even) {
+    background-color: var(--grey-2);
+}
+
+.table tbody tr:nth-of-type(odd) {
+    background-color: var(--white-1);
+}
+
+.table tbody tr:last-of-type {
+    border-bottom: 2px solid var(--green-1);
+}

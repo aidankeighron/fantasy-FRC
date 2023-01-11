@@ -3,49 +3,43 @@
     <head>
         <title>Drafting | Fantasy FRC</title>
         <link rel="stylesheet" href="./css/topnav.css">
+        <link rel="stylesheet" href="./css/drafting.css">
         <script type="text/javascript" src="./js/drafting.js"></script>
         <style>
-            div {
-                color: #fff;
-                font-family: Tahoma, Verdana, Segoe, sans-serif;
-                padding: 10px;
+            .search {
+                border: 2px solid black;
+                border-radius: 5px;
+                margin-top: 20px;
+                margin-left: 20px;
+                text-align: bottom;
+                -webkit-font-smoothing: antialiased;
+                -webkit-transition:0.5s;
+                -webkit-transform: perspective(1px) scale(1);
+                transition:0.5s;
+                transform: perspective(1px) scale(1);
             }
-            .right-container {
-                background-color:#2E4272;
-                display:flex;
-            }
-            .left-container {
-                background-color:#2E4272;
-                display:grid;
-            }
-            .queue {
-                background-color:#4F628E;
-                width: 400px;
-            }
-            .my-team {
-                background-color:#4F628E;
-                width: 400px;
-            }
-            .team-list {
-                background-color:#7887AB;
-                flex-grow: 1;
-                overflow-y:auto;
-                height:85vh;
+
+            .search:hover {
+                -webkit-font-smoothing: antialiased;
+                -webkit-transition:0.5s;
+                -webkit-transform: perspective(1px) scale(1.01);
+                transition:0.5s;
+                transform: perspective(1px) scale(1.01);
             }
         </style>
     </head>
     <body>
         <div class="topnav">
-            <a class="active" href="logout">Logout</a>
+            <a href="logout">Logout</a>
             <a href="home">Home</a>
             <a href="rankings">Rankings</a>
             <a href="teams">Teams</a>
-            <a href="drafting">Drafting</a>
+            <a class="active" href="drafting">Drafting</a>
         </div>
 
         <div class="right-container">
-            <div class="team-list" id="team-list">Teams</div>
-            <div>
+            <div class="table" id="team-list">Teams</div>
+            <div class="time">
                 <h2 id="time">0s</h2>
                 <h3 id="current">Picking: </h3>
                 <h4 id="next">Next: </h4>
@@ -53,20 +47,20 @@
             <div class="left-container">
                 <div class="queue">
                     <h3>Queue</h3>
-                    <table border='1|1' id="queue">
-                        <tr>
+                    <table border='1|1' id="queue" class="table">
+                        <tr><thead>
                             <th>Name</th>
                             <th>Number</th>
-                        </tr>
+                        </thead></tr>
                     </table>
                 </div>
                 <div class="my-team">
                     <h3>My Team</h3>
-                    <table border='1|1' id="my-team">
-                        <tr>
+                    <table border='1|1' id="my-team" class="table">
+                        <tr><thead>
                             <th>Name</th>
                             <th>Number</th>
-                        </tr>
+                        </thead></tr>
                     </table>
                 </div>
             </div>

@@ -3,28 +3,31 @@
     <head>
         <title>Home | Fantasy FRC</title>
         <link rel="stylesheet" href="./css/topnav.css">
+        <link rel="stylesheet" href="./css/home.css">
         <script type="text/javascript" src="./js/getUsers.js"></script>
     </head>
     <body>
         <div class="topnav" id="topnav">
-            <a class="active" href="logout">Logout</a>
-            <a href="home">Home</a>
+            <a href="logout">Logout</a>
+            <a class="active" href="home">Home</a>
             <a href="rankings">Rankings</a>
             <a href="teams">Teams</a>
         </div>
-        <ul>
 
-        </ul>
-        <h3>My Team</h3>
-        <div id="user_team"></div>
+        <div class="my-team">
+            <h3>My Team</h3>
+            <div id="user_team"></div>
+        </div>
+        <div class="user-stats">
+            <h3>Stats</h3>
+            <p id="totalPoints">
+                Score:
+            </p>
+            <p id="rank">
+                Rank:
+            </p>
+        </div>
 
-        <h3>Stats</h3>
-        <p id="totalPoints">
-            Score:
-        </p>
-        <p id="rank">
-            Rank:
-        </p>
         <script src="/socket.io/socket.io.js"></script>
         <script>
             var socket = io();
@@ -33,6 +36,6 @@
                 document.getElementById("topnav").innerHTML += '<a href="drafting">Drafting</a>';
             });
             getUser()
-            </script>
+        </script>
     </body>
 </html>

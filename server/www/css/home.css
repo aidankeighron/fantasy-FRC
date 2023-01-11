@@ -1,0 +1,118 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
+
+:root {
+    --black-1: #050505;
+    --green-1: #16a085;
+    --green-2: #12876f;
+    --green-3: #80ADA4;
+    --white-1: #FFF;
+    --grey-1: #808080;
+    --grey-2: #B0B0B0;
+    --grey-3: #D0D0D0;
+}
+
+* {
+    font-family: "JetBrains Mono", monospace;
+}
+
+body {
+    background: var(--green-2);
+}
+
+h3 {
+    color: var(--black-1);
+    font-size: 25px;
+    font-weight: bold;
+}
+
+.user-stats {
+    margin-left: 20px;
+    border-radius: 5px;
+    border: 2px solid var(--black-1);
+    max-width: 20%;
+    background-color: var(--white-1);
+    -webkit-font-smoothing: antialiased;
+    -webkit-transition:0.5s;
+    -webkit-transform: perspective(1px) scale(1);
+    transition:0.5s;
+    transform: perspective(1px) scale(1);
+}
+
+.user-stats:hover {
+    -webkit-font-smoothing: antialiased;
+    -webkit-transition:0.5s;
+    -webkit-transform: perspective(1px) scale(1.05);
+    transition:0.5s;
+    transform: perspective(1px) scale(1.05);
+}
+
+.user-stats p, h3 {
+    margin: 20px;
+}
+
+.team-table {
+    border-collapse: collapse;
+    margin: 25px 0;
+    font-size: 0.9em;
+    min-width: 400px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    border-radius: 5px 5px 0 0;
+    overflow: hidden;
+}
+
+.team-table thead tr {
+    background-color: var(--green-1);
+    color: var(--white-1);
+    text-align: left;
+    font-weight: bold;
+}
+
+.team-table button {
+    border-radius: 5px;
+    background-color: var(--white-1);
+    transition: 0.5s;
+}
+
+.team-table button:hover {
+    background-color: var(--grey-3);
+    transition: 0.2s;
+}
+
+.team-table button:active {
+    transform: scale(1.05);
+    transition: 0.2s;
+}
+
+.team-table th,
+.team-table td {
+    padding: 12px 15px;
+}
+
+.team-table tbody tr {
+    border-bottom: 1px solid #dddddd;
+    -webkit-font-smoothing: antialiased;
+    -webkit-transition:0.5s;
+    -webkit-transform: perspective(1px) scale(1);
+    transition:0.5s;
+    transform: perspective(1px) scale(1);
+}
+
+.team-table tbody tr:hover {
+    -webkit-font-smoothing: antialiased;
+    -webkit-transition:0.5s;
+    -webkit-transform: perspective(1px) scale(1.02);
+    transition:0.5s;
+    transform: perspective(1px) scale(1.02);
+}
+
+.team-table tbody tr:nth-of-type(even) {
+    background-color: var(--grey-2);
+}
+
+.team-table tbody tr:nth-of-type(odd) {
+    background-color: var(--white-1);
+}
+
+.team-table tbody tr:last-of-type {
+    border-bottom: 2px solid var(--green-1);
+}

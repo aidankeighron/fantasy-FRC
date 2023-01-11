@@ -1,19 +1,20 @@
-async function getTeams() {
-  const port = 3000;
+const url = window.location.origin;
 
-  await fetch('http://localhost:'+port+'/allow-cors/teams', {mode:'cors'}).then(resp => {
+async function getTeams() {
+
+  await fetch(url+'/allow-cors/teams', {mode:'cors'}).then(resp => {
     resp.json().then(data => {
 
-      var html = "<input type='text' id='search' onkeyup='search("+'"team-table"'+", 0, 1)' placeholder='Search in table...' autocomplete='off'>";
-      html+= "<table border='1|1' id='team-table'>";
-      html+= "<tr>";
-      html+= '<th>Name<button onclick="sortTable(0, 0, '+"'"+'team-table'+"'"+')">Sort</button></th>';
-      html+= '<th>Number<button onclick="sortTable(1, 1, '+"'"+'team-table'+"'"+')">Sort</button></th>';
-      html+= '<th>OPR<button onclick="sortTable(2, 1, '+"'"+'team-table'+"'"+')">Sort</button></th>';
-      html+= '<th>Average<button onclick="sortTable(3, 1, '+"'"+'team-table'+"'"+')">Sort</button></th>';
-      html+= '<th>Score<button onclick="sortTable(4, 1, '+"'"+'team-table'+"'"+')">Sort</button></th>';
-      html+= '<th>Owner<button onclick="sortTable(6, 0, '+"'"+'team-table'+"'"+')">Sort</button></th>';
-      html+= "</tr>";
+      var html = "<input class='search' type='text' id='search' onkeyup='search("+'"team-table"'+", 0, 1)' placeholder='Search within table...' autocomplete='off'>";
+      html+= "<table border='1|1' id='team-table' class='table'>";
+      html+= "<tr><thead>";
+      html+= '<th>Name  <button onclick="sortTable(0, 0, '+"'"+'team-table'+"'"+', true)">Sort</button></th>';
+      html+= '<th>Number  <button onclick="sortTable(1, 1, '+"'"+'team-table'+"'"+', true)">Sort</button></th>';
+      html+= '<th>OPR  <button onclick="sortTable(2, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Average  <button onclick="sortTable(3, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Score  <button onclick="sortTable(4, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Owner  <button onclick="sortTable(5, 0, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
+      html+= "</thead></tr>";
 
       data.forEach(element => {
         html+="<tr>";
@@ -32,28 +33,44 @@ async function getTeams() {
 };
 
 // type: 0 = string, 1 = double
-function sortTable(row, type, table) {
+function sortTable(row, type, table, forward) {
   var table, rows, switching, i, x, y, shouldSwitch;
   table = document.getElementById(table);
   switching = true;
   while (switching) {
     switching = false;
     rows = table.rows;
-    for (i = 1; i < (rows.length - 1); i++) {
+    for (i = 2; i < (rows.length - 1); i++) {
       shouldSwitch = false;
       x = rows[i].getElementsByTagName("td")[row];
       y = rows[i + 1].getElementsByTagName("td")[row];
       if (type == 0) {
-          if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-            shouldSwitch = true;
-            break;
+          if (forward) {
+            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+              shouldSwitch = true;
+              break;
+            }            
           }
-      }
-      else {
-          if (parseFloat(x.innerHTML) > parseFloat(y.innerHTML)) {
+          else {
+            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
               shouldSwitch = true;
               break;
             }
+          }
+      }
+      else {
+        if (forward) {
+          if (parseFloat(x.innerHTML) > parseFloat(y.innerHTML)) {
+              shouldSwitch = true;
+              break;
+          }
+        }
+        else {
+          if (parseFloat(x.innerHTML) < parseFloat(y.innerHTML)) {
+              shouldSwitch = true;
+              break;
+          }
+        }
       }
     }
     if (shouldSwitch) {

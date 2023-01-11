@@ -3,14 +3,37 @@
     <head>
         <title>Teams | Fantasy FRC</title>
         <link rel="stylesheet" href="./css/topnav.css">
+        <link rel="stylesheet" href="./css/table.css">
         <script type="text/javascript" src="./js/getTeams.js"></script>
+        <style>
+            .search {
+                border: 2px solid black;
+                border-radius: 5px;
+                margin-top: 20px;
+                margin-left: 20px;
+                text-align: bottom;
+                -webkit-font-smoothing: antialiased;
+                -webkit-transition:0.5s;
+                -webkit-transform: perspective(1px) scale(1);
+                transition:0.5s;
+                transform: perspective(1px) scale(1);
+            }
+
+            .search:hover {
+                -webkit-font-smoothing: antialiased;
+                -webkit-transition:0.5s;
+                -webkit-transform: perspective(1px) scale(1.01);
+                transition:0.5s;
+                transform: perspective(1px) scale(1.01);
+            }
+        </style>
     </head>
     <body>
         <div class="topnav" id="topnav">
-            <a class="active" href="logout">Logout</a>
+            <a href="logout">Logout</a>
             <a href="home">Home</a>
             <a href="rankings">Rankings</a>
-            <a href="teams">Teams</a>
+            <a class="active" href="teams">Teams</a>
         </div>
         <div id="teams"></div>
     </body>

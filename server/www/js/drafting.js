@@ -1,9 +1,9 @@
-const port = 3000;
+const url =  window.location.origin;
 
 function getPickedTeam(index) {
     try {
         table = document.getElementById("queue");
-        number = table.rows[1].cells[index];
+        number = table.rows[2].cells[index];
         return number.textContent || number.innerText;
     } catch (error) {
         return -1;
@@ -47,29 +47,45 @@ function removeFromTable(id) {
     } catch (error) { }
 }
 
-// type: 0 = string, 1 = int
-function sortTable(row, type, table) {
+// type: 0 = string, 1 = double
+function sortTable(row, type, table, forward) {
     var table, rows, switching, i, x, y, shouldSwitch;
     table = document.getElementById(table);
     switching = true;
     while (switching) {
       switching = false;
       rows = table.rows;
-      for (i = 1; i < (rows.length - 1); i++) {
+      for (i = 2; i < (rows.length - 1); i++) {
         shouldSwitch = false;
         x = rows[i].getElementsByTagName("td")[row];
         y = rows[i + 1].getElementsByTagName("td")[row];
         if (type == 0) {
-            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-              shouldSwitch = true;
-              break;
+            if (forward) {
+              if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                shouldSwitch = true;
+                break;
+              }            
             }
-        }
-        else {
-            if (parseFloat(x.innerHTML) > parseFloat(y.innerHTML)) {
+            else {
+              if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
                 shouldSwitch = true;
                 break;
               }
+            }
+        }
+        else {
+          if (forward) {
+            if (parseFloat(x.innerHTML) > parseFloat(y.innerHTML)) {
+                shouldSwitch = true;
+                break;
+            }
+          }
+          else {
+            if (parseFloat(x.innerHTML) < parseFloat(y.innerHTML)) {
+                shouldSwitch = true;
+                break;
+            }
+          }
         }
       }
       if (shouldSwitch) {
@@ -77,7 +93,7 @@ function sortTable(row, type, table) {
         switching = true;
       }
     }
-}
+  }
 
 function search(tableID, nameCol, numCol) {
     var input, filter, table, tr, td, i, txtValue;
@@ -112,16 +128,16 @@ function search(tableID, nameCol, numCol) {
 
 async function loadTeams() {
 
-    await fetch('http://localhost:'+port+'/allow-cors/all-teams', {mode:'cors'}).then(resp => {
+    await fetch(url+'/allow-cors/all-teams', {mode:'cors'}).then(resp => {
     resp.json().then(data => {
-        var html = "<input type='text' id='search' onkeyup='search("+'"team-list-table"'+", 1, 0)' placeholder='Search in table...' autocomplete='off'>";
-        html+="<table border='1|1' id='team-list-table'>";
-        html+= "<tr>";
-        html+= '<th>Number<button onclick="sortTable(0, 1, '+"'"+'team-list-table'+"'"+')">Sort</button></th>';
-        html+= '<th>Name<button onclick="sortTable(1, 0, '+"'"+'team-list-table'+"'"+')">Sort</button></th>';
-        html+= '<th>OPR<button onclick="sortTable(2, 1, '+"'"+'team-list-table'+"'"+')">Sort</button></th>';
-        html+= '<th>Location</th>'
-        html+= "</tr>";
+        var html = "<input class='search' type='text' id='search' onkeyup='search("+'"team-list-table"'+", 1, 0)' placeholder='Search in table...' autocomplete='off'>";
+        html+="<table border='1|1' id='team-list-table' class='table'>";
+        html+= "<tr><thead>";
+        html+= '<th>Number</th>';
+        html+= '<th>Name</th>';
+        html+= '<th>OPR</th>';
+        html+= '<th>Location  </th>'
+        html+= "</thead></tr>";
         for (let i = 0; i < data["teams"].length; i++) {
                 team = data["teams"][i]
                 html+="<tr id="+team.number+"team-list>";

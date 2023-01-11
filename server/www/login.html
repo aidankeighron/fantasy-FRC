@@ -2,19 +2,37 @@
 <html>
     <head>
         <title>Login | Fantasy FRC</title>
+        <link rel="stylesheet" href="./css/login.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://kit.fontawesome.com/a076d05399.js"></script>
     </head>
     <body>
-        <h1>Login</h1>
-        <p id="loginError" style="color:red;"></p>
-        <form name="sign-in" action="", method="GET">
-            <label for="user">Username:</label>
-            <input type="text" name="user"><br>
-            <label for="passw">Password:</label>
-            <input type="text" name="passw"><br>
-            <input type="button" name="Submit" value="Click" onClick="login(this.form)">
-        </form>
+        <header class="title-container">
+            <h1 class="title">Fantasy FRC</h1>
+        </header>
+        <div class="container">
+            <div class="wrapper">
+                <div class="title"><span>Login</span></div>
+                    <form action="#">
+                        <div class="row">
+                            <i class="fas fa-user"></i>
+                            <input name="user" type="text" placeholder="Username" required >
+                        </div>
+                        <div class="row">
+                            <i class="fas fa-lock"></i>
+                            <input name="passw" type="password" placeholder="Password" required>
+                        </div>
+                        <div class="pass"><p id="loginError"></p></div>
+                        <div class="row button">
+                            <input id="sign-in" type="button" value="Login" onClick="login(this.form)">
+                        </div>
+                    </form>
+            </div>
+        </div>
         <script>
+            const url = window.location.origin;
             async function login(form) {
+                document.getElementById("sign-in").disabled = true;
                 const user = form.user.value;
                 const passw = form.passw.value;
                 if (user === null || user === "") {
@@ -27,7 +45,7 @@
                 }
                 const data = {username: user, password: passw};
 
-                await fetch('http://localhost:3000', {
+                await fetch(url, {
                     method: "POST",
                     followAllRedirects: true,
                     headers: {'Content-Type': 'application/json'}, 
@@ -41,6 +59,7 @@
                         document.getElementById('loginError').innerHTML = "Incorrect username/password combo";
                     }
                 });
+                document.getElementById("sign-in").disabled = false;
             }
         </script>
     </body>

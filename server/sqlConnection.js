@@ -42,7 +42,6 @@ class SQLResponse {
                     if(queryError){
                         return reject(queryError);
                     }
-                    console.log(res);
                     return resolve(res);
                 });
             });
