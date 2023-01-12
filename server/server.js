@@ -14,6 +14,8 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const { json } = require('body-parser');
 const io = new Server(server);
+const cookie = require('cookie');
+const signature = require('cookie-signature');
 
 const config = ini.parse(fs.readFileSync('server_info.ini', 'utf-8'))
 const connection = sqlConnection.setupSQLConnection();
@@ -60,14 +62,18 @@ passport.deserializeUser(async (id, done) => {
   done(null, user);
 });
 
+var name = 'connect.sid';
+var secret = config.SERVER.SECRET;
+var store = new FileStore();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(session({
   genid: (req) => {
     return uuid();
   },
-  store: new FileStore(),
-  secret: config.SERVER.SECRET,
+  name: name,
+  store: store,
+  secret: secret,
   resave: false,
   saveUninitialized: true
 }));
@@ -107,12 +113,17 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-  user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-  if (user === "Aidan") {
-    res.sendFile('www/admin.html', { root: __dirname });
+  if (req.isAuthenticated()) {
+    user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+    if (user === "Aidan") {
+      res.sendFile('www/admin.html', { root: __dirname });
+    }
+    else {
+      res.sendStatus(403);
+    }
   }
   else {
-    res.sendStatus(401);
+    res.redirect('/');
   }
 });
 
@@ -177,8 +188,9 @@ app.get('/allow-cors/users', async (req, res) => {
   }
 });
 
-app.get('/allow-cors/all-teams', async (req, res) => {
+app.get('/allow-cors/all-teams', (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
+  
   if (req.isAuthenticated()) {
     res.send(teamsJson);
   }
@@ -186,6 +198,18 @@ app.get('/allow-cors/all-teams', async (req, res) => {
     res.sendStatus(401);
   }
 });
+
+app.get('/allow-cors/add-user', async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+  if (req.isAuthenticated() && user === "Aidan") {
+    message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
+    res.send(message);
+  }
+  else {
+    res.sendStatus(403);
+  }
+})
 
 server.listen(port, () =>
   console.log(`Server listening on port ${port}`),
@@ -202,6 +226,22 @@ const roundLength = 20; // seconds
 const maxTeams = 8;
 
 io.on('connection', (socket) => {
+  if (socket.handshake && socket.handshake.headers && socket.handshake.headers.cookie) {
+    var raw = cookie.parse(socket.handshake.headers.cookie)[name];
+    if (raw) {
+      // The cookie set by express-session begins with s: which indicates it
+      // is a signed cookie. Remove the two characters before unsigning.
+      socket.sessionId = signature.unsign(raw.slice(2), secret) || undefined;
+    }
+  }
+
+  if (socket.sessionId) {
+    store.get(socket.sessionId, function(err, session) {
+      console.log(session);
+      console.log(typeof session);
+      console.log(session.passport.user);
+    });
+  }
   if (draftStarted) {
     socket.emit('draft_started');
   }
@@ -210,8 +250,8 @@ io.on('connection', (socket) => {
     socket.emit('set_start', userIDList[0], userIDList[1]);
   });
 
-  socket.on('start_draft', async (user) => {
-    if (user !== "Aidan") { return; }
+  socket.on('start_draft', async () => {
+    if (session.passport.user !== "cf3a7c") { return; }
     if (draftStarted) { return; }
     console.log("draft started");
     draftStarted = true;
@@ -221,14 +261,14 @@ io.on('connection', (socket) => {
     startTimer(true);
   });
 
-  socket.on('team_picked', (number, name, user) => {
+  socket.on('team_picked', (number, name) => {
     if (!draftStarted) { return; }
     console.log("team picked");
-    if (user === userIDList[0]) {
-      if (isValidTeam(number, user)) {
+    if (session.passport.user === userIDList[0]) {
+      if (isValidTeam(number, session.passport.user)) {
         userIDList.unshift(userIDList.pop());
-        userList[user].current_teams += number+",";
-        if (userList[user].current_teams.split(",").length > maxTeams) {
+        userList[session.passport.user].current_teams += number+",";
+        if (userList[session.passport.user].current_teams.split(",").length > maxTeams) {
           userIDList.pop();
         }
         if (userIDList.length <= 1) {
@@ -261,8 +301,8 @@ io.on('connection', (socket) => {
   });
 });
 
-function isValidTeam(number, user) {
-  let userTeams = userList[user].current_teams.toString().split(",");
+function isValidTeam(number) {
+  let userTeams = userList[session.passport.user].current_teams.toString().split(",");
   let currentTeam;
   for (team in teamList) {
     team = teamList[team];
@@ -285,10 +325,10 @@ function isValidTeam(number, user) {
 }
 
 async function initializeDraft() {
-  var users = await sqlConnection.SQLResponse.getUsers(connection, null);
+  var users = await sqlConnection.SQLResponse.getUserIDs(connection);
   for (let i = 0; i < users.length; i++) {
     user = users[i]
-    userList[user.name] = {
+    userList[user.id] = {
       "name": user.name,
       "current_teams": "",
     };

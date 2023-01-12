@@ -1,7 +1,8 @@
 const { resolve } = require('path');
+const bcrypt = require ('bcrypt');
+const saltRounds = 10;
 
 class SQLResponse {
-
     static async getTeams(conn, user) {        
         if (user == null) {
             return new Promise((resolve, reject)=>{
@@ -23,6 +24,17 @@ class SQLResponse {
                 });
             });
         }
+    }
+
+    static async getUserIDs(conn) {
+        return new Promise((resolve, reject)=>{
+            conn.query('SELECT name, id FROM users ORDER BY position ASC',  (queryError, res)=>{
+                if(queryError){
+                    return reject(queryError);
+                }
+                return resolve(res);
+            });
+        });
     }
 
     static async getUsers(conn, user) {
@@ -48,13 +60,47 @@ class SQLResponse {
         }
     }
 
+    static async addUser(conn, user, passw) {
+        return new Promise((resolve, reject)=>{
+            conn.query('SELECT name, teams, score, position FROM users WHERE name = "'+user+'"',  (queryError, res)=>{
+                if(res == null || res == ""){
+                    bcrypt.genSalt(saltRounds, function(err, salt) {
+                        bcrypt.hash(passw, salt, function(err, hash) {
+                        // returns hash
+                        let id = Math.floor((1 + Math.random()) * 0x1000000)
+                        .toString(16)
+                        .substring(1);
+                        conn.query('INSERT INTO users (name, passw, teams, score, position, id) VALUES ('+user+', "'+hash+'", "", 0, 0, "'+id+'")',  (queryError, res)=>{
+                            if(queryError){
+                                console.log(queryError);
+                            }
+                        });
+                        });
+                    });
+                }
+                else {
+                    return resolve("Username already exists");
+                }
+                return resolve("Completed");
+            });
+        });
+    }
+
     static async verifyUser(conn, user, passw) {
         return new Promise((resolve, reject)=>{
-            conn.query('SELECT id, name, passw FROM users WHERE name = "'+user+'" AND passw = "'+passw+'"',  (queryError, res)=>{
+            conn.query('SELECT id, name, passw FROM users WHERE name = "'+user+'"', (queryError, res)=>{
                 if(queryError){
                     return reject(queryError);
                 }
-                return resolve(res);
+                let user_data = Object.values(JSON.parse(JSON.stringify(res[0])));
+                bcrypt.compare(passw, user_data[2], function(err, result) {
+                    if (result) {
+                        return resolve(res);
+                    }
+                    else {
+                        return resolve(null);
+                    }
+                  });
             });
         });
     }
