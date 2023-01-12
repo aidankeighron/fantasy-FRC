@@ -97,8 +97,8 @@ app.post('/', (req, res, next) => {
 });
 
 app.get('/logout', (req, res) => {
-  req.logout(function(err) {
-    if (err) { return; }
+  req.session.destroy(function (err) {
+    res.clearCookie('connect.sid')
     res.redirect('/');
   });
 });
@@ -237,9 +237,6 @@ io.on('connection', (socket) => {
 
   if (socket.sessionId) {
     store.get(socket.sessionId, function(err, session) {
-      console.log(session);
-      console.log(typeof session);
-      console.log(session.passport.user);
     });
   }
   if (draftStarted) {
