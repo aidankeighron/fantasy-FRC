@@ -1,3 +1,11 @@
+// HTTPS
+var fs = require('fs');
+var https = require('https');
+var privateKey  = fs.readFileSync('server.key', 'utf8');
+var certificate = fs.readFileSync('server.crt', 'utf8');
+
+var credentials = {key: privateKey, cert: certificate};
+
 const sqlConnection = require('./sqlConnection.js');
 const express = require('express');
 const uuid = require('uuid').v4;
@@ -7,10 +15,10 @@ const bodyParser = require('body-parser');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const ini = require('ini');
-const fs = require('fs');
 const http = require('http');
 const app = express();
 const server = http.createServer(app);
+const httpsServer = https.createServer(credentials, app);
 const { Server } = require("socket.io");
 const { json } = require('body-parser');
 const io = new Server(server);
@@ -19,8 +27,10 @@ const signature = require('cookie-signature');
 
 const config = ini.parse(fs.readFileSync('server_info.ini', 'utf-8'))
 const connection = sqlConnection.setupSQLConnection();
-const port = 80;
+const httpPort = 80;
+const httpsPort = 443;
 const SQLRegex = new RegExp("[\\;\\/\"\']", 'g');
+
 
 let teamsJson;
 fs.readFile('team_info.json', 'utf8', (err, jsonString) => {
@@ -211,8 +221,12 @@ app.get('/allow-cors/add-user', async (req, res) => {
   }
 })
 
-server.listen(port, () =>
-  console.log(`Server listening on port ${port}`),
+server.listen(httpPort, () =>
+  console.log(`Server listening on port ${httpPort}`),
+);
+
+httpsServer.listen(httpsPort, () =>
+  console.log(`Server listening on port ${httpsPort}`),
 );
 
 // DRAFTING //

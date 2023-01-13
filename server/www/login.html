@@ -4,22 +4,23 @@
         <title>Login | Fantasy FRC</title>
         <link rel="stylesheet" href="./css/login.css">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+        <!-- <script src="https://kit.fontawesome.com/a076d05399.js"></script> -->
+        <link href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.css" rel="stylesheet"  type='text/css'>
     </head>
     <body>
         <header class="title-container">
             <h1 class="title">Fantasy FRC</h1>
         </header>
         <div class="container">
-            <div class="wrapper">
+            <div class="wrapper" onKeyPress="return isEnterPress(event)">
                 <div class="title"><span>Login</span></div>
-                    <form action="#">
+                    <form action="#" id="login_form">
                         <div class="row">
-                            <i class="fas fa-user"></i>
+                            <i class="fa fa-user"></i>
                             <input name="user" type="text" placeholder="Username" required >
                         </div>
                         <div class="row">
-                            <i class="fas fa-lock"></i>
+                            <i class="fa fa-lock"></i>
                             <input name="passw" type="password" placeholder="Password" required>
                         </div>
                         <div class="pass"><p id="loginError"></p></div>
@@ -31,6 +32,16 @@
         </div>
         <script>
             const url = window.location.origin;
+
+            function isEnterPress(e) {
+                if((e && e.keyCode == 13) || e == 0) {
+                    alert("The form was submitted");
+                    document.forms.login_form.submit();
+                    document.forms.login_form.user.value = ""; // could be form01.reset as well
+                    document.forms.login_form.passw.value = "";
+                }
+            }
+
             async function login(form) {
                 document.getElementById("sign-in").disabled = true;
                 const user = form.user.value;
