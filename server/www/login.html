@@ -35,9 +35,10 @@
 
             function isEnterPress(e) {
                 if((e && e.keyCode == 13) || e == 0) {
-                    alert("The form was submitted");
-                    document.forms.login_form.submit();
-                    document.forms.login_form.user.value = ""; // could be form01.reset as well
+                    var loginButton = document.getElementById("sign-in");
+                    loginButton.click();
+                    // document.forms.login_form.submit();
+                    document.forms.login_form.user.value = "";
                     document.forms.login_form.passw.value = "";
                 }
             }
@@ -46,6 +47,8 @@
                 document.getElementById("sign-in").disabled = true;
                 const user = form.user.value;
                 const passw = form.passw.value;
+                document.forms.login_form.user.value = "";
+                document.forms.login_form.passw.value = "";
                 if (user === null || user === "") {
                     document.getElementById('loginError').innerHTML = "Please enter username";
                     return;

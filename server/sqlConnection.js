@@ -63,19 +63,13 @@ class SQLResponse {
     static async addUser(conn, user, passw) {
         return new Promise((resolve, reject)=>{
             conn.query('SELECT name, teams, score, position FROM users WHERE name = "'+user+'"',  (queryError, res)=>{
-                if(res == null || res == ""){
-                    bcrypt.genSalt(saltRounds, function(err, salt) {
-                        bcrypt.hash(passw, salt, function(err, hash) {
-                        // returns hash
-                        let id = Math.floor((1 + Math.random()) * 0x1000000)
-                        .toString(16)
-                        .substring(1);
-                        conn.query('INSERT INTO users (name, passw, teams, score, position, id) VALUES ('+user+', "'+hash+'", "", 0, 0, "'+id+'")',  (queryError, res)=>{
-                            if(queryError){
-                                console.log(queryError);
-                            }
-                        });
-                        });
+                if (res == null || res == "") {
+                    let hashedPassw = bcrypt.hashSync(String(passw).replace(/^"(.*)"$/, '$1'), saltRounds);
+                    let id = Math.floor((1 + Math.random()) * 0x1000000).toString(16).substring(1);
+                    conn.query('INSERT INTO users (name, passw, teams, score, position, id) VALUES ('+user+', "'+String(hashedPassw)+'", "", 0, 0, "'+id+'")',  (queryError, res)=>{
+                        if(queryError){
+                            console.log(queryError);
+                        }
                     });
                 }
                 else {
@@ -89,18 +83,17 @@ class SQLResponse {
     static async verifyUser(conn, user, passw) {
         return new Promise((resolve, reject)=>{
             conn.query('SELECT id, name, passw FROM users WHERE name = "'+user+'"', (queryError, res)=>{
-                if(queryError){
+                if (queryError) {
                     return reject(queryError);
                 }
                 let user_data = Object.values(JSON.parse(JSON.stringify(res[0])));
-                bcrypt.compare(passw, user_data[2], function(err, result) {
-                    if (result) {
-                        return resolve(res);
-                    }
-                    else {
-                        return resolve(null);
-                    }
-                  });
+                let result = bcrypt.compareSync(passw, user_data[2]);
+                if (result) {
+                    return resolve(res);
+                }
+                else {
+                    return resolve(null);
+                }
             });
         });
     }

@@ -1,10 +1,5 @@
 // HTTPS
 var fs = require('fs');
-var https = require('https');
-var privateKey  = fs.readFileSync('server.key', 'utf8');
-var certificate = fs.readFileSync('server.crt', 'utf8');
-
-var credentials = {key: privateKey, cert: certificate};
 
 const sqlConnection = require('./sqlConnection.js');
 const express = require('express');
@@ -18,7 +13,6 @@ const ini = require('ini');
 const http = require('http');
 const app = express();
 const server = http.createServer(app);
-const httpsServer = https.createServer(credentials, app);
 const { Server } = require("socket.io");
 const { json } = require('body-parser');
 const io = new Server(server);
@@ -223,10 +217,6 @@ app.get('/allow-cors/add-user', async (req, res) => {
 
 server.listen(httpPort, () =>
   console.log(`Server listening on port ${httpPort}`),
-);
-
-httpsServer.listen(httpsPort, () =>
-  console.log(`Server listening on port ${httpsPort}`),
 );
 
 // DRAFTING //

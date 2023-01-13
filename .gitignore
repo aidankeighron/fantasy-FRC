@@ -137,3 +137,4 @@ dist
 .pnp.*
 server/server.crt
 server/server.key
+testing.session.sql
