@@ -203,7 +203,12 @@ app.get('/allow-cors/all-teams', (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   
   if (req.isAuthenticated()) {
-    res.send(teamsJson);
+    // if (Object.keys(teamList).length != 0) {
+    //   res.send(JSON.stringify({"teams":teamList}));
+    // }
+    // else {
+      res.send(teamsJson);
+    // }
   }
   else {
     res.sendStatus(401);
@@ -234,7 +239,7 @@ var pickedTeamsList = new Array();
 var userList = {};
 var draftStarted = false;
 const roundLength = 20; // seconds
-const maxTeams = 2;
+const maxTeams = 8;
 
 io.on('connection', (socket) => {
   if (socket.handshake && socket.handshake.headers && socket.handshake.headers.cookie) {
@@ -266,7 +271,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('start_draft', async () => {
-    console.log(userID);
     if (userID !== "cf3a7c") { return; }
     if (draftStarted) { return; }
     console.log("draft started");
@@ -274,7 +278,7 @@ io.on('connection', (socket) => {
     io.emit('draft_started');
     await initializeDraft();
     io.emit('set_start', userList["ID:"+userIDList[0]].name, userList["ID:"+userIDList[1]].name);
-    startTimer(true);
+    setTimeout(startTimer, 300000, true);
   });
 
   socket.on('team_picked', (number, name) => {
@@ -283,7 +287,7 @@ io.on('connection', (socket) => {
     if (userID === userIDList[0]) {
       let location = isValidTeam(number, userID);
       if (location != null) {
-        userIDList.unshift(userIDList.pop());
+        userIDList.push(userIDList.shift());
         userList["ID:"+userID].current_teams += number+",";
         if (userList["ID:"+userID].current_teams.split(",").length > maxTeams) {
           userIDList.pop();
@@ -295,7 +299,7 @@ io.on('connection', (socket) => {
           nextUser = userList["ID:"+userIDList[1]].name;
         }
         socket.emit('team_added', number, name, location);
-        teamList["team"+number].owner = user;
+        teamList["team"+number].owner = userList["ID:"+userID].name;
         pickedTeamsList["team"+number] = teamList["team"+number]
         delete teamList["team"+number];
         if (userIDList.length <= 0) {
@@ -313,39 +317,39 @@ io.on('connection', (socket) => {
         startTimer(true);
         socket.emit('wrong_next_team');
       }
-      console.log(userList);
-      console.log(userIDList);
     } 
   });
 });
 
 function isValidTeam(number, id) {
-  console.log(id);
-  let userTeams = userList["ID:"+id].current_teams.toString().split(",");
-  let currentTeam;
-  for (team in teamList) {
-    team = teamList[team];
-    if (number == team.number) {
-      currentTeam = team;
-    }
-  }
-
-  for (team in pickedTeamsList) {
-    team = pickedTeamsList[team];
-    for (userTeam in userTeams) {
-      userTeam = userTeams[userTeam];
-      if (userTeam == team.number && currentTeam.location == team.location) {
-        console.log("invalid team");
-        return null;
+  try {
+    let userTeams = userList["ID:"+id].current_teams.toString().split(",");
+    let currentTeam;
+    for (team in teamList) {
+      team = teamList[team];
+      if (number == team.number) {
+        currentTeam = team;
       }
     }
+  
+    for (team in pickedTeamsList) {
+      team = pickedTeamsList[team];
+      for (userTeam in userTeams) {
+        userTeam = userTeams[userTeam];
+        if (userTeam == team.number && currentTeam.location == team.location) {
+          console.log("invalid team");
+          return null;
+        }
+      }
+    }
+    return currentTeam.location;
+  } catch (error) {
+    return null;
   }
-  return currentTeam.location;
 }
 
 async function initializeDraft() {
   var users = await sqlConnection.SQLResponse.getUserIDs(connection);
-  console.log(users);
   for (let i = 0; i < users.length; i++) {
     user = users[i]
     userList["ID:"+user.id] = {
@@ -369,8 +373,6 @@ async function initializeDraft() {
       "owner": ""
     };
   }
-  console.log(userList);
-  console.log(userIDList);
 }
 
 let timeout;
@@ -394,11 +396,11 @@ function startTimer(clicked) {
         number = Object.values(teamList)[index].number;
         index++;
       } while (isValidTeam(number, user) == null);
-      teamList["team"+number].owner = user;
+      teamList["team"+number].owner = userList["ID:"+user].name;
       pickedTeamsList["team"+number] = teamList["team"+number]
       delete teamList["team"+number];
 
-      userIDList.unshift(userIDList.pop());
+      userIDList.push(userIDList.shift());
       userList["ID:"+user].current_teams += number+",";
       if (userList["ID:"+user].current_teams.split(",").length > maxTeams) {
         userIDList.pop();
@@ -419,8 +421,6 @@ function startTimer(clicked) {
         startTimer(true);
         io.emit('get_next_team');
       }
-      console.log(userList);
-      console.log(userIDList);
     }
   }
 }

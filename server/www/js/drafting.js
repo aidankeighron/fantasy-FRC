@@ -139,6 +139,7 @@ async function loadTeams() {
         html+= '<th>OPR</th>';
         html+= '<th>Location  </th>'
         html+= "</thead></tr>";
+
         for (let i = 0; i < data["teams"].length; i++) {
                 team = data["teams"][i]
                 html+="<tr id="+team.number+"team-list>";

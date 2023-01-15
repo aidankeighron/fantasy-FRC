@@ -72,10 +72,11 @@
         <script>
         let seconds;
         let timeout;
+        let timerSeconds = 20;
         function startTimer(clicked) {
             if (clicked) {
                 clearTimeout(timeout);
-                seconds = 20;
+                seconds = timerSeconds;
             }
             document.getElementById("time").innerHTML = seconds+"s";
             seconds--;
