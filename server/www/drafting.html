@@ -51,6 +51,7 @@
                         <tr><thead>
                             <th>Name</th>
                             <th>Number</th>
+                            <th>Location</th>
                         </thead></tr>
                     </table>
                 </div>
@@ -60,6 +61,7 @@
                         <tr><thead>
                             <th>Name</th>
                             <th>Number</th>
+                            <th>Location</th>
                         </thead></tr>
                     </table>
                 </div>
@@ -101,8 +103,8 @@
             }
         });
         
-        socket.on('team_added', (number, name) => {
-            addToTable(number, name, "my-team");
+        socket.on('team_added', (number, name, location) => {
+            addToTable(number, name, location, "my-team");
         });
         
         socket.on('team_removed', (number, current, next) => {

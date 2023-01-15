@@ -1,0 +1,20 @@
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
+
+:root {
+    --black-1: #050505;
+    --green-1: #16a085;
+    --green-2: #12876f;
+    --green-3: #80ADA4;
+    --white-1: #FFF;
+    --grey-1: #808080;
+    --grey-2: #B0B0B0;
+    --grey-3: #D0D0D0;
+}
+
+* {
+    font-family: "JetBrains Mono", monospace;
+}
+
+body {
+    background: var(--green-2);
+}

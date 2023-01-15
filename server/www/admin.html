@@ -2,19 +2,20 @@
 <html>
     <head>
         <title>Admin | Fantasy FRC</title>
+        <link rel="stylesheet" href="./css/admin.css">
     </head>
     <body>
         <h1>Admin</h1>
 
         <button onclick="startDraft()">Start Draft</button>
-        <br>
+        <br><br><br><br>
         <p id="result"></p>
         <p>Name</p>
         <input type='text' id='name' placeholder='Name' autocomplete='off'>
         <br>
         <p>Password</p>
         <input type='text' id='passw' placeholder='Password' autocomplete='off'>
-        <br>
+        <br><br>
         <button onclick="addUser()">Add User</button>
         <script src="/socket.io/socket.io.js"></script>
         <script>
@@ -27,9 +28,11 @@
 
         async function addUser() {
             input1 = document.getElementById("name");
-            name = input1.value.toLowerCase();
+            name = input1.value;
+            input1.value = "";
             input2 = document.getElementById("passw");
-            passw = input2.value.toLowerCase();
+            passw = input2.value;
+            input2.value = "";
             await fetch(url+'/allow-cors/add-user?user="'+name+'"&passw="'+passw+'"', {mode:'cors'}).then(resp => {
                 console.log(resp);
                 document.getElementById("result").innerHTML = resp.status;

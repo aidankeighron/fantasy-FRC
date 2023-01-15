@@ -10,7 +10,7 @@ function getPickedTeam(index) {
     }
 }
 
-function addToTable(number, name, tableID) {
+function addToTable(number, name, location, tableID) {
     var table = document.getElementById(tableID);
     if (tableID === "queue" && table.rows.length > 10) { // max teams
         return;
@@ -30,8 +30,9 @@ function addToTable(number, name, tableID) {
     row.id = number+"queue";
     row.insertCell(0).innerHTML = name;
     row.insertCell(1).innerHTML = number;
+    row.insertCell(2).innerHTML = location;
     if (tableID !== "my-team") {
-        row.insertCell(2).innerHTML = '<td><button onclick="removeFromTable('+"'"+number+'queue'+"'"+')">Remove</button></td>';
+        row.insertCell(3).innerHTML = '<td><button onclick="removeFromTable('+"'"+number+'queue'+"'"+')">Remove</button></td>';
     }
     if (tableID === "queue") {
         pickNextTeam();
@@ -145,7 +146,7 @@ async function loadTeams() {
                 html+="<td>"+team.name+"</td>";
                 html+="<td>"+team.opr+"</td>";
                 html+="<td>"+team.location+"</td>"
-                html+='<td><button onclick="addToTable('+team.number+', '+"'"+team.name+"'"+', '+"'queue'"+')">Add</button></td>';
+                html+='<td><button onclick="addToTable('+team.number+', '+"'"+team.name+"'"+', '+"'"+team.location+"'"+", 'queue'"+')">Add</button></td>';
                 html+="</tr>";
             }
         

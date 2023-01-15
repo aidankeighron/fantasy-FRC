@@ -88,6 +88,13 @@ app.get('/', (req, res) => {
   res.sendFile('www/login.html', { root: __dirname });
 });
 
+app.use((req, res, next) => {
+  if (req.protocol == 'https') {
+    return res.redirect(301, `http://${req.headers.host}${req.url}`);
+  }
+  next();
+});
+
 app.post('/', (req, res, next) => {
   passport.authenticate('local', (err, user, info) => {
     if(info) {return res.send(info.message)}
@@ -227,7 +234,7 @@ var pickedTeamsList = new Array();
 var userList = {};
 var draftStarted = false;
 const roundLength = 20; // seconds
-const maxTeams = 8;
+const maxTeams = 2;
 
 io.on('connection', (socket) => {
   if (socket.handshake && socket.handshake.headers && socket.handshake.headers.cookie) {
@@ -238,9 +245,14 @@ io.on('connection', (socket) => {
       socket.sessionId = signature.unsign(raw.slice(2), secret) || undefined;
     }
   }
-
+  let userID = "";
   if (socket.sessionId) {
     store.get(socket.sessionId, function(err, session) {
+      try {
+        userID = session.passport.user;
+      } catch (error) {
+        console.log(error);
+      }
     });
   }
   if (draftStarted) {
@@ -248,46 +260,51 @@ io.on('connection', (socket) => {
   }
 
   socket.on("get_start", () => {
-    socket.emit('set_start', userIDList[0], userIDList[1]);
+    if (draftStarted) {
+      socket.emit('set_start', userList["ID:"+userIDList[0]].name, userList["ID:"+userIDList[1]].name);
+    }
   });
 
   socket.on('start_draft', async () => {
-    if (session.passport.user !== "cf3a7c") { return; }
+    console.log(userID);
+    if (userID !== "cf3a7c") { return; }
     if (draftStarted) { return; }
     console.log("draft started");
     draftStarted = true;
     io.emit('draft_started');
     await initializeDraft();
-    io.emit('set_start', userIDList[0], userIDList[1]);
+    io.emit('set_start', userList["ID:"+userIDList[0]].name, userList["ID:"+userIDList[1]].name);
     startTimer(true);
   });
 
   socket.on('team_picked', (number, name) => {
     if (!draftStarted) { return; }
     console.log("team picked");
-    if (session.passport.user === userIDList[0]) {
-      if (isValidTeam(number, session.passport.user)) {
+    if (userID === userIDList[0]) {
+      let location = isValidTeam(number, userID);
+      if (location != null) {
         userIDList.unshift(userIDList.pop());
-        userList[session.passport.user].current_teams += number+",";
-        if (userList[session.passport.user].current_teams.split(",").length > maxTeams) {
+        userList["ID:"+userID].current_teams += number+",";
+        if (userList["ID:"+userID].current_teams.split(",").length > maxTeams) {
           userIDList.pop();
         }
         if (userIDList.length <= 1) {
           nextUser = "-";
         }
         else {
-          nextUser = userIDList[1];
+          nextUser = userList["ID:"+userIDList[1]].name;
         }
-        socket.emit('team_added', number, name);
-        io.emit('team_removed', number, userIDList[0], nextUser);
+        socket.emit('team_added', number, name, location);
         teamList["team"+number].owner = user;
         pickedTeamsList["team"+number] = teamList["team"+number]
         delete teamList["team"+number];
         if (userIDList.length <= 0) {
+          io.emit('team_removed', number, nextUser, nextUser);
           draftStarted = false;
           saveData();
         }
         else {
+          io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
           startTimer(true);
           io.emit('get_next_team');
         }
@@ -302,8 +319,9 @@ io.on('connection', (socket) => {
   });
 });
 
-function isValidTeam(number) {
-  let userTeams = userList[session.passport.user].current_teams.toString().split(",");
+function isValidTeam(number, id) {
+  console.log(id);
+  let userTeams = userList["ID:"+id].current_teams.toString().split(",");
   let currentTeam;
   for (team in teamList) {
     team = teamList[team];
@@ -318,22 +336,23 @@ function isValidTeam(number) {
       userTeam = userTeams[userTeam];
       if (userTeam == team.number && currentTeam.location == team.location) {
         console.log("invalid team");
-        return false;
+        return null;
       }
     }
   }
-  return true;
+  return currentTeam.location;
 }
 
 async function initializeDraft() {
   var users = await sqlConnection.SQLResponse.getUserIDs(connection);
+  console.log(users);
   for (let i = 0; i < users.length; i++) {
     user = users[i]
-    userList[user.id] = {
+    userList["ID:"+user.id] = {
       "name": user.name,
       "current_teams": "",
     };
-    userIDList.push(user.name);
+    userIDList.push(user.id);
     userIDList = userIDList
     .map(value => ({ value, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
@@ -350,6 +369,8 @@ async function initializeDraft() {
       "owner": ""
     };
   }
+  console.log(userList);
+  console.log(userIDList);
 }
 
 let timeout;
@@ -372,32 +393,34 @@ function startTimer(clicked) {
       do {
         number = Object.values(teamList)[index].number;
         index++;
-      } while (!isValidTeam(number, user));
+      } while (isValidTeam(number, user) == null);
       teamList["team"+number].owner = user;
       pickedTeamsList["team"+number] = teamList["team"+number]
       delete teamList["team"+number];
-      
+
       userIDList.unshift(userIDList.pop());
-      userList[user].current_teams += number+",";
-      if (userList[user].current_teams.split(",").length > maxTeams) {
+      userList["ID:"+user].current_teams += number+",";
+      if (userList["ID:"+user].current_teams.split(",").length > maxTeams) {
         userIDList.pop();
       }
       if (userIDList.length <= 1) {
         nextUser = "-";
       }
       else {
-        nextUser = userIDList[1];
+        nextUser = userList["ID:"+userIDList[1]].name;
       }
-      io.emit('team_removed', number, userIDList[0], nextUser);
       if (userIDList.length <= 0) {
+        io.emit('team_removed', number, nextUser, nextUser);
         draftStarted = false;
         saveData();
       }
       else {
+        io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
         startTimer(true);
         io.emit('get_next_team');
       }
       console.log(userList);
+      console.log(userIDList);
     }
   }
 }
