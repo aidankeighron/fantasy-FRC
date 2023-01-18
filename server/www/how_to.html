@@ -1,28 +1,28 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Rankings | Fantasy FRC</title>
+        <title>Teams | Fantasy FRC</title>
         <link rel="stylesheet" href="./css/topnav.css">
         <link rel="stylesheet" href="./css/table.css">
-        <script type="text/javascript" src="./js/getUsers.js"></script>
+        <script type="text/javascript" src="./js/getTeams.js"></script>
     </head>
     <body>
         <div class="topnav" id="topnav">
             <a href="logout">Logout</a>
             <a href="home">Home</a>
-            <a class="active" href="rankings">Rankings</a>
+            <a href="rankings">Rankings</a>
             <a href="teams">Teams</a>
-            <a href="how_to">How To</a>
+            <a class="active" href="how_to">How To</a>
         </div>
-        <div id="users"></div>
+        <h2>How To</h2>
+        <p></p>
     </body>
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io();
         
         socket.on("draft_started", () => {
-            document.getElementById("topnav").innerHTML += '<a href="drafting">Drafting</a>';
+                document.getElementById("topnav").innerHTML += '<a href="drafting">Drafting</a>';
         });
-        getUsers()
     </script>
 </html>

@@ -3,41 +3,97 @@
     <head>
         <title>Admin | Fantasy FRC</title>
         <link rel="stylesheet" href="./css/admin.css">
+        <link rel="stylesheet" href="./css/table.css">
     </head>
     <body>
         <h1>Admin</h1>
 
-        <button onclick="startDraft()">Start Draft</button>
-        <br><br><br><br>
-        <p id="result"></p>
-        <p>Name</p>
-        <input type='text' id='name' placeholder='Name' autocomplete='off'>
-        <br>
-        <p>Password</p>
-        <input type='text' id='passw' placeholder='Password' autocomplete='off'>
-        <br><br>
-        <button onclick="addUser()">Add User</button>
+        <div style="display:flex;margin: 10x;">
+            <div>
+                <button onclick="startDraft()">Start Draft</button>
+                <br><br>
+                <p id="result"></p>
+                <h3>Name</p>
+                <input type='text' id='name' placeholder='Name' autocomplete='off'>
+                <br>
+                <h3>Password</p>
+                <input type='text' id='passw' placeholder='Password' autocomplete='off'>
+                <br><br>
+                <button onclick="addUser()">Add User</button>
+            </div>
+            <div style="margin: 50px;">
+                <h3>Users</h3>
+                <table id="users-table" class="table"></table>
+            </div>
+
+        </div>
+
         <script src="/socket.io/socket.io.js"></script>
         <script>
-        var socket = io();
-        const url = window.location.origin;
+            var socket = io();
+            const url = window.location.origin;
 
-        function startDraft() {
-            socket.emit("start_draft");
-        }
+            function startDraft() {
+                socket.emit("start_draft");
+            }
 
-        async function addUser() {
-            input1 = document.getElementById("name");
-            name = input1.value;
-            input1.value = "";
-            input2 = document.getElementById("passw");
-            passw = input2.value;
-            input2.value = "";
-            await fetch(url+'/allow-cors/add-user?user="'+name+'"&passw="'+passw+'"', {mode:'cors'}).then(resp => {
-                console.log(resp);
-                document.getElementById("result").innerHTML = resp.status;
-            });
-        }
+            const SQLRegex = new RegExp("[\\\\;/\"\'\,\.]", 'g');
+
+            async function addUser() {
+                input1 = document.getElementById("name");
+                name = input1.value;
+                input1.value = "";
+                input2 = document.getElementById("passw");
+                passw = input2.value;
+                input2.value = "";
+                if (name == null || name == "" || passw == null || passw == "") {
+                    document.getElementById("result").innerHTML = "Must provide name and password";
+                    return;
+                }
+                if (SQLRegex.test(name) || SQLRegex.test(passw)) {
+                    document.getElementById("result").innerHTML = "Password or username can not contain any of the following \\ ; / \" \' , .";
+                    return;
+                }
+                else {
+                    await fetch(url+'/allow-cors/add-user?user='+name+'&passw='+passw, {mode:'cors'}).then(resp => {
+                        resp.text().then(message => {
+                        document.getElementById("result").innerHTML = message;
+                    });
+                    loadUsers();
+                    });
+                }
+            }
+
+            async function removeUser(user) {
+                await fetch(url+'/allow-cors/remove-user?user='+user, {mode:'cors'}).then(resp => {
+                    resp.text().then(message => {
+                        document.getElementById("result").innerHTML = message;
+                    });
+                    loadUsers();
+                });
+            }
+
+            async function loadUsers() {
+                await fetch(url+'/allow-cors/users', {mode:'cors'}).then(resp => {
+                    resp.json().then(data => {
+                    
+                    var html = "<table id='users-table' class='table'>";
+                    html+= "<tr><thead>";
+                    html+= '<th>Name</th>';
+                    html+= "</thead></tr>";
+    
+                    data.forEach(element => {
+                        html+="<tr>";
+                        html+="<td>"+element.name+"</td>";
+                        html+='<td><button onclick="removeUser('+"'"+element.name+"'"+')">Remove</button></td>';
+                        html+="</tr>";
+                    });
+                    html+="</table>";
+                    document.getElementById("users-table").innerHTML = html;
+                    });
+                });
+            }
+            loadUsers();
         </script>
     </body>
 </html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Teams | Fantasy FRC</title>
+        <link rel="stylesheet" href="./css/topnav.css">
+        <link rel="stylesheet" href="./css/table.css">
+        <script type="text/javascript" src="./js/getTeams.js"></script>
+    </head>
+    <body>
+        <div class="topnav" id="topnav">
+            <a href="logout">Logout</a>
+            <a href="home">Home</a>
+            <a href="rankings">Rankings</a>
+            <a href="teams">Teams</a>
+            <a href="how_to">How To</a>
+            <a class="active" href="draft_teams">Draft Teams</a>
+            <a href="drafting">Drafting</a>
+        </div>
+        <div id="user-tables" style="display: flex;"></div>
+    </body>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+        
+        socket.on("team_removed", (number, current, nextUser) => {
+            getTeams();
+        });
+
+        async function getTeams() {
+            try {
+                await fetch(url+'/allow-cors/all-users', {mode:'cors'}).then(resp => {
+                resp.json().then(data => {
+
+                    Object.entries(data).forEach(user => {
+                        let table = document.createElement('table');
+                        let thead = document.createElement('thead');
+                        let tbody = document.createElement('tbody');
+                        table.appendChild(thead);
+                        table.appendChild(tbody);
+
+                        document.getElementById('user-tables').appendChild(table);
+
+                        let row_1 = document.createElement('tr');
+                        let heading_1 = document.createElement('th');
+                        heading_1.innerHTML = user[1].name;
+                        row_1.appendChild(heading_1);
+                        thead.appendChild(row_1);
+
+                        let userTeams = user[1].current_teams.toString().split(",");
+                        for (userTeam in userTeams) {
+                            userTeam = userTeams[userTeam];
+
+                            let row_2 = document.createElement('tr');
+                            let row_2_data_1 = document.createElement('td');
+                            row_2_data_1.innerHTML = userTeam;
+
+                            row_2.appendChild(row_2_data_1);
+                            tbody.appendChild(row_2);
+                        }
+                        table.setAttribute('class', 'table');
+                    });
+
+                
+                    });
+                });
+            }
+            catch (error) {
+                alert("ERROR");
+                console.log(error);
+            }
+        }
+
+        getTeams();
+    </script>
+</html>

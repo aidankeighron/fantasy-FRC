@@ -1,29 +1,28 @@
 const url = window.location.origin;
 async function getUsers() {
-  
   await fetch(url+'/allow-cors/users', {mode:'cors'}).then(resp => {
-  resp.json().then(data => {
-    
-    var html = "<table border='1|1' id='users-table' class='table'>";
-    html+= "<tr><thead>";
-    html+= '<th>Name  <button onclick="sortTable(0, 0, '+"'"+'users-table'+"'"+', true)">Sort</button></th>';
-    html+= '<th>Teams  </th>';
-    html+= '<th>Score  <button onclick="sortTable(2, 1, '+"'"+'users-table'+"'"+', false)">Sort</button></th>';
-    html+= '<th>Position  <button onclick="sortTable(3, 1, '+"'"+'users-table'+"'"+', true)">Sort</button></th>';
-    html+= "</thead></tr>";
+    resp.json().then(data => {
+      
+      var html = "<table border='1|1' id='users-table' class='table'>";
+      html+= "<tr><thead>";
+      html+= '<th>Name  <button onclick="sortTable(0, 0, '+"'"+'users-table'+"'"+', true)">Sort</button></th>';
+      html+= '<th>Teams  </th>';
+      html+= '<th>Score  <button onclick="sortTable(2, 1, '+"'"+'users-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Position  <button onclick="sortTable(3, 1, '+"'"+'users-table'+"'"+', true)">Sort</button></th>';
+      html+= "</thead></tr>";
 
-    data.forEach(element => {
-      html+="<tr>";
-      html+="<td>"+element.name+"</td>";
-      html+="<td>"+element.teams+"</td>";
-      html+="<td>"+element.score+"</td>";
-      html+="<td>"+element.position+"</td>";
-      html+="</tr>";
+      data.forEach(element => {
+        html+="<tr>";
+        html+="<td>"+element.name+"</td>";
+        html+="<td>"+element.teams+"</td>";
+        html+="<td>"+element.score+"</td>";
+        html+="<td>"+element.position+"</td>";
+        html+="</tr>";
+      });
+      html+="</table>";
+      document.getElementById("users").innerHTML = html;
     });
-    html+="</table>";
-    document.getElementById("users").innerHTML = html;
   });
-});
 };
 
 async function getUser() {

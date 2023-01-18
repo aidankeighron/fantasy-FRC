@@ -1,6 +1,5 @@
-// HTTPS
-var fs = require('fs');
 
+const fs = require('fs');
 const sqlConnection = require('./sqlConnection.js');
 const express = require('express');
 const uuid = require('uuid').v4;
@@ -14,7 +13,6 @@ const http = require('http');
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
-const { json } = require('body-parser');
 const io = new Server(server);
 const cookie = require('cookie');
 const signature = require('cookie-signature');
@@ -22,9 +20,7 @@ const signature = require('cookie-signature');
 const config = ini.parse(fs.readFileSync('server_info.ini', 'utf-8'))
 const connection = sqlConnection.setupSQLConnection();
 const httpPort = 80;
-const httpsPort = 443;
-const SQLRegex = new RegExp("[\\;\\/\"\']", 'g');
-
+const SQLRegex = new RegExp("[\\;\\/\"\'\,\.]", 'g');
 
 let teamsJson;
 fs.readFile('team_info.json', 'utf8', (err, jsonString) => {
@@ -40,20 +36,27 @@ app.use( express.static( __dirname + '/www' ));
 passport.use(new LocalStrategy(
   { usernameField: 'username' },
   async (username, password, done) => {
-    if (SQLRegex.test(username) || SQLRegex.test(password)) {
+    try {
+      if (SQLRegex.test(username) || SQLRegex.test(password)) {
+        return done(null, false, { message: 'Invalid credentials'});
+      }
+      const validUser = await sqlConnection.SQLResponse.verifyUser(connection, username, password);
+      if (validUser == null || validUser == "") {
+        return done(null, false, { message: 'Invalid credentials'});
+      }
+      let user = Object.values(JSON.parse(JSON.stringify(validUser[0])));
+      user = {
+        'username': user[1],
+        'password': user[2],
+        'id': user[0]
+      }
+      return done(null, user);
+    }
+    catch (error) {
+      console.log("ERROR:");
+      console.log(error);
       return done(null, false, { message: 'Invalid credentials'});
     }
-    const validUser = await sqlConnection.SQLResponse.verifyUser(connection, username, password);
-    if (validUser == null || validUser == "") {
-      return done(null, false, { message: 'Invalid credentials'});
-    }
-    let user = Object.values(JSON.parse(JSON.stringify(validUser[0])));
-    user = {
-      'username': user[1],
-      'password': user[2],
-      'id': user[0]
-    }
-    return done(null, user);
   }
 ));
 
@@ -124,108 +127,240 @@ app.get('/home', (req, res) => {
 });
 
 app.get('/admin', (req, res) => {
-  if (req.isAuthenticated()) {
+  try {
+    if (req.isAuthenticated()) {
+      user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+      if (user === "Aidan") {
+        res.sendFile('www/admin.html', { root: __dirname });
+      }
+      else {
+        res.sendStatus(403);
+      }
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/rankings', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/rankings.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/teams', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/teams.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/drafting', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/drafting.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/draft_teams', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/draft_teams.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/how_to', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/how_to.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/teams', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.isAuthenticated()) {
+      if (req.query.user == "" || req.query.user == null) {
+        message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
+      }
+      else {
+        user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+        message = await sqlConnection.SQLResponse.getTeams(connection, user);
+      }
+      res.send(message);
+    }
+    else {
+      res.sendStatus(401);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/users', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.isAuthenticated()) {
+      if (req.query.user == "" || req.query.user == null) {
+        message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
+      }
+      else {
+        user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+        message = await sqlConnection.SQLResponse.getUsers(connection, user);
+      }
+      res.send(message);
+    }
+    else {
+      res.sendStatus(401);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/all-teams', (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    
+    if (req.isAuthenticated()) {
+      if (Object.keys(teamList).length != 0) {
+        res.json(JSON.parse(JSON.stringify({"teams": teamList})));
+      }
+      else {
+        res.send(teamsJson);
+      }
+    }
+    else {
+      res.sendStatus(401);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/all-users', (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    
+    if (req.isAuthenticated()) {
+      if (draftStarted) {
+        res.json(JSON.parse(JSON.stringify({userList})));
+      }
+      else {
+        res.send("");
+      }
+    }
+    else {
+      res.sendStatus(401);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/add-user', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
     user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-    if (user === "Aidan") {
-      res.sendFile('www/admin.html', { root: __dirname });
+    if (req.isAuthenticated() && user === "Aidan") {
+      message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
+      res.send(message);
     }
     else {
       res.sendStatus(403);
     }
   }
-  else {
-    res.redirect('/');
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
   }
 });
 
-app.get('/rankings', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.sendFile('www/rankings.html', { root: __dirname });
-  }
-  else {
-    res.redirect('/');
-  }
-});
-
-app.get('/teams', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.sendFile('www/teams.html', { root: __dirname });
-  }
-  else {
-    res.redirect('/');
-  }
-});
-
-app.get('/drafting', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.sendFile('www/drafting.html', { root: __dirname });
-  }
-  else {
-    res.redirect('/');
-  }
-});
-
-app.get('/allow-cors/teams', async (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  if (req.isAuthenticated()) {
-    if (req.query.user == "" || req.query.user == null) {
-      message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
+app.get('/allow-cors/remove-user', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+    if (req.isAuthenticated() && user === "Aidan") {
+      message = await sqlConnection.SQLResponse.removeUser(connection, req.query.user);
+      res.send(message);
     }
     else {
-      user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-      message = await sqlConnection.SQLResponse.getTeams(connection, user);
+      res.sendStatus(403);
     }
-    res.send(message);
   }
-  else {
-    res.sendStatus(401);
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
   }
 });
 
-app.get('/allow-cors/users', async (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  if (req.isAuthenticated()) {
-    if (req.query.user == "" || req.query.user == null) {
-      message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
-    }
-    else {
-      user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-      message = await sqlConnection.SQLResponse.getUsers(connection, user);
-    }
-    res.send(message);
-  }
-  else {
-    res.sendStatus(401);
-  }
-});
 
-app.get('/allow-cors/all-teams', (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  
-  if (req.isAuthenticated()) {
-    // if (Object.keys(teamList).length != 0) {
-    //   res.send(JSON.stringify({"teams":teamList}));
-    // }
-    // else {
-      res.send(teamsJson);
-    // }
-  }
-  else {
-    res.sendStatus(401);
-  }
-});
-
-app.get('/allow-cors/add-user', async (req, res) => {
-  res.set('Access-Control-Allow-Origin', '*');
-  user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-  if (req.isAuthenticated() && user === "Aidan") {
-    message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
-    res.send(message);
-  }
-  else {
-    res.sendStatus(403);
-  }
-})
 
 server.listen(httpPort, () =>
   console.log(`Server listening on port ${httpPort}`),
@@ -234,12 +369,14 @@ server.listen(httpPort, () =>
 // DRAFTING //
 
 var userIDList = new Array();
-var teamList = new Array();
-var pickedTeamsList = new Array();
+var teamList = {};
+var pickedTeamsList = {};
 var userList = {};
 var draftStarted = false;
-const roundLength = 20; // seconds
+const roundLength = 5; // seconds
+const startLength = 2; // seconds
 const maxTeams = 8;
+var startUpEnded = false;
 
 io.on('connection', (socket) => {
   if (socket.handshake && socket.handshake.headers && socket.handshake.headers.cookie) {
@@ -264,21 +401,46 @@ io.on('connection', (socket) => {
     socket.emit('draft_started');
   }
 
+  socket.on("get_my_teams", () => {
+    if (!draftStarted) return;
+    try {
+      var userTeams = userList["ID:"+userID].current_teams.toString().split(",");
+      var teams = {};
+      for (userTeam in userTeams) {
+        userTeam = userTeams[userTeam];
+        teams["team"+userTeam] = pickedTeamsList["team"+userTeam];
+      }
+      socket.emit("sending_my_teams", teams);
+    }
+    catch (error) {
+      console.log("ERROR:");
+      console.log(error);
+    }
+  });
+
   socket.on("get_start", () => {
     if (draftStarted) {
       socket.emit('set_start', userList["ID:"+userIDList[0]].name, userList["ID:"+userIDList[1]].name);
+      if (startUpEnded) {
+        socket.emit("restart_timer", seconds);
+      }
+      else {
+        socket.emit("restart_timer", startLength);
+      }
     }
   });
 
   socket.on('start_draft', async () => {
     if (userID !== "cf3a7c") { return; }
     if (draftStarted) { return; }
+    startUpEnded = false;
     console.log("draft started");
     draftStarted = true;
     io.emit('draft_started');
     await initializeDraft();
     io.emit('set_start', userList["ID:"+userIDList[0]].name, userList["ID:"+userIDList[1]].name);
-    setTimeout(startTimer, 300000, true);
+    io.emit("restart_timer", startLength);
+    setTimeout(startTimer, startLength*1000, true);
   });
 
   socket.on('team_picked', (number, name) => {
@@ -311,13 +473,19 @@ io.on('connection', (socket) => {
           io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
           startTimer(true);
           io.emit('get_next_team');
+          io.emit("restart_timer", roundLength);
         }
       }
       else {
         startTimer(true);
         socket.emit('wrong_next_team');
+        io.emit("restart_timer", roundLength);
       }
-    } 
+      console.log(userList);
+      console.log(userIDList.forEach((id, index) => {
+        process.stdout.write(userList["ID:"+id].name + ", ");
+      })); 
+    }
   });
 });
 
@@ -344,6 +512,7 @@ function isValidTeam(number, id) {
     }
     return currentTeam.location;
   } catch (error) {
+    console.log(error);
     return null;
   }
 }
@@ -357,11 +526,11 @@ async function initializeDraft() {
       "current_teams": "",
     };
     userIDList.push(user.id);
-    userIDList = userIDList
-    .map(value => ({ value, sort: Math.random() }))
-    .sort((a, b) => a.sort - b.sort)
-    .map(({ value }) => value);
   }
+  userIDList = userIDList
+  .map(value => ({ value, sort: Math.random() }))
+  .sort((a, b) => a.sort - b.sort)
+  .map(({ value }) => value);
   let teams = JSON.parse(teamsJson)["teams"];
   for (let i = 0; i < teams.length; i++) {
     team = teams[i];
@@ -378,6 +547,10 @@ async function initializeDraft() {
 let timeout;
 let seconds;
 function startTimer(clicked) {
+  if (!startUpEnded) {
+    io.emit("restart_timer", roundLength);
+  }
+  startUpEnded = true;
   if (clicked) {
       clearTimeout(timeout);
       seconds = roundLength;
@@ -419,7 +592,12 @@ function startTimer(clicked) {
       else {
         io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
         startTimer(true);
+        io.emit("restart_timer", roundLength);
         io.emit('get_next_team');
+        console.log(userList);
+        console.log(userIDList.forEach((id, index) => {
+          process.stdout.write(userList["ID:"+id].name + ", ");
+        }));
       }
     }
   }
@@ -427,6 +605,6 @@ function startTimer(clicked) {
 
 async function saveData() {
   console.log("Draft ended");
-  await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
-  io.emit("draft_ended")
+  // await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
+  io.emit("draft_ended");
 }
