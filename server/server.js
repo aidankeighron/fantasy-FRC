@@ -199,7 +199,12 @@ app.get('/drafting', (req, res) => {
 app.get('/draft_teams', (req, res) => {
   try {
     if (req.isAuthenticated()) {
-      res.sendFile('www/draft_teams.html', { root: __dirname });
+      if (draftStarted) {
+        res.sendFile('www/draft_teams.html', { root: __dirname });
+      }
+      else {
+        res.redirect('/home');
+      }
     }
     else {
       res.redirect('/');

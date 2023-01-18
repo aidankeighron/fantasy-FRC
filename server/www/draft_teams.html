@@ -5,6 +5,39 @@
         <link rel="stylesheet" href="./css/topnav.css">
         <link rel="stylesheet" href="./css/table.css">
         <script type="text/javascript" src="./js/getTeams.js"></script>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            .users {
+                display: grid;
+                grid-template: repeat(10, 1fr) / repeat(10, 1fr);
+                grid-gap: 2px;
+                min-height: 0;
+                min-width: 0; /* needed for Firefox */
+            }
+
+            @media screen and (max-width: 1200px) {
+                .users {
+                    grid-template: repeat(10, 1fr) / repeat(7, 1fr);
+                }
+            }
+
+            @media screen and (max-width: 750px) {
+                .users {
+                    grid-template: repeat(10, 1fr) / repeat(5, 1fr);
+                }
+            }
+
+            @media screen and (max-width: 400px) {
+                .users {
+                    grid-template: repeat(10, 1fr) / repeat(2, 1fr);
+                }
+            }
+            
+            .tablediv {
+                max-width: 100%;
+                overflow: hidden;
+            }
+        </style>
     </head>
     <body>
         <div class="topnav" id="topnav">
@@ -16,7 +49,7 @@
             <a class="active" href="draft_teams">Draft Teams</a>
             <a href="drafting">Drafting</a>
         </div>
-        <div id="user-tables" style="display: flex;"></div>
+        <div id="user-tables" class="users"></div>
     </body>
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -26,38 +59,49 @@
             getTeams();
         });
 
+        function removeAllChildNodes(parent) {
+            while (parent.firstChild) {
+                parent.removeChild(parent.firstChild);
+            }
+        }
+
         async function getTeams() {
             try {
                 await fetch(url+'/allow-cors/all-users', {mode:'cors'}).then(resp => {
                 resp.json().then(data => {
-
-                    Object.entries(data).forEach(user => {
+                    removeAllChildNodes(document.getElementById('user-tables'));
+                    Object.entries(data["userList"]).forEach(user => {
                         let table = document.createElement('table');
                         let thead = document.createElement('thead');
                         let tbody = document.createElement('tbody');
                         table.appendChild(thead);
                         table.appendChild(tbody);
 
-                        document.getElementById('user-tables').appendChild(table);
-
+                        
                         let row_1 = document.createElement('tr');
                         let heading_1 = document.createElement('th');
                         heading_1.innerHTML = user[1].name;
                         row_1.appendChild(heading_1);
                         thead.appendChild(row_1);
-
+                        
                         let userTeams = user[1].current_teams.toString().split(",");
                         for (userTeam in userTeams) {
                             userTeam = userTeams[userTeam];
-
+                            if (userTeam == "" || userTeam == null) continue;
                             let row_2 = document.createElement('tr');
                             let row_2_data_1 = document.createElement('td');
                             row_2_data_1.innerHTML = userTeam;
-
+                            
                             row_2.appendChild(row_2_data_1);
                             tbody.appendChild(row_2);
                         }
                         table.setAttribute('class', 'table');
+                        
+                        let divTable = document.createElement("div");
+                        divTable.setAttribute('class', 'tablediv');
+                        
+                        divTable.append(table);
+                        document.getElementById('user-tables').appendChild(divTable);
                     });
 
                 
