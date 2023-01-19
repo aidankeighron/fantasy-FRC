@@ -49,9 +49,6 @@ function addToTable(number, name, location, tableID) {
 function removeFromTable(id) {
     try {
         document.getElementById(id).remove();
-        if (id === "queue") {
-            pickNextTeam();
-        }
     } catch (error) { }
 }
 
