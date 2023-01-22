@@ -1,4 +1,3 @@
-
 const fs = require('fs');
 const sqlConnection = require('./sqlConnection.js');
 const express = require('express');
@@ -199,12 +198,7 @@ app.get('/drafting', (req, res) => {
 app.get('/draft_teams', (req, res) => {
   try {
     if (req.isAuthenticated()) {
-      if (draftStarted) {
-        res.sendFile('www/draft_teams.html', { root: __dirname });
-      }
-      else {
-        res.redirect('/home');
-      }
+      res.sendFile('www/draft_teams.html', { root: __dirname });
     }
     else {
       res.redirect('/');
@@ -378,8 +372,8 @@ var teamList = {};
 var pickedTeamsList = {};
 var userList = {};
 var draftStarted = false;
-const roundLength = 5; // seconds
-const startLength = 2; // seconds
+const roundLength = 20; // seconds
+const startLength = 300; // seconds
 const maxTeams = 8;
 var startUpEnded = false;
 
@@ -483,7 +477,7 @@ io.on('connection', (socket) => {
       }
       else {
         startTimer(true);
-        socket.emit('wrong_next_team');
+        socket.emit('wrong_next_team', number);
         io.emit("restart_timer", roundLength);
       }
       console.log(userList);
@@ -610,6 +604,6 @@ function startTimer(clicked) {
 
 async function saveData() {
   console.log("Draft ended");
-  // await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
+  await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
   io.emit("draft_ended");
 }

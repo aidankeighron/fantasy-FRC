@@ -13,7 +13,7 @@ async function getTeams() {
       html+= '<th>OPR  <button onclick="sortTable(2, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
       html+= '<th>Average  <button onclick="sortTable(3, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
       html+= '<th>Score  <button onclick="sortTable(4, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
-      html+= '<th>Owner  <button onclick="sortTable(5, 0, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Owner  <button onclick="sortTable(5, 0, '+"'"+'team-table'+"'"+', true)">Sort</button></th>';
       html+= "</thead></tr>";
 
       data.forEach(element => {

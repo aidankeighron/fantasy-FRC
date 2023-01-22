@@ -1,32 +1,32 @@
 const url =  window.location.origin;
 
 function getPickedTeam(index) {
-    try {
-        table = document.getElementById("queue");
-        number = table.rows[2].cells[index];
-        return number.textContent || number.innerText;
-    } 
-    catch (error) {
-      return -1;
-    }
+  try {
+    table = document.getElementById("queue");
+    number = table.rows[2].cells[index];
+    return number.textContent || number.innerText;
+  } 
+  catch (error) {
+    return -1;
+  }
 }
 
 function addToTable(number, name, location, tableID) {
   try {
     var table = document.getElementById(tableID);
     if (tableID === "queue" && table.rows.length > 10) { // max teams
-        return;
+      return;
     }
     for (let i in table.rows) {
-        let row = table.rows[i]
-        for (let j in row.cells) {
-            let col = row.cells[j]
-            try {
-                if (col.innerHTML.includes(name)) {
-                    return;
-                }
-            } catch (error) { }
-        }  
+      let row = table.rows[i]
+      for (let j in row.cells) {
+        let col = row.cells[j]
+        try {
+          if (col.innerHTML.includes(name)) {
+            return;
+          }
+        } catch (error) { }
+      }  
     }
     var row = table.insertRow(-1);
     row.id = number+"queue";
@@ -34,10 +34,10 @@ function addToTable(number, name, location, tableID) {
     row.insertCell(1).innerHTML = number;
     row.insertCell(2).innerHTML = location;
     if (tableID !== "my-team") {
-        row.insertCell(3).innerHTML = '<td><button onclick="removeFromTable('+"'"+number+'queue'+"'"+')">Remove</button></td>';
+      row.insertCell(3).innerHTML = '<td><button onclick="removeFromTable('+"'"+number+'queue'+"'"+')">Remove</button></td>';
     }
     if (tableID === "queue") {
-        pickNextTeam();
+      pickNextTeam();
     }
   }
   catch (error) {
@@ -47,9 +47,9 @@ function addToTable(number, name, location, tableID) {
 }
 
 function removeFromTable(id) {
-    try {
-        document.getElementById(id).remove();
-    } catch (error) { }
+  try {
+    document.getElementById(id).remove();
+  } catch (error) { }
 }
 
 // type: 0 = string, 1 = double
@@ -66,30 +66,30 @@ function sortTable(row, type, table, forward) {
         x = rows[i].getElementsByTagName("td")[row];
         y = rows[i + 1].getElementsByTagName("td")[row];
         if (type == 0) {
-            if (forward) {
-              if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                shouldSwitch = true;
-                break;
-              }            
+          if (forward) {
+            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+              shouldSwitch = true;
+              break;
+            }            
+          }
+          else {
+            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+              shouldSwitch = true;
+              break;
             }
-            else {
-              if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                shouldSwitch = true;
-                break;
-              }
-            }
+          }
         }
         else {
           if (forward) {
             if (parseFloat(x.innerHTML) > parseFloat(y.innerHTML)) {
-                shouldSwitch = true;
-                break;
+              shouldSwitch = true;
+              break;
             }
           }
           else {
             if (parseFloat(x.innerHTML) < parseFloat(y.innerHTML)) {
-                shouldSwitch = true;
-                break;
+              shouldSwitch = true;
+              break;
             }
           }
         }
@@ -118,21 +118,21 @@ function search(tableID, nameCol, numCol) {
       if (td) {
         txtValue = td.textContent || td.innerText;
         if (!isNaN(parseInt(filter))) {
-            if (txtValue.toLowerCase().indexOf(filter) > -1) {
-                tr[i].style.display = "";
-            } else {
-                tr[i].style.display = "none";
-            }
-            continue;
+          if (txtValue.toLowerCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+          } else {
+            tr[i].style.display = "none";
+          }
+          continue;
         }
         td = tr[i].getElementsByTagName("td")[nameCol];
         if (td) {
           txtValue = td.textContent || td.innerText;
-            if (txtValue.toLowerCase().indexOf(filter) > -1) {
+          if (txtValue.toLowerCase().indexOf(filter) > -1) {
             tr[i].style.display = "";
-            } else {
+          } else {
             tr[i].style.display = "none";
-            }
+          }
         }
       }       
     }
@@ -146,7 +146,7 @@ function search(tableID, nameCol, numCol) {
 async function loadTeams() {
   try {
     await fetch(url+'/allow-cors/all-teams', {mode:'cors'}).then(resp => {
-    resp.json().then(data => {
+      resp.json().then(data => {
         var html = "<input class='search' type='text' id='search' onkeyup='search("+'"team-list-table"'+", 1, 0)' placeholder='Search in table...' autocomplete='off'>";
         html+="<table border='1|1' id='team-list-table' class='table'>";
         html+= "<tr><thead>";
@@ -155,21 +155,21 @@ async function loadTeams() {
         html+= '<th>OPR</th>';
         html+= '<th>Location</th>'
         html+= "</thead></tr>";
-
+        
         if (data["teams"][0] != null) {
           for (let i = 0; i < data["teams"].length; i++) {
-                  team = data["teams"][i]
-                  html+="<tr id="+team.number+"team-list>";
-                  html+="<td>"+team.number+"</td>";
-                  html+="<td>"+team.name+"</td>";
-                  html+="<td>"+team.opr+"</td>";
-                  html+="<td>"+team.location+"</td>"
-                  html+='<td><button onclick="addToTable('+team.number+', '+"'"+team.name+"'"+', '+"'"+team.location+"'"+", 'queue'"+')">Add</button></td>';
-                  html+="</tr>";
-              }
+            team = data["teams"][i]
+            html+="<tr id="+team.number+"team-list>";
+            html+="<td>"+team.number+"</td>";
+            html+="<td>"+team.name+"</td>";
+            html+="<td>"+team.opr+"</td>";
+            html+="<td>"+team.location+"</td>"
+            html+='<td><button onclick="addToTable('+team.number+', '+"'"+team.name+"'"+', '+"'"+team.location+"'"+", 'queue'"+')">Add</button></td>';
+            html+="</tr>";
+          }
           
-              html+="</table>";
-              document.getElementById("team-list").innerHTML = html;
+          html+="</table>";
+          document.getElementById("team-list").innerHTML = html;
         } 
         else {
           Object.entries(data["teams"]).forEach(team => {
@@ -181,11 +181,11 @@ async function loadTeams() {
             html+='<td><button onclick="addToTable('+team[1].number+', '+"'"+team[1].name+"'"+', '+"'"+team[1].location+"'"+", 'queue'"+')">Add</button></td>';
             html+="</tr>";
           });
-
+          
           html+="</table>";
           document.getElementById("team-list").innerHTML = html;
         }
-        });
+      });
     });
   }
   catch (error) {
@@ -202,7 +202,7 @@ function loadMyTeams(teams) {
     html+= '<th>Name</th>';
     html+= '<th>Location</th>'
     html+= "</thead></tr>";
-
+    
     Object.entries(teams).forEach(team => {
       html+="<tr>";
       html+="<td>"+team[1].number+"</td>";
