@@ -227,6 +227,22 @@ app.get('/how_to', (req, res) => {
   }
 });
 
+app.get('/settings', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/settings.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
 app.get('/allow-cors/teams', async (req, res) => {
   try {
     res.set('Access-Control-Allow-Origin', '*');
@@ -327,6 +343,25 @@ app.get('/allow-cors/add-user', async (req, res) => {
     user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
     if (req.isAuthenticated() && user === "Aidan") {
       message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
+      res.send(message);
+    }
+    else {
+      res.sendStatus(403);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/update-passw', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+    if (req.isAuthenticated()) {
+      message = await sqlConnection.SQLResponse.updatePassword(connection, req.query.newpassw, req.query.retypepassw, user);
       res.send(message);
     }
     else {
@@ -604,6 +639,6 @@ function startTimer(clicked) {
 
 async function saveData() {
   console.log("Draft ended");
-  await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
+  // await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
   io.emit("draft_ended");
 }

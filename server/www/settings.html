@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Settings | Fantasy FRC</title>
+        <link rel="stylesheet" href="./css/topnav.css">
+        <link rel="stylesheet" href="./css/home.css">
+        <link rel="stylesheet" href="./css/footer.css">
+    </head>
+    <body>
+        <div class="topnav" id="topnav">
+            <a href="logout">Logout</a>
+            <a href="home">Home</a>
+            <a href="rankings">Rankings</a>
+            <a href="teams">Teams</a>
+            <a href="how_to">How To</a>
+            <a class="active" href="settings">Settings</a>
+        </div>
+
+        <div>
+            <p id="result"></p>
+            <h3>New Password</p>
+            <input type='text' id='new_passw' placeholder='New Password' autocomplete='off'>
+            <br>
+            <h3>Retype Password</p>
+            <input type='text' id='retype_passw' placeholder='Retype Password' autocomplete='off'>
+            <br><br>
+            <button onclick="changePassword()">Update Password</button>
+        </div>
+
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io();
+        
+            socket.on("draft_started", () => {
+                document.getElementById("topnav").innerHTML += '<a href="drafting">Drafting</a>';
+            });
+
+            const url = window.location.origin;
+            const SQLRegex = new RegExp("[\\\\;/\"\'\,\.]", 'g');
+
+            function changePassword() {
+                input1 = document.getElementById("new_passw");
+                new_passw = input1.value;
+                input1.value = "";
+                input2 = document.getElementById("retype_passw");
+                retype_passw = input2.value;
+                input2.value = "";
+                if (new_passw == null || new_passw == "" || retype_passw == null || retype_passw == "") {
+                    document.getElementById("result").innerHTML = "Must fill out both fields";
+                    return;
+                }
+                if (new_passw != retype_passw) {
+                    document.getElementById("result").innerHTML = "Passwords must match";
+                    return;
+                }
+                if (SQLRegex.test(new_passw) || SQLRegex.test(retype_passw)) {
+                    document.getElementById("result").innerHTML = "Password or username can not contain any of the following \\ ; / \" \' , .";
+                    return;
+                }
+                else {
+                    fetch(url+'/allow-cors/update-passw?newpassw='+new_passw+'&retypepassw='+retype_passw, {mode:'cors'}).then(resp => {
+                        resp.text().then(message => {
+                        document.getElementById("result").innerHTML = message;
+                        });
+                    });
+                }
+            }
+
+        </script>
+    </body>
+    <footer>
+        <p>© 2023 | Aidan Keighron | <a href="https://swervyk.github.io/" target="_blank">About Me</a></p>
+    </footer>
+</html>

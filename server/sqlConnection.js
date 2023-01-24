@@ -108,6 +108,30 @@ class SQLResponse {
         }
     }
 
+    static async updatePassword(conn, newPassw, repeatPassw, user) {
+        try {
+            return new Promise((resolve, reject)=>{
+                if (newPassw != null && newPassw != "" && repeatPassw != null && repeatPassw != "" && newPassw == repeatPassw) {
+                    let hashedPassw = bcrypt.hashSync(String(newPassw).replace(/^"(.*)"$/, '$1'), saltRounds);
+                    conn.query('UPDATE users SET passw = "'+String(hashedPassw)+'" WHERE name = "'+user+'"',  (queryError, res)=>{
+                        if(queryError){
+                            console.log(queryError);
+                        }
+                    });
+                }
+                else {
+                    return resolve("Error while changing password");
+                }
+                return resolve("Completed");
+            });
+        }
+        catch (error) {
+            console.log("ERROR:");
+            console.log(error);
+            return "Error while adding user";
+        }
+    }
+
     static async removeUser(conn, user) {
         try {
             return new Promise((resolve, reject)=>{
