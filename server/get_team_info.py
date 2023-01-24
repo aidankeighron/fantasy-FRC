@@ -1,4 +1,4 @@
-# name, number, opr, average, score, location
+# name, number, epa, average, score, location
 
 import statbotics
 from configparser import ConfigParser
@@ -23,16 +23,16 @@ last_team_number = 0
 page = 0
 while True:
     teams = get_teams(YEAR-1, page)
-    print(teams)
     if not teams:
         break
+    print(page)
     page += 1
     for team in teams:
         try:
             team_info = sb.get_team_year(team["team_number"], YEAR-1)
         except:
-            team_info = {"opr": 0}
-        team_data.append({"name": team["nickname"], "number": team["team_number"], "opr": team_info["opr"], "average": 0, "score": 0, "location": team["state_prov"] if team["country"] == "USA" else team["country"]})
+            team_info = {"epa_end": 0}
+        team_data.append({"name": team["nickname"], "number": team["team_number"], "epa": team_info["epa_end"], "average": 0, "score": 0, "location": team["state_prov"] if team["country"] == "USA" else team["country"]})
     last_team_number = int(teams[-1]["team_number"])
 
 while True:
@@ -42,10 +42,9 @@ while True:
     page += 1
     for team in teams:
         if int(team["team_number"]) > last_team_number:
-            team_data.append({"name": team["nickname"], "number": team["team_number"], "opr": 0, "average": 0, "score": 0, "location": team["state_prov"] if team["country"] == "USA" else team["country"]})
-
-print(team_data)
+            team_data.append({"name": team["nickname"], "number": team["team_number"], "epa": 0, "average": 0, "score": 0, "location": team["state_prov"] if team["country"] == "USA" else team["country"]})
 
 json_data = json.dumps({"teams": team_data}, indent=4)
+
 with open('team_info.json', 'w') as file:
-    json.dump(json_data, file)
+    file.write(json_data)

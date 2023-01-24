@@ -21,6 +21,9 @@ const connection = sqlConnection.setupSQLConnection();
 const httpPort = 80;
 const SQLRegex = new RegExp("[\\;\\/\"\'\,\.]", 'g');
 
+const adminId = "cf3a7c";
+const adminName = "Aidan";
+
 let teamsJson;
 fs.readFile('team_info.json', 'utf8', (err, jsonString) => {
   if (err) {
@@ -129,7 +132,7 @@ app.get('/admin', (req, res) => {
   try {
     if (req.isAuthenticated()) {
       user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-      if (user === "Aidan") {
+      if (user === adminName) {
         res.sendFile('www/admin.html', { root: __dirname });
       }
       else {
@@ -341,7 +344,7 @@ app.get('/allow-cors/add-user', async (req, res) => {
   try {
     res.set('Access-Control-Allow-Origin', '*');
     user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-    if (req.isAuthenticated() && user === "Aidan") {
+    if (req.isAuthenticated() && user === adminName) {
       message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
       res.send(message);
     }
@@ -379,7 +382,7 @@ app.get('/allow-cors/remove-user', async (req, res) => {
   try {
     res.set('Access-Control-Allow-Origin', '*');
     user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-    if (req.isAuthenticated() && user === "Aidan") {
+    if (req.isAuthenticated() && user === adminName) {
       message = await sqlConnection.SQLResponse.removeUser(connection, req.query.user);
       res.send(message);
     }
@@ -465,7 +468,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('start_draft', async () => {
-    if (userID !== "cf3a7c") { return; }
+    if (userID !== adminId) { return; }
     if (draftStarted) { return; }
     startUpEnded = false;
     console.log("draft started");
@@ -571,7 +574,7 @@ async function initializeDraft() {
     teamList["team"+team.number.toString()] = {
       "name": team.name,
       "number": team.number,
-      "opr": team.opr,
+      "epa": team.epa,
       "location": team.location,
       "owner": ""
     };
@@ -639,6 +642,6 @@ function startTimer(clicked) {
 
 async function saveData() {
   console.log("Draft ended");
-  // await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
+  await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
   io.emit("draft_ended");
 }

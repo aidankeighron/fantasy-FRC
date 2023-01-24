@@ -152,7 +152,7 @@ async function loadTeams() {
         html+= "<tr><thead>";
         html+= '<th>Number</th>';
         html+= '<th>Name</th>';
-        html+= '<th>OPR</th>';
+        html+= '<th>EPA</th>';
         html+= '<th>Location</th>'
         html+= "</thead></tr>";
         
@@ -162,7 +162,7 @@ async function loadTeams() {
             html+="<tr id="+team.number+"team-list>";
             html+="<td>"+team.number+"</td>";
             html+="<td>"+team.name+"</td>";
-            html+="<td>"+team.opr+"</td>";
+            html+="<td>"+team.epa+"</td>";
             html+="<td>"+team.location+"</td>"
             html+='<td><button onclick="addToTable('+team.number+', '+"'"+team.name+"'"+', '+"'"+team.location+"'"+", 'queue'"+')">Add</button></td>';
             html+="</tr>";
@@ -176,7 +176,7 @@ async function loadTeams() {
             html+="<tr id="+team[1].number+"team-list>";
             html+="<td>"+team[1].number+"</td>";
             html+="<td>"+team[1].name+"</td>";
-            html+="<td>"+team[1].opr+"</td>";
+            html+="<td>"+team[1].epa+"</td>";
             html+="<td>"+team[1].location+"</td>";
             html+='<td><button onclick="addToTable('+team[1].number+', '+"'"+team[1].name+"'"+', '+"'"+team[1].location+"'"+", 'queue'"+')">Add</button></td>';
             html+="</tr>";
