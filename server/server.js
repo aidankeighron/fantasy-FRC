@@ -481,7 +481,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('team_picked', (number, name) => {
-    if (!draftStarted) { return; }
+    if (!draftStarted || !startUpEnded) { return; }
     console.log("team picked");
     if (userID === userIDList[0]) {
       let location = isValidTeam(number, userID);
