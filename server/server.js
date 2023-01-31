@@ -411,7 +411,7 @@ var pickedTeamsList = {};
 var userList = {};
 var draftStarted = false;
 const roundLength = 20; // seconds
-const startLength = 300; // seconds
+const startLength = 5; // seconds
 const maxTeams = 8;
 var startUpEnded = false;
 
@@ -585,9 +585,13 @@ let timeout;
 let seconds;
 function startTimer(clicked) {
   if (!startUpEnded) {
+    startUpEnded = true;
+    startTimer(true);
     io.emit("restart_timer", roundLength);
+    io.emit('get_next_team');
+    console.log("picking now");
+    return;
   }
-  startUpEnded = true;
   if (clicked) {
       clearTimeout(timeout);
       seconds = roundLength;
@@ -642,6 +646,6 @@ function startTimer(clicked) {
 
 async function saveData() {
   console.log("Draft ended");
-  await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
+  // await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
   io.emit("draft_ended");
 }
