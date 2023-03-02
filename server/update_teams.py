@@ -5,11 +5,10 @@ import numpy as np
 import requests
 from datetime import datetime
 
-
 config = ConfigParser()
 config.read("server_info.ini")
-# db = mc.connect(host=config.get("SQL", "SQL_IP").replace('"', ""), user=config.get("SQL", "SQL_User").replace('"', ""), password=config.get("SQL", "SQL_Passw").replace('"', ""), auth_plugin='mysql_native_password', database=config.get("SQL", "SQL_Database").replace('"', ""))
-# my_cursor = db.cursor(buffered=True)
+db = mc.connect(host=config.get("SQL", "SQL_IP").replace('"', ""), user=config.get("SQL", "SQL_User").replace('"', ""), password=config.get("SQL", "SQL_Passw").replace('"', ""), auth_plugin='mysql_native_password', database=config.get("SQL", "SQL_Database").replace('"', ""))
+my_cursor = db.cursor(buffered=True)
 
 EVENTS = {15: ['2023alhu', '2023casj', '2023chcmp', '2023gacmp', '2023incmp', '2023micmp', '2023mrcmp', '2023necmp', '2023nyny', '2023oktu', '2023oncmp', '2023paca', '2023pncmp', '2023txcmp'], 10: ['2023arli', '2023caph', '2023flwp', '2023gaalb', '2023inmis', '2023mabri', '2023miesc', '2023mifor', '2023mijac', '2023miket', '2023mimil', '2023mndu', '2023mndu2', '2023mxmo', '2023ncash', '2023nhgrs', '2023onbar', '2023onnew', '2023orore', '2023pahat', '2023tuis3', '2023txdal', '2023txwac', '2023utwv', '2023vabla', '2023wasno'], 11: ['2023ausc', '2023cafr', '2023caoc', '2023cave', '2023ctwat', '2023gadal', '2023ilch', '2023inpri', '2023isde3', '2023isde4', '2023mdbet', '2023midtr', '2023mike2', '2023milan', 
 '2023misjo', '2023mosl', '2023ncjoh', '2023ndgf', '2023njfla', '2023okok', '2023orwil', '2023rinsc', '2023scand', '2023tume', '2023txbel', '2023txcha'], 13: ['2023azgl', '2023cada', '2023casd', '2023code', '2023flta', '2023gacar', '2023hiho', '2023iacf', '2023inwla', '2023mabos', '2023mdtim', '2023mila2', '2023milak', '2023milsu', '2023mimid', '2023mitry', '2023miwmi', '2023mnmi2', '2023mose', '2023mxto', '2023ncpem', '2023nhdur', '2023njtab', '2023njwas', '2023nyli2', '2023onnob', '2023onwat', '2023orsal', '2023schar', '2023tuis', '2023tuis2', '2023txhou', '2023vagle', '2023wasam', '2023wimi', '2023zhha'], 12: ['2023azva', '2023brbr', '2023cala', '2023casf', '2023flor', '2023gagwi', '2023ilpe', '2023iscmp', '2023ksla', '2023marea', '2023mawne', '2023mibel', '2023midet', '2023mimus', '2023mista', '2023mitvc', '2023mslr', '2023mxpu', '2023ncmec', '2023ncwak', '2023njrob', '2023nyli', '2023nyro', '2023ohmv', '2023onlon', '2023ontor', '2023paphi', '2023txfor', '2023txsan', '2023vaale', '2023vapor', '2023wabon', '2023wayak'], 9: ['2023bcvi', '2023cops', '2023isde1', '2023isde2'], 14: ['2023caav', '2023camb', '2023cthar', '2023gamac', '2023idbo', '2023ingre', '2023lake', '2023mawor', '2023miken', '2023miliv', '2023mimcc', '2023misal', '2023mitr2', '2023mnmi', '2023mokc', '2023nccmp', '2023njski', '2023nvlv', '2023nytr', '2023ohcl', '2023onham', '2023onwin', '2023paben', '2023qcmo', '2023tnkn', '2023txama', '2023txcle', '2023waahs', '2023wila'], 17: ['2023cmptx']}
@@ -158,7 +157,7 @@ def setupEvents():
     print(events)
             
 
-my_calendar = CustomizedCalendar(start_weekday=WEEKDAY.SUN)
+# my_calendar = CustomizedCalendar(start_weekday=WEEKDAY.SUN)
 # print(my_calendar.calculate(datetime(2023, 4, 22))[1])
 # print(my_calendar.calculate(datetime(2023, 4, 23))[1])
 # print()
