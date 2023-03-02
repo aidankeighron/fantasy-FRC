@@ -5,8 +5,8 @@ import requests
 
 config = ConfigParser()
 config.read("server_info.ini")
-# db = mc.connect(host=config.get("SQL", "SQL_IP").replace('"', ""), user=config.get("SQL", "SQL_User").replace('"', ""), password=config.get("SQL", "SQL_Passw").replace('"', ""), auth_plugin='mysql_native_password', database=config.get("SQL", "SQL_Database").replace('"', ""))
-# my_cursor = db.cursor(buffered=True)
+db = mc.connect(host=config.get("SQL", "SQL_IP").replace('"', ""), user=config.get("SQL", "SQL_User").replace('"', ""), password=config.get("SQL", "SQL_Passw").replace('"', ""), auth_plugin='mysql_native_password', database=config.get("SQL", "SQL_Database").replace('"', ""))
+my_cursor = db.cursor(buffered=True)
 
 ## DATABASE ## 
 
@@ -95,6 +95,8 @@ def get_team_data(team):
     team_score = 0
     # Get events
     for event in events:
+        if event == "2023week0":
+            continue
         (opr, average, win_percent, event_played) = get_team_event(team, event)
         if not event_played:
             continue
