@@ -129,7 +129,7 @@ def update_user_score(user):
             active_teams += 1
     if active_teams == 0:
         return (0)
-    user_score /= active_teams
+    # user_score /= active_teams
     
     return (user_score)
 
