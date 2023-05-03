@@ -11,18 +11,20 @@ async function getTeams() {
       html+= '<th>Name  <button onclick="sortTable(0, 0, '+"'"+'team-table'+"'"+', true)">Sort</button></th>';
       html+= '<th>Number  <button onclick="sortTable(1, 1, '+"'"+'team-table'+"'"+', true)">Sort</button></th>';
       html+= '<th>OPR  <button onclick="sortTable(2, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
-      html+= '<th>Average  <button onclick="sortTable(3, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
-      html+= '<th>Score  <button onclick="sortTable(4, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
-      html+= '<th>Owner  <button onclick="sortTable(5, 0, '+"'"+'team-table'+"'"+', true)">Sort</button></th>';
+      html+= '<th>Win Percent  <button onclick="sortTable(3, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Average  <button onclick="sortTable(4, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Score  <button onclick="sortTable(5, 1, '+"'"+'team-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Owner  <button onclick="sortTable(6, 0, '+"'"+'team-table'+"'"+', true)">Sort</button></th>';
       html+= "</thead></tr>";
 
       data.forEach(element => {
         html+="<tr>";
         html+="<td>"+element.name+"</td>";
         html+="<td>"+element.number+"</td>";
-        html+="<td>"+element.opr+"</td>";
-        html+="<td>"+element.average+"</td>";
-        html+="<td>"+element.score+"</td>";
+        html+="<td>"+truncate(element.opr)+"</td>";
+        html+="<td>"+truncate(element.winPercent)+"</td>";
+        html+="<td>"+truncate(element.average)+"</td>";
+        html+="<td>"+truncate(element.score)+"</td>";
         html+="<td>"+element.owner+"</td>";
         html+="</tr>";
       });
@@ -31,6 +33,15 @@ async function getTeams() {
     });
   });
 };
+
+function truncate(value) {
+  try {
+    var number = parseFloat(value);
+    return Math.floor(number * 100) / 100;
+  } catch (error) {
+    return value;
+  }
+}
 
 // type: 0 = string, 1 = double
 function sortTable(row, type, table, forward) {

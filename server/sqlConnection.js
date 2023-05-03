@@ -55,7 +55,7 @@ class SQLResponse {
         try {
             if (user == null) {
                 return new Promise((resolve, reject)=>{
-                    conn.query('SELECT name, teams, score, position FROM users ORDER BY position ASC',  (queryError, res)=>{
+                    conn.query('SELECT name, teams, score, quals_score, elim_score, position FROM users ORDER BY position ASC',  (queryError, res)=>{
                         if(queryError){
                             return reject(queryError);
                         }
@@ -65,7 +65,7 @@ class SQLResponse {
             }
             else {
                 return new Promise((resolve, reject)=>{
-                    conn.query('SELECT name, teams, score, position FROM users WHERE name = "'+user+'"',  (queryError, res)=>{
+                    conn.query('SELECT name, teams, score, quals_score, elim_score, position FROM users WHERE name = "'+user+'"',  (queryError, res)=>{
                         if(queryError){
                             return reject(queryError);
                         }

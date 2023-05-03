@@ -8,14 +8,18 @@ async function getUsers() {
       html+= '<th>Name  <button onclick="sortTable(0, 0, '+"'"+'users-table'+"'"+', true)">Sort</button></th>';
       html+= '<th>Teams  </th>';
       html+= '<th>Score  <button onclick="sortTable(2, 1, '+"'"+'users-table'+"'"+', false)">Sort</button></th>';
-      html+= '<th>Position  <button onclick="sortTable(3, 1, '+"'"+'users-table'+"'"+', true)">Sort</button></th>';
+      html+= '<th>Quals Score  <button onclick="sortTable(3, 1, '+"'"+'users-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Elim Score  <button onclick="sortTable(4, 1, '+"'"+'users-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Position  <button onclick="sortTable(5, 1, '+"'"+'users-table'+"'"+', true)">Sort</button></th>';
       html+= "</thead></tr>";
 
       data.forEach(element => {
         html+="<tr>";
         html+="<td>"+element.name+"</td>";
         html+="<td>"+element.teams+"</td>";
-        html+="<td>"+element.score+"</td>";
+        html+="<td>"+truncate(element.score)+"</td>";
+        html+="<td>"+truncate(element.quals_score)+"</td>";
+        html+="<td>"+truncate(element.elim_score)+"</td>";
         html+="<td>"+element.position+"</td>";
         html+="</tr>";
       });
@@ -35,17 +39,19 @@ async function getUser() {
       html+= '<th>Name  <button onclick="sortTable(0, 0, '+"'"+'user-table'+"'"+', true)">Sort</button></th>';
       html+= '<th>Number  <button onclick="sortTable(1, 1, '+"'"+'user-table'+"'"+', true)">Sort</button></th>';
       html+= '<th>OPR  <button onclick="sortTable(2, 1, '+"'"+'user-table'+"'"+', false)">Sort</button></th>';
-      html+= '<th>Average  <button onclick="sortTable(3, 1, '+"'"+'user-table'+"'"+', false)">Sort</button></th>';
-      html+= '<th>Score  <button onclick="sortTable(4, 1, '+"'"+'user-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Win Percent  <button onclick="sortTable(3, 1, '+"'"+'user-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Average  <button onclick="sortTable(4, 1, '+"'"+'user-table'+"'"+', false)">Sort</button></th>';
+      html+= '<th>Score  <button onclick="sortTable(5, 1, '+"'"+'user-table'+"'"+', false)">Sort</button></th>';
       html+= "</thead></tr>";
 
       data.forEach(element => {
         html+="<tr>";
         html+="<td>"+element.name+"</td>";
         html+="<td>"+element.number+"</td>";
-        html+="<td>"+element.opr+"</td>";
-        html+="<td>"+element.average+"</td>";
-        html+="<td>"+element.score+"</td>";
+        html+="<td>"+truncate(element.opr)+"</td>";
+        html+="<td>"+truncate(element.winPercent)+"</td>";
+        html+="<td>"+truncate(element.average)+"</td>";
+        html+="<td>"+truncate(element.score)+"</td>";
         html+="</tr>";
       });
       html+="</table>";
@@ -60,6 +66,15 @@ async function getUser() {
     });
   });
 };
+
+function truncate(value) {
+  try {
+    var number = parseFloat(value);
+    return Math.floor(number * 100) / 100;
+  } catch (error) {
+    return value;
+  }
+}
 
 // type: 0 = string, 1 = double
 function sortTable(row, type, table, forward) {
