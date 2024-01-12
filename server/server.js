@@ -71,9 +71,9 @@ passport.deserializeUser(async (id, done) => {
   done(null, user);
 });
 
-var name = 'connect.sid';
-var secret = config.SERVER.SECRET;
-var store = new FileStore();
+let name = 'connect.sid';
+let secret = config.SERVER.SECRET;
+let store = new FileStore();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(session({
@@ -131,7 +131,7 @@ app.get('/home', (req, res) => {
 app.get('/admin', (req, res) => {
   try {
     if (req.isAuthenticated()) {
-      user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+      let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
       if (user === adminName) {
         res.sendFile('www/admin.html', { root: __dirname });
       }
@@ -251,11 +251,11 @@ app.get('/allow-cors/teams', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.isAuthenticated()) {
       if (req.query.user == "" || req.query.user == null) {
-        message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
+        let message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
       }
       else {
-        user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-        message = await sqlConnection.SQLResponse.getTeams(connection, user);
+        let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+        let message = await sqlConnection.SQLResponse.getTeams(connection, user);
       }
       res.send(message);
     }
@@ -275,11 +275,11 @@ app.get('/allow-cors/users', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.isAuthenticated()) {
       if (req.query.user == "" || req.query.user == null) {
-        message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
+        let message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
       }
       else {
-        user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-        message = await sqlConnection.SQLResponse.getUsers(connection, user);
+        let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+        let message = await sqlConnection.SQLResponse.getUsers(connection, user);
       }
       res.send(message);
     }
@@ -343,9 +343,9 @@ app.get('/allow-cors/all-users', (req, res) => {
 app.get('/allow-cors/add-user', async (req, res) => {
   try {
     res.set('Access-Control-Allow-Origin', '*');
-    user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+    let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
     if (req.isAuthenticated() && user === adminName) {
-      message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
+      let message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
       res.send(message);
     }
     else {
@@ -405,19 +405,19 @@ server.listen(httpPort, () =>
 
 // DRAFTING //
 
-var userIDList = new Array();
-var teamList = {};
-var pickedTeamsList = {};
-var userList = {};
-var draftStarted = false;
+let userIDList = new Array();
+let teamList = {};
+let pickedTeamsList = {};
+let userList = {};
+let draftStarted = false;
 const roundLength = 20; // seconds
 const startLength = 5; // seconds
 const maxTeams = 8;
-var startUpEnded = false;
+let startUpEnded = false;
 
 io.on('connection', (socket) => {
   if (socket.handshake && socket.handshake.headers && socket.handshake.headers.cookie) {
-    var raw = cookie.parse(socket.handshake.headers.cookie)[name];
+    let raw = cookie.parse(socket.handshake.headers.cookie)[name];
     if (raw) {
       // The cookie set by express-session begins with s: which indicates it
       // is a signed cookie. Remove the two characters before unsigning.
@@ -441,8 +441,8 @@ io.on('connection', (socket) => {
   socket.on("get_my_teams", () => {
     if (!draftStarted) return;
     try {
-      var userTeams = userList["ID:"+userID].current_teams.toString().split(",");
-      var teams = {};
+      let userTeams = userList["ID:"+userID].current_teams.toString().split(",");
+      let teams = {};
       for (userTeam in userTeams) {
         userTeam = userTeams[userTeam];
         teams["team"+userTeam] = pickedTeamsList["team"+userTeam];
@@ -492,7 +492,7 @@ io.on('connection', (socket) => {
           userIDList.pop();
         }
         if (userIDList.length <= 1) {
-          nextUser = "-";
+          let nextUser = "-";
         }
         else {
           nextUser = userList["ID:"+userIDList[1]].name;

@@ -13,7 +13,7 @@
                 "authProtocol": "default"
             },
             "previewLimit": 50,
-            "server": "192.168.1.101",
+            "server": "192.168.1.32",
             "port": 3306,
             "driver": "MySQL",
             "name": "testing",
