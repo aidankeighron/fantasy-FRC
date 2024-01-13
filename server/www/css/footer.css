@@ -11,15 +11,15 @@
     --grey-3: #D0D0D0;
 }
 
-footer {
-    margin: 0px 0px 0px -8px;
+.footer {
+    /* margin: 0px 0px 0px -8px; */
     border-radius: 5px;
     font-family: "JetBrains Mono", monospace;
-    position: fixed;
+    /* position: fixed; */
     padding: 10px 10px 10px 10px;
-    bottom: 0;
-    width: 100%;
+    /* bottom: 0; */
+    /* width: 100%; */
     /* Height of the footer*/
-    height: 40px;
+    /* height: 40px; */
     background: var(--white-1);
 }

@@ -42,6 +42,7 @@ passport.use(new LocalStrategy(
       if (SQLRegex.test(username) || SQLRegex.test(password)) {
         return done(null, false, { message: 'Invalid credentials'});
       }
+      await sqlConnection.SQLResponse.getPasswordHash(connection);
       const validUser = await sqlConnection.SQLResponse.verifyUser(connection, username, password);
       if (validUser == null || validUser == "") {
         return done(null, false, { message: 'Invalid credentials'});
@@ -71,9 +72,9 @@ passport.deserializeUser(async (id, done) => {
   done(null, user);
 });
 
-let name = 'connect.sid';
-let secret = config.SERVER.SECRET;
-let store = new FileStore();
+var name = 'connect.sid';
+var secret = config.SERVER.SECRET;
+var store = new FileStore();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(session({
@@ -131,7 +132,7 @@ app.get('/home', (req, res) => {
 app.get('/admin', (req, res) => {
   try {
     if (req.isAuthenticated()) {
-      let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+      user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
       if (user === adminName) {
         res.sendFile('www/admin.html', { root: __dirname });
       }
@@ -251,11 +252,11 @@ app.get('/allow-cors/teams', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.isAuthenticated()) {
       if (req.query.user == "" || req.query.user == null) {
-        let message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
+        message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
       }
       else {
         let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-        let message = await sqlConnection.SQLResponse.getTeams(connection, user);
+        message = await sqlConnection.SQLResponse.getTeams(connection, user);
       }
       res.send(message);
     }
@@ -275,11 +276,11 @@ app.get('/allow-cors/users', async (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     if (req.isAuthenticated()) {
       if (req.query.user == "" || req.query.user == null) {
-        let message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
+        message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
       }
       else {
-        let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-        let message = await sqlConnection.SQLResponse.getUsers(connection, user);
+        user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+        message = await sqlConnection.SQLResponse.getUsers(connection, user);
       }
       res.send(message);
     }
@@ -343,9 +344,9 @@ app.get('/allow-cors/all-users', (req, res) => {
 app.get('/allow-cors/add-user', async (req, res) => {
   try {
     res.set('Access-Control-Allow-Origin', '*');
-    let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+    user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
     if (req.isAuthenticated() && user === adminName) {
-      let message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
+      message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
       res.send(message);
     }
     else {
@@ -405,19 +406,19 @@ server.listen(httpPort, () =>
 
 // DRAFTING //
 
-let userIDList = new Array();
-let teamList = {};
-let pickedTeamsList = {};
-let userList = {};
-let draftStarted = false;
+var userIDList = new Array();
+var teamList = {};
+var pickedTeamsList = {};
+var userList = {};
+var draftStarted = false;
 const roundLength = 20; // seconds
 const startLength = 5; // seconds
 const maxTeams = 8;
-let startUpEnded = false;
+var startUpEnded = false;
 
 io.on('connection', (socket) => {
   if (socket.handshake && socket.handshake.headers && socket.handshake.headers.cookie) {
-    let raw = cookie.parse(socket.handshake.headers.cookie)[name];
+    var raw = cookie.parse(socket.handshake.headers.cookie)[name];
     if (raw) {
       // The cookie set by express-session begins with s: which indicates it
       // is a signed cookie. Remove the two characters before unsigning.
@@ -441,8 +442,8 @@ io.on('connection', (socket) => {
   socket.on("get_my_teams", () => {
     if (!draftStarted) return;
     try {
-      let userTeams = userList["ID:"+userID].current_teams.toString().split(",");
-      let teams = {};
+      var userTeams = userList["ID:"+userID].current_teams.toString().split(",");
+      var teams = {};
       for (userTeam in userTeams) {
         userTeam = userTeams[userTeam];
         teams["team"+userTeam] = pickedTeamsList["team"+userTeam];
@@ -492,7 +493,7 @@ io.on('connection', (socket) => {
           userIDList.pop();
         }
         if (userIDList.length <= 1) {
-          let nextUser = "-";
+          var nextUser = "-";
         }
         else {
           nextUser = userList["ID:"+userIDList[1]].name;
