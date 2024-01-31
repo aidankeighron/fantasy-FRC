@@ -147,7 +147,7 @@ class SQLResponse {
         catch (error) {
             console.log("ERROR:");
             console.log(error);
-            return "Error while adding user";
+            return "Error while updating password";
         }
     }
 
