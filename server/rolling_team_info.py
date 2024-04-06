@@ -137,8 +137,8 @@ def get_team_data(team):
     
     
     # Qual
-    team_opr /= played_quals
-    team_average /= played_quals
+    # team_opr /= played_quals
+    # team_average /= played_quals
     qual_team_win_percent = (team_qual_wins/team_qual_matches_played)# / played_quals
     team_qual_score = qual_team_win_percent * team_average
     # Elim
@@ -147,7 +147,7 @@ def get_team_data(team):
         team_score = team_qual_score
         team_win_percent = qual_team_win_percent
     else:
-        elim_team_win_percent = (team_elim_wins/team_elim_matches_played) / played_elims
+        elim_team_win_percent = (team_elim_wins/team_elim_matches_played) #/ played_elims
         team_elim_score = elim_team_win_percent * team_average
         team_win_percent = (team_qual_wins+team_elim_wins)/(team_qual_matches_played+team_elim_matches_played)# / (played_quals+played_elims)
         team_score = team_win_percent * team_average
