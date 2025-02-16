@@ -31,646 +31,544 @@ fs.readFile('team_info.json', 'utf8', (err, jsonString) => {
     return 
   }
   teamsJson = jsonString;
-  saveData();
+})
+
+app.use( express.static( __dirname + '/www' ));
+
+passport.use(new LocalStrategy(
+  { usernameField: 'username' },
+  async (username, password, done) => {
+    try {
+      if (SQLRegex.test(username) || SQLRegex.test(password)) {
+        return done(null, false, { message: 'Invalid credentials'});
+      }
+      await sqlConnection.SQLResponse.getPasswordHash(connection);
+      const validUser = await sqlConnection.SQLResponse.verifyUser(connection, username, password);
+      if (validUser == null || validUser == "") {
+        return done(null, false, { message: 'Invalid credentials'});
+      }
+      let user = Object.values(JSON.parse(JSON.stringify(validUser[0])));
+      user = {
+        'username': user[1],
+        'password': user[2],
+        'id': user[0]
+      }
+      return done(null, user);
+    }
+    catch (error) {
+      console.log("ERROR:");
+      console.log(error);
+      return done(null, false, { message: 'Invalid credentials'});
+    }
+  }
+));
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
 });
 
-// app.use( express.static( __dirname + '/www' ));
+passport.deserializeUser(async (id, done) => {
+  const user = await sqlConnection.SQLResponse.getUserInfo(connection, id);
+  done(null, user);
+});
 
-// passport.use(new LocalStrategy(
-//   { usernameField: 'username' },
-//   async (username, password, done) => {
-//     try {
-//       if (SQLRegex.test(username) || SQLRegex.test(password)) {
-//         return done(null, false, { message: 'Invalid credentials'});
-//       }
-//       await sqlConnection.SQLResponse.getPasswordHash(connection);
-//       const validUser = await sqlConnection.SQLResponse.verifyUser(connection, username, password);
-//       if (validUser == null || validUser == "") {
-//         return done(null, false, { message: 'Invalid credentials'});
-//       }
-//       let user = Object.values(JSON.parse(JSON.stringify(validUser[0])));
-//       user = {
-//         'username': user[1],
-//         'password': user[2],
-//         'id': user[0]
-//       }
-//       return done(null, user);
-//     }
-//     catch (error) {
-//       console.log("ERROR:");
-//       console.log(error);
-//       return done(null, false, { message: 'Invalid credentials'});
-//     }
-//   }
-// ));
+var name = 'connect.sid';
+var secret = config.SERVER.SECRET;
+var store = new FileStore();
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(session({
+  genid: (req) => {
+    return uuid();
+  },
+  name: name,
+  store: store,
+  secret: secret,
+  resave: false,
+  saveUninitialized: true
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
-// passport.serializeUser((user, done) => {
-//   done(null, user.id);
-// });
+app.get('/', (req, res) => {
+  res.sendFile('www/login.html', { root: __dirname });
+});
 
-// passport.deserializeUser(async (id, done) => {
-//   const user = await sqlConnection.SQLResponse.getUserInfo(connection, id);
-//   done(null, user);
-// });
+app.use((req, res, next) => {
+  if (req.protocol == 'https') {
+    return res.redirect(301, `http://${req.headers.host}${req.url}`);
+  }
+  next();
+});
 
-// var name = 'connect.sid';
-// var secret = config.SERVER.SECRET;
-// var store = new FileStore();
-// app.use(bodyParser.urlencoded({ extended: false }));
-// app.use(bodyParser.json());
-// app.use(session({
-//   genid: (req) => {
-//     return uuid();
-//   },
-//   name: name,
-//   store: store,
-//   secret: secret,
-//   resave: false,
-//   saveUninitialized: true
-// }));
-// app.use(passport.initialize());
-// app.use(passport.session());
+app.post('/', (req, res, next) => {
+  passport.authenticate('local', (err, user, info) => {
+    if(info) {return res.send(info.message)}
+    if (err) { return next(err); }
+    if (!user) { return res.redirect('/'); }
+    req.login(user, (err) => {
+      if (err) { return next(err); }
+      return res.redirect('/home')
+    });
+  })(req, res, next);
+});
 
-// app.get('/', (req, res) => {
-//   res.sendFile('www/login.html', { root: __dirname });
-// });
+app.get('/logout', (req, res) => {
+  req.session.destroy(function (err) {
+    res.clearCookie('connect.sid')
+    res.redirect('/');
+  });
+});
 
-// app.use((req, res, next) => {
-//   if (req.protocol == 'https') {
-//     return res.redirect(301, `http://${req.headers.host}${req.url}`);
-//   }
-//   next();
-// });
+app.get('/home', (req, res) => {
+  if (req.isAuthenticated()) {
+    res.sendFile('www/home.html', { root: __dirname });
+  }
+  else {
+    res.redirect('/');
+  }
+});
 
-// app.post('/', (req, res, next) => {
-//   passport.authenticate('local', (err, user, info) => {
-//     if(info) {return res.send(info.message)}
-//     if (err) { return next(err); }
-//     if (!user) { return res.redirect('/'); }
-//     req.login(user, (err) => {
-//       if (err) { return next(err); }
-//       return res.redirect('/home')
-//     });
-//   })(req, res, next);
-// });
+app.get('/admin', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+      if (user === adminName) {
+        res.sendFile('www/admin.html', { root: __dirname });
+      }
+      else {
+        res.sendStatus(403);
+      }
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/logout', (req, res) => {
-//   req.session.destroy(function (err) {
-//     res.clearCookie('connect.sid')
-//     res.redirect('/');
-//   });
-// });
+app.get('/rankings', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/rankings.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/home', (req, res) => {
-//   if (req.isAuthenticated()) {
-//     res.sendFile('www/home.html', { root: __dirname });
-//   }
-//   else {
-//     res.redirect('/');
-//   }
-// });
+app.get('/teams', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/teams.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/admin', (req, res) => {
-//   try {
-//     if (req.isAuthenticated()) {
-//       user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-//       if (user === adminName) {
-//         res.sendFile('www/admin.html', { root: __dirname });
-//       }
-//       else {
-//         res.sendStatus(403);
-//       }
-//     }
-//     else {
-//       res.redirect('/');
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+app.get('/drafting', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/drafting.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/rankings', (req, res) => {
-//   try {
-//     if (req.isAuthenticated()) {
-//       res.sendFile('www/rankings.html', { root: __dirname });
-//     }
-//     else {
-//       res.redirect('/');
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+app.get('/draft_teams', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/draft_teams.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/teams', (req, res) => {
-//   try {
-//     if (req.isAuthenticated()) {
-//       res.sendFile('www/teams.html', { root: __dirname });
-//     }
-//     else {
-//       res.redirect('/');
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+app.get('/how_to', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/how_to.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/drafting', (req, res) => {
-//   try {
-//     if (req.isAuthenticated()) {
-//       res.sendFile('www/drafting.html', { root: __dirname });
-//     }
-//     else {
-//       res.redirect('/');
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+app.get('/settings', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/settings.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/draft_teams', (req, res) => {
-//   try {
-//     if (req.isAuthenticated()) {
-//       res.sendFile('www/draft_teams.html', { root: __dirname });
-//     }
-//     else {
-//       res.redirect('/');
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+app.get('/allow-cors/teams', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.isAuthenticated()) {
+      if (req.query.user == "" || req.query.user == null) {
+        message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
+      }
+      else {
+        let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+        message = await sqlConnection.SQLResponse.getTeams(connection, user);
+      }
+      res.send(message);
+    }
+    else {
+      res.sendStatus(401);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/how_to', (req, res) => {
-//   try {
-//     if (req.isAuthenticated()) {
-//       res.sendFile('www/how_to.html', { root: __dirname });
-//     }
-//     else {
-//       res.redirect('/');
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+app.get('/allow-cors/users', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.isAuthenticated()) {
+      if (req.query.user == "" || req.query.user == null) {
+        message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
+      }
+      else {
+        user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+        message = await sqlConnection.SQLResponse.getUsers(connection, user);
+      }
+      res.send(message);
+    }
+    else {
+      res.sendStatus(401);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/settings', (req, res) => {
-//   try {
-//     if (req.isAuthenticated()) {
-//       res.sendFile('www/settings.html', { root: __dirname });
-//     }
-//     else {
-//       res.redirect('/');
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
-
-// app.get('/allow-cors/teams', async (req, res) => {
-//   try {
-//     res.set('Access-Control-Allow-Origin', '*');
-//     if (req.isAuthenticated()) {
-//       if (req.query.user == "" || req.query.user == null) {
-//         message = await sqlConnection.SQLResponse.getTeams(connection, req.query.user);
-//       }
-//       else {
-//         let user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-//         message = await sqlConnection.SQLResponse.getTeams(connection, user);
-//       }
-//       res.send(message);
-//     }
-//     else {
-//       res.sendStatus(401);
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
-
-// app.get('/allow-cors/users', async (req, res) => {
-//   try {
-//     res.set('Access-Control-Allow-Origin', '*');
-//     if (req.isAuthenticated()) {
-//       if (req.query.user == "" || req.query.user == null) {
-//         message = await sqlConnection.SQLResponse.getUsers(connection, req.query.user);
-//       }
-//       else {
-//         user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-//         message = await sqlConnection.SQLResponse.getUsers(connection, user);
-//       }
-//       res.send(message);
-//     }
-//     else {
-//       res.sendStatus(401);
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
-
-// app.get('/allow-cors/all-teams', (req, res) => {
-//   try {
-//     res.set('Access-Control-Allow-Origin', '*');
+app.get('/allow-cors/all-teams', (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
     
-//     if (req.isAuthenticated()) {
-//       if (Object.keys(teamList).length != 0) {
-//         res.json(JSON.parse(JSON.stringify({"teams": teamList})));
-//       }
-//       else {
-//         res.send(teamsJson);
-//       }
-//     }
-//     else {
-//       res.sendStatus(401);
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+    if (req.isAuthenticated()) {
+      if (Object.keys(teamList).length != 0) {
+        res.json(JSON.parse(JSON.stringify({"teams": teamList})));
+      }
+      else {
+        res.send(teamsJson);
+      }
+    }
+    else {
+      res.sendStatus(401);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/allow-cors/all-users', (req, res) => {
-//   try {
-//     res.set('Access-Control-Allow-Origin', '*');
+app.get('/allow-cors/all-users', (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
     
-//     if (req.isAuthenticated()) {
-//       if (draftStarted) {
-//         res.json(JSON.parse(JSON.stringify({userList})));
-//       }
-//       else {
-//         res.send("");
-//       }
-//     }
-//     else {
-//       res.sendStatus(401);
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+    if (req.isAuthenticated()) {
+      if (draftStarted) {
+        res.json(JSON.parse(JSON.stringify({userList})));
+      }
+      else {
+        res.send("");
+      }
+    }
+    else {
+      res.sendStatus(401);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/allow-cors/add-user', async (req, res) => {
-//   try {
-//     res.set('Access-Control-Allow-Origin', '*');
-//     user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-//     if (req.isAuthenticated() && user === adminName) {
-//       message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
-//       res.send(message);
-//     }
-//     else {
-//       res.sendStatus(403);
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+app.get('/allow-cors/add-user', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+    if (req.isAuthenticated() && user === adminName) {
+      message = await sqlConnection.SQLResponse.addUser(connection, req.query.user, req.query.passw);
+      res.send(message);
+    }
+    else {
+      res.sendStatus(403);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/allow-cors/update-passw', async (req, res) => {
-//   try {
-//     res.set('Access-Control-Allow-Origin', '*');
-//     user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-//     if (req.isAuthenticated()) {
-//       message = await sqlConnection.SQLResponse.updatePassword(connection, req.query.newpassw, req.query.retypepassw, user);
-//       res.send(message);
-//     }
-//     else {
-//       res.sendStatus(403);
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+app.get('/allow-cors/update-passw', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+    if (req.isAuthenticated()) {
+      message = await sqlConnection.SQLResponse.updatePassword(connection, req.query.newpassw, req.query.retypepassw, user);
+      res.send(message);
+    }
+    else {
+      res.sendStatus(403);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
-// app.get('/allow-cors/remove-user', async (req, res) => {
-//   try {
-//     res.set('Access-Control-Allow-Origin', '*');
-//     user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
-//     if (req.isAuthenticated() && user === adminName) {
-//       message = await sqlConnection.SQLResponse.removeUser(connection, req.query.user);
-//       res.send(message);
-//     }
-//     else {
-//       res.sendStatus(403);
-//     }
-//   }
-//   catch (error) {
-//     console.log("ERROR:");
-//     console.log(error);
-//     res.sendStatus(500);
-//   }
-// });
+app.get('/allow-cors/remove-user', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    user = Object.values(JSON.parse(JSON.stringify(req.user[0])))[1];
+    if (req.isAuthenticated() && user === adminName) {
+      message = await sqlConnection.SQLResponse.removeUser(connection, req.query.user);
+      res.send(message);
+    }
+    else {
+      res.sendStatus(403);
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
 
 
 
-// server.listen(httpPort, () =>
-//   console.log(`Server listening on port ${httpPort}`),
-// );
+server.listen(httpPort, () =>
+  console.log(`Server listening on port ${httpPort}`),
+);
 
-// // DRAFTING //
+// DRAFTING //
 
-// var userIDList = new Array();
-// var teamList = {};
-// var pickedTeamsList = {};
-// var userList = {};
-// var draftStarted = false;
-// const roundLength = 20; // seconds
-// const startLength = 5; // seconds
-// const maxTeams = 8;
-// var startUpEnded = false;
+var userIDList = new Array();
+var teamList = {};
+var pickedTeamsList = {};
+var userList = {};
+var draftStarted = false;
+const roundLength = 20; // seconds
+const startLength = 5; // seconds
+const maxTeams = 8;
+var startUpEnded = false;
 
-// io.on('connection', (socket) => {
-//   if (socket.handshake && socket.handshake.headers && socket.handshake.headers.cookie) {
-//     var raw = cookie.parse(socket.handshake.headers.cookie)[name];
-//     if (raw) {
-//       // The cookie set by express-session begins with s: which indicates it
-//       // is a signed cookie. Remove the two characters before unsigning.
-//       socket.sessionId = signature.unsign(raw.slice(2), secret) || undefined;
-//     }
-//   }
-//   let userID = "";
-//   if (socket.sessionId) {
-//     store.get(socket.sessionId, function(err, session) {
-//       try {
-//         userID = session.passport.user;
-//       } catch (error) {
-//         console.log(error);
-//       }
-//     });
-//   }
-//   if (draftStarted) {
-//     socket.emit('draft_started');
-//   }
+io.on('connection', (socket) => {
+  if (socket.handshake && socket.handshake.headers && socket.handshake.headers.cookie) {
+    var raw = cookie.parse(socket.handshake.headers.cookie)[name];
+    if (raw) {
+      // The cookie set by express-session begins with s: which indicates it
+      // is a signed cookie. Remove the two characters before unsigning.
+      socket.sessionId = signature.unsign(raw.slice(2), secret) || undefined;
+    }
+  }
+  let userID = "";
+  if (socket.sessionId) {
+    store.get(socket.sessionId, function(err, session) {
+      try {
+        userID = session.passport.user;
+      } catch (error) {
+        console.log(error);
+      }
+    });
+  }
+  if (draftStarted) {
+    socket.emit('draft_started');
+  }
 
-//   socket.on("get_my_teams", () => {
-//     if (!draftStarted) return;
-//     try {
-//       var userTeams = userList["ID:"+userID].current_teams.toString().split(",");
-//       var teams = {};
-//       for (userTeam in userTeams) {
-//         userTeam = userTeams[userTeam];
-//         teams["team"+userTeam] = pickedTeamsList["team"+userTeam];
-//       }
-//       socket.emit("sending_my_teams", teams);
-//     }
-//     catch (error) {
-//       console.log("ERROR:");
-//       console.log(error);
-//     }
-//   });
+  socket.on("get_my_teams", () => {
+    if (!draftStarted) return;
+    try {
+      var userTeams = userList["ID:"+userID].current_teams.toString().split(",");
+      var teams = {};
+      for (userTeam in userTeams) {
+        userTeam = userTeams[userTeam];
+        teams["team"+userTeam] = pickedTeamsList["team"+userTeam];
+      }
+      socket.emit("sending_my_teams", teams);
+    }
+    catch (error) {
+      console.log("ERROR:");
+      console.log(error);
+    }
+  });
 
-//   socket.on("get_start", () => {
-//     if (draftStarted) {
-//       socket.emit('set_start', userList["ID:"+userIDList[0]].name, userList["ID:"+userIDList[1]].name);
-//       if (startUpEnded) {
-//         socket.emit("restart_timer", seconds);
-//       }
-//       else {
-//         socket.emit("restart_timer", startLength);
-//       }
-//     }
-//   });
+  socket.on("get_start", () => {
+    if (draftStarted) {
+      socket.emit('set_start', userList["ID:"+userIDList[0]].name, userList["ID:"+userIDList[1]].name);
+      if (startUpEnded) {
+        socket.emit("restart_timer", seconds);
+      }
+      else {
+        socket.emit("restart_timer", startLength);
+      }
+    }
+  });
 
-//   socket.on('start_draft', async () => {
-//     if (userID !== adminId) { return; }
-//     if (draftStarted) { return; }
-//     startUpEnded = false;
-//     console.log("draft started");
-//     draftStarted = true;
-//     io.emit('draft_started');
-//     await initializeDraft();
-//     io.emit('set_start', userList["ID:"+userIDList[0]].name, userList["ID:"+userIDList[1]].name);
-//     io.emit("restart_timer", startLength);
-//     setTimeout(startTimer, startLength*1000, true);
-//   });
+  socket.on('start_draft', async () => {
+    if (userID !== adminId) { return; }
+    if (draftStarted) { return; }
+    startUpEnded = false;
+    console.log("draft started");
+    draftStarted = true;
+    io.emit('draft_started');
+    await initializeDraft();
+    io.emit('set_start', userList["ID:"+userIDList[0]].name, userList["ID:"+userIDList[1]].name);
+    io.emit("restart_timer", startLength);
+    setTimeout(startTimer, startLength*1000, true);
+  });
 
-//   socket.on('team_picked', (number, name) => {
-//     if (!draftStarted || !startUpEnded) { return; }
-//     console.log("team picked");
-//     if (userID === userIDList[0]) {
-//       let location = isValidTeam(number, userID);
-//       if (location != null) {
-//         userIDList.push(userIDList.shift());
-//         userList["ID:"+userID].current_teams += number+",";
-//         if (userList["ID:"+userID].current_teams.split(",").length > maxTeams) {
-//           userIDList.pop();
-//         }
-//         if (userIDList.length <= 1) {
-//           var nextUser = "-";
-//         }
-//         else {
-//           nextUser = userList["ID:"+userIDList[1]].name;
-//         }
-//         socket.emit('team_added', number, name, location);
-//         teamList["team"+number].owner = userList["ID:"+userID].name;
-//         pickedTeamsList["team"+number] = teamList["team"+number]
-//         delete teamList["team"+number];
-//         if (userIDList.length <= 0) {
-//           io.emit('team_removed', number, nextUser, nextUser);
-//           draftStarted = false;
-//           saveData();
-//         }
-//         else {
-//           io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
-//           startTimer(true);
-//           io.emit('get_next_team');
-//           io.emit("restart_timer", roundLength);
-//         }
-//       }
-//       else {
-//         startTimer(true);
-//         socket.emit('wrong_next_team', number);
-//         io.emit("restart_timer", roundLength);
-//       }
-//       console.log(userList);
-//       console.log(userIDList.forEach((id, index) => {
-//         process.stdout.write(userList["ID:"+id].name + ", ");
-//       })); 
-//     }
-//   });
-// });
+  socket.on('team_picked', (number, name) => {
+    if (!draftStarted || !startUpEnded) { return; }
+    console.log("team picked");
+    if (userID === userIDList[0]) {
+      let location = isValidTeam(number, userID);
+      if (location != null) {
+        userIDList.push(userIDList.shift());
+        userList["ID:"+userID].current_teams += number+",";
+        if (userList["ID:"+userID].current_teams.split(",").length > maxTeams) {
+          userIDList.pop();
+        }
+        if (userIDList.length <= 1) {
+          var nextUser = "-";
+        }
+        else {
+          nextUser = userList["ID:"+userIDList[1]].name;
+        }
+        socket.emit('team_added', number, name, location);
+        teamList["team"+number].owner = userList["ID:"+userID].name;
+        pickedTeamsList["team"+number] = teamList["team"+number]
+        delete teamList["team"+number];
+        if (userIDList.length <= 0) {
+          io.emit('team_removed', number, nextUser, nextUser);
+          draftStarted = false;
+          saveData();
+        }
+        else {
+          io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
+          startTimer(true);
+          io.emit('get_next_team');
+          io.emit("restart_timer", roundLength);
+        }
+      }
+      else {
+        startTimer(true);
+        socket.emit('wrong_next_team', number);
+        io.emit("restart_timer", roundLength);
+      }
+      console.log(userList);
+      console.log(userIDList.forEach((id, index) => {
+        process.stdout.write(userList["ID:"+id].name + ", ");
+      })); 
+    }
+  });
+});
 
-// function isValidTeam(number, id) {
-//   try {
-//     let userTeams = userList["ID:"+id].current_teams.toString().split(",");
-//     let currentTeam;
-//     for (team in teamList) {
-//       team = teamList[team];
-//       if (number == team.number) {
-//         currentTeam = team;
-//       }
-//     }
+function isValidTeam(number, id) {
+  try {
+    let userTeams = userList["ID:"+id].current_teams.toString().split(",");
+    let currentTeam;
+    for (team in teamList) {
+      team = teamList[team];
+      if (number == team.number) {
+        currentTeam = team;
+      }
+    }
   
-//     for (team in pickedTeamsList) {
-//       team = pickedTeamsList[team];
-//       for (userTeam in userTeams) {
-//         userTeam = userTeams[userTeam];
-//         if (userTeam == team.number && currentTeam.location == team.location) {
-//           console.log("invalid team");
-//           return null;
-//         }
-//       }
-//     }
-//     return currentTeam.location;
-//   } catch (error) {
-//     console.log(error);
-//     return null;
-//   }
-// }
+    for (team in pickedTeamsList) {
+      team = pickedTeamsList[team];
+      for (userTeam in userTeams) {
+        userTeam = userTeams[userTeam];
+        if (userTeam == team.number && currentTeam.location == team.location) {
+          console.log("invalid team");
+          return null;
+        }
+      }
+    }
+    return currentTeam.location;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
+}
 
-// async function initializeDraft() {
-//   var users = await sqlConnection.SQLResponse.getUserIDs(connection);
-//   for (let i = 0; i < users.length; i++) {
-//     user = users[i]
-//     userList["ID:"+user.id] = {
-//       "name": user.name,
-//       "current_teams": "",
-//     };
-//     userIDList.push(user.id);
-//   }
-//   userIDList = userIDList
-//   .map(value => ({ value, sort: Math.random() }))
-//   .sort((a, b) => a.sort - b.sort)
-//   .map(({ value }) => value);
-//   let teams = JSON.parse(teamsJson)["teams"];
-//   for (let i = 0; i < teams.length; i++) {
-//     team = teams[i];
-//     teamList["team"+team.number.toString()] = {
-//       "name": team.name,
-//       "number": team.number,
-//       "epa": team.epa,
-//       "location": team.location,
-//       "owner": ""
-//     };
-//   }
-// }
-
-// let timeout;
-// let seconds;
-// function startTimer(clicked) {
-//   if (!startUpEnded) {
-//     startUpEnded = true;
-//     startTimer(true);
-//     io.emit("restart_timer", roundLength);
-//     io.emit('get_next_team');
-//     console.log("picking now");
-//     return;
-//   }
-//   if (clicked) {
-//       clearTimeout(timeout);
-//       seconds = roundLength;
-//   }
-//   seconds--;
-//   if (seconds >= 0) {
-//     timeout = setTimeout(startTimer, 1000);
-//   }
-//   else {
-//     if (!clicked && draftStarted) {
-//       console.log("team override");
-//       let user = userIDList[0];
-//       index = 0;
-//       number = 0;
-//       do {
-//         number = Object.values(teamList)[index].number;
-//         index++;
-//       } while (isValidTeam(number, user) == null);
-//       teamList["team"+number].owner = userList["ID:"+user].name;
-//       pickedTeamsList["team"+number] = teamList["team"+number]
-//       delete teamList["team"+number];
-
-//       userIDList.push(userIDList.shift());
-//       userList["ID:"+user].current_teams += number+",";
-//       if (userList["ID:"+user].current_teams.split(",").length > maxTeams) {
-//         userIDList.pop();
-//       }
-//       if (userIDList.length <= 1) {
-//         nextUser = "-";
-//       }
-//       else {
-//         nextUser = userList["ID:"+userIDList[1]].name;
-//       }
-//       if (userIDList.length <= 0) {
-//         io.emit('team_removed', number, nextUser, nextUser);
-//         draftStarted = false;
-//         saveData();
-//       }
-//       else {
-//         io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
-//         startTimer(true);
-//         io.emit("restart_timer", roundLength);
-//         io.emit('get_next_team');
-//         console.log(userList);
-//         console.log(userIDList.forEach((id, index) => {
-//           process.stdout.write(userList["ID:"+id].name + ", ");
-//         }));
-//       }
-//     }
-//   }
-// }
-
-
-async function saveData() {
-  console.log("Draft ended");
-  userList = { 'ID:cf3a7c':
-  { name: 'Aidan',
-    current_teams: '1323,2056,111,67,2468,176,1706,4499,' },
- 'ID:74fa59':
-  { name: 'akitiss',
-    current_teams: '1,4414,118,41,6328,694,4253,179,' },
- 'ID:99d9fa':
-  { name: 'alanna',
-    current_teams: '16,25,125,51,587,870,2481,93,' },
- 'ID:b9e29b': { name: 'BotFan', current_teams: '4,20,31,33,56,69,71,86,' },
- 'ID:263fa0':
-  { name: 'fuddster', current_teams: '8,21,28,48,60,68,78,87,' },
- 'ID:431a5f':
-  { name: 'Graeme',
-    current_teams: '254,1690,4613,148,1114,987,4481,3538,' },
- 'ID:213a12':
-  { name: 'Karissa',
-    current_teams: '1678,1577,2910,45,59,66,75,88,' },
- 'ID:4068df':
-  { name: 'Keighron', current_teams: '2704,4613,148,1114,4265,2046,1986,3636,' } 
-};
-  teamList = {};
+async function initializeDraft() {
+  var users = await sqlConnection.SQLResponse.getUserIDs(connection);
+  for (let i = 0; i < users.length; i++) {
+    user = users[i]
+    userList["ID:"+user.id] = {
+      "name": user.name,
+      "current_teams": "",
+    };
+    userIDList.push(user.id);
+  }
+  userIDList = userIDList
+  .map(value => ({ value, sort: Math.random() }))
+  .sort((a, b) => a.sort - b.sort)
+  .map(({ value }) => value);
   let teams = JSON.parse(teamsJson)["teams"];
   for (let i = 0; i < teams.length; i++) {
     team = teams[i];
@@ -682,20 +580,73 @@ async function saveData() {
       "owner": ""
     };
   }
-  pickedTeamsList = {};
-  Object.keys(userList).forEach(function(key) {
-    teams = userList[key].current_teams.split(",");
-    for (team of teams) {
-      if (team == "") continue;
-      teamList["team"+team].owner = userList[key].name;
-      pickedTeamsList["team"+team] = teamList["team"+team];
-    }
-});
-for (user in userList) {
-  user = userList[user];
-  console.log(String(user.current_teams).slice(0, -1));
-  console.log(user.name);
 }
+
+let timeout;
+let seconds;
+function startTimer(clicked) {
+  if (!startUpEnded) {
+    startUpEnded = true;
+    startTimer(true);
+    io.emit("restart_timer", roundLength);
+    io.emit('get_next_team');
+    console.log("picking now");
+    return;
+  }
+  if (clicked) {
+      clearTimeout(timeout);
+      seconds = roundLength;
+  }
+  seconds--;
+  if (seconds >= 0) {
+    timeout = setTimeout(startTimer, 1000);
+  }
+  else {
+    if (!clicked && draftStarted) {
+      console.log("team override");
+      let user = userIDList[0];
+      index = 0;
+      number = 0;
+      do {
+        number = Object.values(teamList)[index].number;
+        index++;
+      } while (isValidTeam(number, user) == null);
+      teamList["team"+number].owner = userList["ID:"+user].name;
+      pickedTeamsList["team"+number] = teamList["team"+number]
+      delete teamList["team"+number];
+
+      userIDList.push(userIDList.shift());
+      userList["ID:"+user].current_teams += number+",";
+      if (userList["ID:"+user].current_teams.split(",").length > maxTeams) {
+        userIDList.pop();
+      }
+      if (userIDList.length <= 1) {
+        nextUser = "-";
+      }
+      else {
+        nextUser = userList["ID:"+userIDList[1]].name;
+      }
+      if (userIDList.length <= 0) {
+        io.emit('team_removed', number, nextUser, nextUser);
+        draftStarted = false;
+        saveData();
+      }
+      else {
+        io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
+        startTimer(true);
+        io.emit("restart_timer", roundLength);
+        io.emit('get_next_team');
+        console.log(userList);
+        console.log(userIDList.forEach((id, index) => {
+          process.stdout.write(userList["ID:"+id].name + ", ");
+        }));
+      }
+    }
+  }
+}
+
+async function saveData() {
+  console.log("Draft ended");
   // await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
   io.emit("draft_ended");
 }

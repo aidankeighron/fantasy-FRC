@@ -168,11 +168,6 @@ def update_user_score(user):
     elim_score = 0
     active_teams = 0
 
-    if user == "Graeme":
-        teams.append(["", 1114])
-        teams.append(["", 4613])
-        teams.append(["", 148])
-
     for team in teams:
         (team_opr, team_average, team_score, team_winPercent, team_qual_score, team_elim_score) = get_team_data("frc"+str(team[1]))
         update_team(team_opr, team_average, team_score, team_winPercent, team[1])
@@ -183,7 +178,7 @@ def update_user_score(user):
             elim_score += team_elim_score
             active_teams += 1
     if active_teams == 0:
-        return (0, 0, 0)
+        return (0)
     # user_score /= active_teams
     
     return (user_score, quals_score, elim_score)
