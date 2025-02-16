@@ -45,7 +45,7 @@ def update_team(opr, average, score, winPercent, number):
     
 ## DATABASE ## 
 
-YEAR = "2024"
+YEAR = "2025"
 
 cached_teams_statuses = {}
 cached_team_oprs = {}
@@ -116,7 +116,7 @@ def get_team_data(team):
     team_qual_matches_played = 0
     # Get events
     for event in events:
-        if event == "2024week0":
+        if event == "2025week0":
             continue
         (qual_opr, qual_average, qual_wins, qual_matches_played, qual_event_played) = get_team_event_quals(team, event)
         if not qual_event_played:

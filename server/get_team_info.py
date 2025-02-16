@@ -5,7 +5,7 @@ from configparser import ConfigParser
 import requests
 import json
 
-YEAR = 2024
+YEAR = 2025
 
 config = ConfigParser()
 config.read("server_info.ini")
