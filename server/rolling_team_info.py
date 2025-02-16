@@ -178,7 +178,7 @@ def update_user_score(user):
             elim_score += team_elim_score
             active_teams += 1
     if active_teams == 0:
-        return (0)
+        return (0, 0, 0)
     # user_score /= active_teams
     
     return (user_score, quals_score, elim_score)
