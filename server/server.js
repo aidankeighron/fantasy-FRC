@@ -647,6 +647,6 @@ function startTimer(clicked) {
 
 async function saveData() {
   console.log("Draft ended");
-  // await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
+  await sqlConnection.SQLResponse.draftEnded(connection, userList, pickedTeamsList);
   io.emit("draft_ended");
 }
