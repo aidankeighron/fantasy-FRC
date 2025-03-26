@@ -71,7 +71,7 @@ def get_team_event_quals(team, event):
             teams_statuses = get_event(event, "teams/statuses")
             cached_teams_statuses.update({event: teams_statuses})
 
-        average = teams_statuses[team]["qual"]["ranking"]["sort_orders"][1]
+        average = teams_statuses[team]["qual"]["ranking"]["sort_orders"][2]
         wins = teams_statuses[team]["qual"]["ranking"]["record"]["wins"]
         matches_played = teams_statuses[team]["qual"]["ranking"]["matches_played"]
         
@@ -137,8 +137,8 @@ def get_team_data(team):
     
     
     # Qual
-    # team_opr /= played_quals
-    # team_average /= played_quals
+    team_opr /= played_quals
+    team_average /= played_quals
     qual_team_win_percent = (team_qual_wins/team_qual_matches_played)# / played_quals
     team_qual_score = qual_team_win_percent * team_average
     # Elim
