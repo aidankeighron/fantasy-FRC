@@ -1,124 +1,131 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
-
-:root {
-    --black-1: #050505;
-    --green-1: #16a085;
-    --green-2: #12876f;
-    --green-3: #80ADA4;
-    --white-1: #FFF;
-    --grey-1: #808080;
-    --grey-2: #B0B0B0;
-}
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    border-radius: 5px;
-    font-family: "JetBrains Mono", monospace;
-}
+/* Login Page Styles */
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
 
 body {
-    background: var(--green-2);
-    overflow: hidden;
-}
-
-::selection {
-    background: rgba(26,188,156,0.3);
+    overflow: hidden; /* Prevent scrolling on login page */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
 }
 
 .title-container {
-    text-align: center;
-    font-size: 50px;
-    color: var(--black-1);
-}
-
-.container{
-    /* max-width: 440px;
-    padding: 0 20px;
-    margin: 25% auto; */
     position: absolute;
-    top: 30%;
-    left: calc(50% - 174px);
-}
-
-.wrapper{
+    top: 10%;
     width: 100%;
-    background: var(--white-1);
-    border-radius: 10px;
-    box-shadow: 0px 4px 10px 1px rgba(0,0,0,0.1);
+    text-align: center;
 }
 
-.wrapper .title{
+.title-container .title {
+    font-size: 3rem;
+    color: var(--primary);
+    text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    font-weight: 800;
+}
+
+.container {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    padding: 0 20px;
+    z-index: 1;
+}
+
+.wrapper {
+    background: var(--bg-surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 15px 25px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+.wrapper .title {
     height: 90px;
-    background: var(--green-1);
-    border-radius: 5px 5px 0 0;
-    color: var(--white-1);
-    font-size: 30px;
-    font-weight: 600;
+    background: rgba(16, 185, 129, 0.2); /* Semi-transparent green */
+    color: var(--text-main);
+    font-size: 1.8rem;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-bottom: 1px solid var(--border);
 }
 
-.wrapper form{
-    padding: 30px 25px 25px 25px;
+.wrapper form {
+    padding: 30px 25px 35px 25px;
 }
-.wrapper form .row{
-    height: 45px;
-    margin-bottom: 15px;
+
+.wrapper form .row {
+    height: 50px;
+    margin-bottom: 20px;
     position: relative;
 }
-.wrapper form .row input{
+
+.wrapper form .row input {
     height: 100%;
     width: 100%;
     outline: none;
     padding-left: 60px;
-    border-radius: 5px;
-    border: 1px solid lightgrey;
-    font-size: 16px;
-    transition: all 0.3s ease;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.2);
+    font-size: 1rem;
+    color: var(--text-main);
+    transition: var(--transition);
 }
-form .row input:focus{
-    border-color: var(--green-1);
-    box-shadow: inset 0px 0px 2px 2px rgba(26,188,156,0.25);
+
+.wrapper form .row input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px var(--primary-glow);
+    background: rgba(0, 0, 0, 0.3);
 }
-form .row input::placeholder{
-    color: #999;
+
+.wrapper form .row input::placeholder {
+    color: var(--text-muted);
 }
-.wrapper form .row i{
+
+.wrapper form .row i {
     position: absolute;
-    width: 47px;
+    width: 50px;
     height: 100%;
-    color: var(--white-1);
-    font-size: 18px;
-    background: var(--green-1);
-    border: 1px solid var(--green-1);
-    border-radius: 5px 0 0 5px;
+    color: var(--text-main);
+    font-size: 1.2rem;
+    background: var(--primary); /* Green accent for icon box */
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
 }
-.wrapper form .pass{
-    margin: -8px 0 20px 0;
+
+.wrapper form .pass {
+    margin: -10px 0 20px 0;
+    text-align: center;
 }
-.wrapper form .pass p{
-    color: red;
-    font-size: 17px;
-    text-decoration: none;
+
+.wrapper form .pass p {
+    color: #ef4444; /* Red for errors */
+    font-size: 0.9rem;
 }
-.wrapper form .pass a:hover{
-    text-decoration: underline;
-}
-.wrapper form .button input{
-    color: var(--white-1);
-    font-size: 20px;
-    font-weight: 500;
-    padding-left: 0px;
-    background: var(--green-1);
-    border: 1px solid var(--green-1);
+
+.wrapper form .button input {
+    width: 100%;
+    height: 100%;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 600;
+    padding-left: 0;
+    background: var(--primary);
+    border: none;
+    border-radius: var(--radius-md);
     cursor: pointer;
+    transition: var(--transition);
+    box-shadow: 0 5px 15px var(--primary-glow);
 }
-form .button input:hover{
-    background: var(--green-2);
+
+.wrapper form .button input:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
 }

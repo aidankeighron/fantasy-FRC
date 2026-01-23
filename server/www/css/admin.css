@@ -1,20 +1,65 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
+/* Admin Page Styles */
 
-:root {
-    --black-1: #050505;
-    --green-1: #16a085;
-    --green-2: #12876f;
-    --green-3: #80ADA4;
-    --white-1: #FFF;
-    --grey-1: #808080;
-    --grey-2: #B0B0B0;
-    --grey-3: #D0D0D0;
+/* Base body background is handled by style.css */
+
+h1 {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 2.5rem;
+    color: var(--primary);
+    text-shadow: 0 0 10px var(--primary-glow);
 }
 
-* {
-    font-family: "JetBrains Mono", monospace;
+/* Layout for Admin Dashboard */
+.admin-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 2rem;
+    gap: 3rem;
 }
 
-body {
-    background: var(--green-2);
+/* Panel Styling (reusing glass panel concept) */
+.admin-panel {
+    background: var(--bg-surface);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    min-width: 300px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+input[type=text] {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+}
+
+input[type=text]:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 5px var(--primary-glow);
+}
+
+button {
+    width: 100%;
+    margin-top: 10px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+button:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 0 10px var(--primary-glow);
 }

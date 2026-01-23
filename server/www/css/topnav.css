@@ -1,53 +1,42 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
-
-:root {
-    --black-1: #050505;
-    --green-1: #16a085;
-    --green-2: #12876f;
-    --white-1: #FFF;
-    --grey-1: #808080;
-}
-
-* {
-    font-family: "JetBrains Mono", monospace;
-}
-
-/* Add a black background color to the top navigation */
+/* The navigation bar */
 .topnav {
-    background-color: var(--black-1);
-    overflow: hidden;
-    height: 10%;
-    border-radius: 5px;
+    background-color: var(--bg-surface);
+    height: auto;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    margin-bottom: 20px;
+    
+    /* Glassmorphism */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Style the links inside the navigation bar */
+/* Links inside the navigation bar */
 .topnav a {
-    float: left;
-    color: var(--white-1);
+    color: var(--text-muted);
     text-align: center;
-    padding: 25px 16px;
+    padding: 16px 20px;
     text-decoration: none;
-    font-size: 17px;
-    -webkit-font-smoothing: antialiased;
-    -webkit-transition:0.5s;
-    -webkit-transform: perspective(1px) scale(1);
-    transition:0.5s;
-    transform: perspective(1px) scale(1);
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
 }
 
 /* Change the color of links on hover */
 .topnav a:hover {
-    background-color: #ddd;
-    color: var(--black-1);
-    -webkit-font-smoothing: antialiased;
-    -webkit-transition:0.5s;
-    -webkit-transform: perspective(1px) scale(1.05);
-    transition:0.5s;
-    transform: perspective(1px) scale(1.05);
+    background-color: var(--bg-surface-hover);
+    color: var(--primary);
+    transform: translateY(-2px);
 }
 
-/* Add a color to the active/current link */
+/* Active/current link */
 .topnav a.active {
-    background-color: var(--green-1);
-    color: white;
+    background-color: var(--primary-glow);
+    color: var(--primary);
+    box-shadow: 0 0 10px var(--primary-glow);
 }

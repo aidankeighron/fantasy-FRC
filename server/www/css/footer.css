@@ -1,25 +1,30 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
-
-:root {
-    --black-1: #050505;
-    --green-1: #16a085;
-    --green-2: #12876f;
-    --green-3: #80ADA4;
-    --white-1: #FFF;
-    --grey-1: #808080;
-    --grey-2: #B0B0B0;
-    --grey-3: #D0D0D0;
+/* Footer Styles */
+.footer {
+    background-color: var(--bg-surface);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100% !important; /* Override inline styles */
+    margin: 0 !important;   /* Override inline styles */
+    font-size: 0.85rem;
+    z-index: 100;
 }
 
-.footer {
-    /* margin: 0px 0px 0px -8px; */
-    border-radius: 5px;
-    font-family: "JetBrains Mono", monospace;
-    /* position: fixed; */
-    padding: 10px 10px 10px 10px;
-    /* bottom: 0; */
-    /* width: 100%; */
-    /* Height of the footer*/
-    /* height: 40px; */
-    background: var(--white-1);
+.footer a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.footer a:hover {
+    color: var(--primary-hover);
+    text-decoration: underline;
+    text-shadow: 0 0 8px var(--primary-glow);
 }

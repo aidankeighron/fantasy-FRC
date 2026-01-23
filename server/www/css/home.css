@@ -1,118 +1,110 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
+/* Home Page Styles */
 
-:root {
-    --black-1: #050505;
-    --green-1: #16a085;
-    --green-2: #12876f;
-    --green-3: #80ADA4;
-    --white-1: #FFF;
-    --grey-1: #808080;
-    --grey-2: #B0B0B0;
-    --grey-3: #D0D0D0;
-}
-
-* {
-    font-family: "JetBrains Mono", monospace;
-}
-
-body {
-    background: var(--green-2);
-}
-
-h3 {
-    color: var(--white-1);
-    font-size: 25px;
-    font-weight: bold;
-}
-
+/* User Stats Card */
 .user-stats {
-    margin-left: 20px;
-    border-radius: 5px;
-    border: 2px solid var(--black-1);
-    max-width: 20%;
-    background-color: var(--white-1);
-    -webkit-font-smoothing: antialiased;
-    -webkit-transition:0.5s;
-    -webkit-transform: perspective(1px) scale(1);
-    transition:0.5s;
-    transform: perspective(1px) scale(1);
+    background: var(--bg-surface);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    
+    padding: 1.5rem;
+    margin: 20px; /* Keep margin but ensure it fits layout */
+    max-width: 300px; /* Better constraint */
+    color: var(--text-main);
+    
+    transition: var(--transition);
 }
 
 .user-stats:hover {
-    -webkit-font-smoothing: antialiased;
-    -webkit-transition:0.5s;
-    -webkit-transform: perspective(1px) scale(1.05);
-    transition:0.5s;
-    transform: perspective(1px) scale(1.05);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-color: rgba(16, 185, 129, 0.3); /* Slight green border on hover */
 }
 
-.user-stats p, h3 {
-    margin: 20px;
+.user-stats h3 {
+    margin-top: 0;
+    color: var(--primary);
+    border-bottom: 2px solid var(--border);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
 }
 
+.user-stats p {
+    font-size: 1.1rem;
+    margin: 0.5rem 0;
+}
+
+.my-team h3 {
+    margin-left: 20px;
+    color: var(--text-main);
+}
+
+/* Team Table Styles - specific to home page mostly */
 .team-table {
-    border-collapse: collapse;
-    margin: 25px 0;
-    font-size: 0.9em;
+    border-collapse: separate; /* Required for border-radius on rows/cells if needed */
+    border-spacing: 0;
+    margin: 25px 20px;
+    font-size: 0.95em;
     min-width: 400px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-    border-radius: 5px 5px 0 0;
+    width: calc(100% - 40px);
+    max-width: 1000px;
+    
+    background: var(--bg-surface);
+    backdrop-filter: blur(12px);
+    border-radius: var(--radius-md);
     overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
 .team-table thead tr {
-    background-color: var(--green-1);
-    color: var(--white-1);
+    background-color: rgba(16, 185, 129, 0.2); /* Low opacity prompt green */
+    color: var(--primary);
     text-align: left;
-    font-weight: bold;
-}
-
-.team-table button {
-    border-radius: 5px;
-    background-color: var(--white-1);
-    transition: 0.5s;
-}
-
-.team-table button:hover {
-    background-color: var(--grey-3);
-    transition: 0.2s;
-}
-
-.team-table button:active {
-    transform: scale(1.05);
-    transition: 0.2s;
 }
 
 .team-table th,
 .team-table td {
-    padding: 12px 15px;
+    padding: 12px 20px;
 }
 
 .team-table tbody tr {
-    border-bottom: 1px solid #dddddd;
-    -webkit-font-smoothing: antialiased;
-    -webkit-transition:0.5s;
-    -webkit-transform: perspective(1px) scale(1);
-    transition:0.5s;
-    transform: perspective(1px) scale(1);
+    border-bottom: 1px solid var(--border);
+    transition: var(--transition);
 }
 
+/* Row Hover Effect */
 .team-table tbody tr:hover {
-    -webkit-font-smoothing: antialiased;
-    -webkit-transition:0.5s;
-    -webkit-transform: perspective(1px) scale(1.02);
-    transition:0.5s;
-    transform: perspective(1px) scale(1.02);
-}
-
-.team-table tbody tr:nth-of-type(even) {
-    background-color: var(--grey-2);
-}
-
-.team-table tbody tr:nth-of-type(odd) {
-    background-color: var(--white-1);
+    background-color: rgba(255, 255, 255, 0.05);
+    transform: scale(1.01);
 }
 
 .team-table tbody tr:last-of-type {
-    border-bottom: 2px solid var(--green-1);
+    border-bottom: 2px solid var(--primary);
+}
+
+/* Stripes */
+.team-table tbody tr:nth-of-type(even) {
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Buttons in table */
+.team-table button {
+    padding: 0.5rem 1rem;
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    border: 1px solid var(--primary);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+}
+
+.team-table button:hover {
+    background-color: var(--primary);
+    color: var(--bg-dark);
+    box-shadow: 0 0 10px var(--primary-glow);
+}
+
+.team-table button:active {
+    transform: scale(0.95);
 }

@@ -1,91 +1,67 @@
-@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100;0,300;0,400;0,800;1,100;1,300;1,400;1,800&display=swap");
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed&display=swap');
-
-:root {
-    --black-1: #050505;
-    --green-1: #16a085;
-    --green-2: #12876f;
-    --green-3: #80ADA4;
-    --white-1: #FFF;
-    --grey-1: #808080;
-    --grey-2: #B0B0B0;
-    --grey-3: #D0D0D0;
-}
-
-* {
-    font-family: "JetBrains Mono", monospace;
-}
-
-body {
-    background: var(--green-2);
-}
+/* Global Table Styles */
 
 .table {
-    border-collapse: collapse;
-    margin: 25px 0;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0; /* Let containers handle margin */
     font-size: 0.9em;
-    min-width: 400px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-    border-radius: 5px 5px 0 0;
-    overflow: hidden;
+    
+    background: transparent; /* Use container background */
 }
 
-.table thead tr {
-    background-color: var(--green-1);
-    color: var(--white-1);
+/* Header */
+.table th, .table thead tr {
+    background-color: rgba(16, 185, 129, 0.15); /* Subtle green tint */
+    color: var(--primary);
     text-align: left;
-    font-weight: bold;
+    font-weight: 700;
+    padding: 12px 15px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(5px);
 }
 
-.table button {
-    border-radius: 5px;
-    background-color: var(--white-1);
-    transition: 0.5s;
+.table th:first-child {
+    border-top-left-radius: var(--radius-md);
+}
+.table th:last-child {
+    border-top-right-radius: var(--radius-md);
 }
 
-.table button:hover {
-    background-color: var(--grey-3);
-    transition: 0.2s;
-}
-
-.table button:active {
-    transform: scale(1.05);
-    transition: 0.2s;
-}
-
-.table th,
+/* Body */
 .table td {
     padding: 12px 15px;
-    font-family: "Roboto Condensed", sans-serif;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Inter', sans-serif;
 }
 
 .table tbody tr {
-    border-bottom: 1px solid #dddddd;
-    backface-visibility: hidden;
-    -webkit-font-smoothing: antialiased;
-    -webkit-transition:0.5s;
-    -webkit-transform: perspective(1px) scale(1);
-    transition:0.5s;
-    transform: perspective(1px) scale(1);
+    transition: var(--transition);
 }
 
 .table tbody tr:hover {
-    -webkit-font-smoothing: antialiased;
-    -webkit-transition:0.5s;
-    -webkit-transform: perspective(1px) scale(1.02);
-    transition:0.5s;
-    transform: perspective(1px) scale(1.02);
+    background-color: rgba(255, 255, 255, 0.05);
 }
 
-
+/* Stripe effect if desired, or keep clean */
 .table tbody tr:nth-of-type(even) {
-    background-color: var(--grey-2);
+    background-color: rgba(255, 255, 255, 0.02);
 }
 
-.table tbody tr:nth-of-type(odd) {
-    background-color: var(--white-1);
+/* Buttons inside tables */
+.table button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
 }
 
-.table tbody tr:last-of-type {
-    border-bottom: 2px solid var(--green-1);
+.table button:hover {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: 0 0 10px var(--primary-glow);
 }
