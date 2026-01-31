@@ -69,8 +69,13 @@
     <script>
         var socket = io();
         
-        socket.on("team_removed", (number, current, nextUser) => {
-            getTeams();
+        socket.on("team_removed", (number, current, nextUser, owner) => {
+            if (owner) {
+                addTeamToOwner(owner, number);
+            } else {
+                // Fallback if for some reason owner isn't sent (shouldn't happen with new server code)
+                 initializeTeams();
+            }
         });
 
         function removeAllChildNodes(parent) {
@@ -79,55 +84,84 @@
             }
         }
 
-        async function getTeams() {
+        async function initializeTeams() {
             try {
-                await fetch(url+'/allow-cors/all-users', {mode:'cors'}).then(resp => {
-                resp.json().then(data => {
-                    removeAllChildNodes(document.getElementById('user-tables'));
-                    Object.entries(data["userList"]).forEach(user => {
-                        let table = document.createElement('table');
-                        let thead = document.createElement('thead');
-                        let tbody = document.createElement('tbody');
-                        table.appendChild(thead);
-                        table.appendChild(tbody);
-
-                        
-                        let row_1 = document.createElement('tr');
-                        let heading_1 = document.createElement('th');
-                        heading_1.innerHTML = user[1].name;
-                        row_1.appendChild(heading_1);
-                        thead.appendChild(row_1);
-                        
-                        let userTeams = user[1].current_teams.toString().split(",");
-                        for (userTeam in userTeams) {
-                            userTeam = userTeams[userTeam];
-                            if (userTeam == "" || userTeam == null) continue;
-                            let row_2 = document.createElement('tr');
-                            let row_2_data_1 = document.createElement('td');
-                            row_2_data_1.innerHTML = userTeam;
-                            
-                            row_2.appendChild(row_2_data_1);
-                            tbody.appendChild(row_2);
-                        }
-                        table.setAttribute('class', 'table');
-                        
-                        let divTable = document.createElement("div");
-                        divTable.setAttribute('class', 'tablediv');
-                        
-                        divTable.append(table);
-                        document.getElementById('user-tables').appendChild(divTable);
-                    });
-
+                // Only fetch once
+                const response = await fetch(url+'/allow-cors/all-users', {mode:'cors'});
+                const data = await response.json();
                 
-                    });
+                removeAllChildNodes(document.getElementById('user-tables'));
+                
+                // Sort users or keep consistent order if needed, assuming userList order is fine
+                Object.entries(data["userList"]).forEach(user => {
+                    const userName = user[1].name;
+                    // Create Container
+                    let divTable = document.createElement("div");
+                    divTable.setAttribute('class', 'tablediv');
+                    
+                    let table = document.createElement('table');
+                    table.setAttribute('class', 'table');
+                    // Identifier for efficient updates
+                    table.setAttribute('data-owner', userName); 
+
+                    let thead = document.createElement('thead');
+                    let tbody = document.createElement('tbody');
+                    
+                    table.appendChild(thead);
+                    table.appendChild(tbody);
+
+                    // Header
+                    let row_1 = document.createElement('tr');
+                    let heading_1 = document.createElement('th');
+                    heading_1.innerHTML = userName;
+                    row_1.appendChild(heading_1);
+                    thead.appendChild(row_1);
+                    
+                    // Existing Teams
+                    let userTeams = user[1].current_teams.toString().split(",");
+                    for (userTeam of userTeams) {
+                        if (userTeam == "" || userTeam == null) continue;
+                        let row = document.createElement('tr');
+                        let cell = document.createElement('td');
+                        cell.innerHTML = userTeam;
+                        row.appendChild(cell);
+                        tbody.appendChild(row);
+                    }
+                    
+                    divTable.append(table);
+                    document.getElementById('user-tables').appendChild(divTable);
                 });
+
             }
             catch (error) {
                 alert("ERROR");
-                console.log(error);
+                console.log("Error initializing teams:", error);
             }
         }
 
-        getTeams();
+        function addTeamToOwner(ownerName, teamNumber) {
+            // Find the table for this owner
+            const tables = document.querySelectorAll('table[data-owner]');
+            let targetTable = null;
+            for (let table of tables) {
+                if (table.getAttribute('data-owner') === ownerName) {
+                    targetTable = table;
+                    break;
+                }
+            }
+
+            if (targetTable) {
+                let tbody = targetTable.querySelector('tbody');
+                let row = document.createElement('tr');
+                let cell = document.createElement('td');
+                cell.innerHTML = teamNumber;
+                row.appendChild(cell);
+                tbody.appendChild(row);
+            } else {
+                console.log(`Table for owner ${ownerName} not found.`);
+            }
+        }
+
+        initializeTeams();
     </script>
 </html>

@@ -503,12 +503,12 @@ io.on('connection', (socket) => {
         pickedTeamsList["team"+number] = teamList["team"+number]
         delete teamList["team"+number];
         if (userIDList.length <= 0) {
-          io.emit('team_removed', number, nextUser, nextUser);
+          io.emit('team_removed', number, nextUser, nextUser, userList["ID:"+userID].name);
           draftStarted = false;
           saveData();
         }
         else {
-          io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
+          io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser, userList["ID:"+userID].name);
           startTimer(true);
           io.emit('get_next_team');
           io.emit("restart_timer", roundLength);
