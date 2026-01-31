@@ -238,12 +238,22 @@ class SQLResponse {
 
 
 module.exports = {
-    setupSQLConnection: function setupResponse() {
-        const fs = require('fs');
-        const ini = require('ini');
-        const config = ini.parse(fs.readFileSync('server_info.ini', 'utf-8'));
-        
+    setupSQLConnection: function setupResponse(configOverride) {
         const mysql = require('mysql');
+        let config;
+
+        if (configOverride) {
+            config = configOverride;
+        } else {
+            const fs = require('fs');
+            const ini = require('ini');
+            try {
+                config = ini.parse(fs.readFileSync('server_info.ini', 'utf-8'));
+            } catch (err) {
+                console.error("Error reading server_info.ini and no config provided:", err);
+                return null;
+            }
+        }
         
         const sqlServer = mysql.createConnection({
           host: config.SQL.SQL_IP,

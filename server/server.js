@@ -16,8 +16,27 @@ const io = new Server(server);
 const cookie = require('cookie');
 const signature = require('cookie-signature');
 
-const config = ini.parse(fs.readFileSync('server_info.ini', 'utf-8'))
-const connection = sqlConnection.setupSQLConnection();
+let config = {};
+try {
+  if (fs.existsSync('server_info.ini')) {
+    config = ini.parse(fs.readFileSync('server_info.ini', 'utf-8'));
+  }
+} catch (e) {
+  console.log("Warning: Could not read server_info.ini, relying on environment variables.");
+}
+
+// Ensure sections exist
+if (!config.SQL) config.SQL = {};
+if (!config.SERVER) config.SERVER = {};
+
+// Override with Environment Variables
+if (process.env.SQL_IP) config.SQL.SQL_IP = process.env.SQL_IP;
+if (process.env.SQL_USER) config.SQL.SQL_User = process.env.SQL_USER;
+if (process.env.SQL_PASSWORD) config.SQL.SQL_Passw = process.env.SQL_PASSWORD;
+if (process.env.SQL_DATABASE) config.SQL.SQL_Database = process.env.SQL_DATABASE;
+if (process.env.SECRET) config.SERVER.SECRET = process.env.SECRET;
+
+const connection = sqlConnection.setupSQLConnection(config);
 const httpPort = 80;
 const SQLRegex = new RegExp("[\\;\\/\"\'\,\.]", 'g');
 

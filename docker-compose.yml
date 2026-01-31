@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  app:
+    build: 
+      context: ./server
+    ports:
+      - "80:80"
+    environment:
+      - SQL_IP=db
+      - SQL_USER=root
+      - SQL_PASSWORD=password
+      - SQL_DATABASE=fantasy
+      - SECRET=changeme_in_production
+      - BLUE_ALLIANCE=your_tba_key_here
+    volumes:
+      - ./server/sessions:/usr/src/app/sessions
+      # Mount team_info.json so updates persist if desired, though DB is source of truth?
+      # If python scripts update local json file, we might want to persist it.
+      - ./server/team_info.json:/usr/src/app/team_info.json
+    depends_on:
+      - db
+    restart: always
+
+  db:
+    image: mysql:8.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=fantasy
+    volumes:
+      - db_data:/var/lib/mysql
+    # Expose DB port if you want to connect from host tools
+    ports:
+      - "3306:3306"
+    restart: always
+
+volumes:
+  db_data:
