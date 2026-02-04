@@ -90,9 +90,46 @@ button, .btn {
 
 /* Layout Utilities */
 .container {
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 6rem 4rem;
+}
+
+/* Global Form Elements */
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="number"],
+input[type="date"],
+input:not([type]), /* For inputs without type attribute */
+textarea,
+select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: rgba(30, 41, 59, 0.5); /* Semi-transparent dark */
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    transition: var(--transition);
+    outline: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem; /* Add spacing below inputs */
+    max-width: 400px;      /* Fix width on large screens */
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+    background-color: rgba(30, 41, 59, 0.8);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 100px;
 }
 
 .flex-center {
