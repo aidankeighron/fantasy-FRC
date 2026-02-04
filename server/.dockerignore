@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.DS_Store
+__pycache__
+*.pyc
+sessions
+server_info.ini

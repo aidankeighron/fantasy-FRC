@@ -19,7 +19,8 @@ services:
       # If python scripts update local json file, we might want to persist it.
       - ./server/team_info.json:/usr/src/app/team_info.json
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     restart: always
 
   db:
@@ -29,9 +30,15 @@ services:
       - MYSQL_DATABASE=fantasy
     volumes:
       - db_data:/var/lib/mysql
+      - ./server/init.sql:/docker-entrypoint-initdb.d/init.sql
     # Expose DB port if you want to connect from host tools
     ports:
       - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     restart: always
 
 volumes:
