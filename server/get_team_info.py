@@ -5,7 +5,7 @@ from configparser import ConfigParser
 import requests
 import json
 
-YEAR = 2025
+YEAR = 2026
 
 config = ConfigParser()
 config.read("server_info.ini")
@@ -31,8 +31,8 @@ while True:
         try:
             team_info = sb.get_team_year(team["team_number"], YEAR-1)
         except:
-            team_info = {"epa_end": 0}
-        team_data.append({"name": team["nickname"], "number": team["team_number"], "epa": team_info["epa_end"], "average": 0, "score": 0, "location": team["state_prov"] if team["country"] == "USA" else team["country"]})
+            team_info = {"epa": {"norm": 0}}
+        team_data.append({"name": team["nickname"], "number": team["team_number"], "epa": team_info["epa"]["norm"], "average": 0, "score": 0, "location": team["state_prov"] if team["country"] == "USA" else team["country"]})
     # last_team_number = int(teams[-1]["team_number"])
 
 # while True:
