@@ -139,3 +139,4 @@ server/server.crt
 server/server.key
 testing.session.sql
 /server/node_modules
+/keys
