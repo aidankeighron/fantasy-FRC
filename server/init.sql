@@ -32,6 +32,19 @@ GRANT ALL PRIVILEGES ON fantasy.* TO 'root'@'%';
 ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'password';
 FLUSH PRIVILEGES;
 
+-- Create trades table
+CREATE TABLE IF NOT EXISTS trades (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id VARCHAR(255) NOT NULL,
+    receiver_id VARCHAR(255) NOT NULL,
+    sender_team INT NOT NULL,
+    receiver_team INT NOT NULL,
+    status ENUM('pending', 'accepted', 'rejected') DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
 -- Insert admin user account
 -- Username: Aidan, Password: mad77777 (hashed with bcrypt)
 INSERT INTO users (id, name, passw, teams, score, quals_score, elim_score, position)

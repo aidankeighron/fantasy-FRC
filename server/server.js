@@ -266,6 +266,22 @@ app.get('/settings', (req, res) => {
   }
 });
 
+app.get('/trades', (req, res) => {
+  try {
+    if (req.isAuthenticated()) {
+      res.sendFile('www/trades.html', { root: __dirname });
+    }
+    else {
+      res.redirect('/');
+    }
+  }
+  catch (error) {
+    console.log("ERROR:");
+    console.log(error);
+    res.sendStatus(500);
+  }
+});
+
 app.get('/allow-cors/teams', async (req, res) => {
   try {
     res.set('Access-Control-Allow-Origin', '*');
@@ -413,6 +429,89 @@ app.get('/allow-cors/remove-user', async (req, res) => {
   catch (error) {
     console.log("ERROR:");
     console.log(error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/trade/propose', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.isAuthenticated()) {
+      let sender = Object.values(JSON.parse(JSON.stringify(req.user[0])));
+      let senderId = sender[0];
+      
+      // We expect receiver ID, sender team number, receiver team number
+      let receiverId = req.query.receiver_id;
+      let senderTeam = req.query.sender_team;
+      let receiverTeam = req.query.receiver_team;
+
+      if (!receiverId || !senderTeam || !receiverTeam) {
+        return res.send("Missing keys");
+      }
+
+      message = await sqlConnection.SQLResponse.proposeTrade(connection, senderId, receiverId, senderTeam, receiverTeam);
+      res.send(message);
+    } else {
+      res.sendStatus(403);
+    }
+  } catch (error) {
+    console.log("ERROR:", error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/trade/pending', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.isAuthenticated()) {
+      let user = Object.values(JSON.parse(JSON.stringify(req.user[0])));
+      let userId = user[0];
+      
+      let trades = await sqlConnection.SQLResponse.getPendingTrades(connection, userId);
+      res.send(JSON.stringify(trades));
+    } else {
+      res.sendStatus(403);
+    }
+  } catch (error) {
+    console.log("ERROR:", error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/trade/sent', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.isAuthenticated()) {
+      let user = Object.values(JSON.parse(JSON.stringify(req.user[0])));
+      let userId = user[0];
+      
+      let trades = await sqlConnection.SQLResponse.getSentTrades(connection, userId);
+      res.send(JSON.stringify(trades));
+    } else {
+      res.sendStatus(403);
+    }
+  } catch (error) {
+    console.log("ERROR:", error);
+    res.sendStatus(500);
+  }
+});
+
+app.get('/allow-cors/trade/respond', async (req, res) => {
+  try {
+    res.set('Access-Control-Allow-Origin', '*');
+    if (req.isAuthenticated()) {
+      let tradeId = req.query.trade_id;
+      let action = req.query.action; // 'accepted' or 'rejected'
+
+      if (!tradeId || !action) return res.send("Missing params");
+
+      message = await sqlConnection.SQLResponse.respondToTrade(connection, tradeId, action);
+      res.send(message);
+    } else {
+      res.sendStatus(403);
+    }
+  } catch (error) {
+    console.log("ERROR:", error);
     res.sendStatus(500);
   }
 });

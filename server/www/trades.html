@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Trades | Fantasy FRC</title>
+        <link rel="shortcut icon" href="./css/favicon.png" type="image/x-icon">
+        <link rel="stylesheet" href="./css/style.css">
+        <link rel="stylesheet" href="./css/topnav.css">
+        <link rel="stylesheet" href="./css/table.css">
+        <link rel="stylesheet" href="./css/footer.css">
+        <style>
+            .trade-section {
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                background-color: rgba(0, 0, 0, 0.2);
+                margin: 20px;
+                padding: 20px;
+                border-radius: 10px;
+            }
+            .trade-form select {
+                padding: 10px;
+                margin: 5px;
+                border-radius: 5px;
+                background-color: rgba(255, 255, 255, 0.1);
+                color: white;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+            }
+            .trade-form button {
+                padding: 10px 20px;
+                border-radius: 5px;
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                cursor: pointer;
+                transition: background 0.3s;
+            }
+            .trade-form button:hover {
+                background-color: #45a049;
+            }
+            .action-btn {
+                padding: 5px 10px;
+                margin: 0 5px;
+                border: none;
+                border-radius: 3px;
+                cursor: pointer;
+                color: white;
+            }
+            .accept-btn { background-color: #4CAF50; }
+            .reject-btn { background-color: #f44336; }
+            h2 { border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 20px; }
+        </style>
+    </head>
+    <body>
+        <div class="topnav" id="topnav">
+            <a href="logout">Logout</a>
+            <a href="home">Home</a>
+            <a href="rankings">Rankings</a>
+            <a href="teams">Teams</a>
+            <a class="active" href="trades">Trades</a>
+            <a href="how_to">How To</a>
+            <a href="settings">Settings</a>
+        </div>
+
+        <div class="container">
+            <div class="trade-section">
+                <h2>Propose a Trade</h2>
+                <div class="trade-form">
+                    <label>Trade with:</label>
+                    <select id="userSelect" onchange="loadTheirTeams()"></select>
+                    
+                    <br><br>
+                    
+                    <label>I want their team:</label>
+                    <select id="theirTeamSelect"></select>
+                    
+                    <label>For my team:</label>
+                    <select id="myTeamSelect"></select>
+                    
+                    <br><br>
+                    <button onclick="proposeTrade()">Propose Trade</button>
+                    <p id="proposeMsg"></p>
+                </div>
+            </div>
+
+            <div class="trade-section">
+                <h2>Incoming Trades (Action Required)</h2>
+                <div id="pendingTrades">Loading...</div>
+            </div>
+
+            <div class="trade-section">
+                <h2>Sent Trades (Waiting)</h2>
+                <div id="sentTrades">Loading...</div>
+            </div>
+        </div>
+
+        <p style="position: fixed; bottom: 0; width: 100%; margin: 5px;" class="footer">
+            © 2025 | Aidan Keighron
+        </p>
+
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="./js/trades.js"></script>
+        <script>
+            var socket = io();
+            socket.on("draft_started", () => {
+                document.getElementById("topnav").innerHTML += '<a href="drafting">Drafting</a>';
+            });
+            initTrades();
+        </script>
+    </body>
+</html>
