@@ -143,12 +143,12 @@ function search(tableID, nameCol, numCol) {
   }
 }
 
-async function loadTeams() {
+  async function loadTeams() {
   try {
     await fetch(url+'/allow-cors/all-teams', {mode:'cors'}).then(resp => {
       resp.json().then(data => {
         var html = "<input class='search' type='text' id='search' onkeyup='search("+'"team-list-table"'+", 1, 0)' placeholder='Search in table...' autocomplete='off'>";
-        html+="<table border='1|1' id='team-list-table' class='table'>";
+        html+="<table id='team-list-table' class='table'>";
         html+= "<tr><thead>";
         html+= '<th>Number</th>';
         html+= '<th>Name</th>';
@@ -212,7 +212,7 @@ function loadMyTeams(teams) {
     });
     
     html+="</table>";
-    document.getElementById("my-team").innerHTML = html;
+    document.getElementById("my-team-container").innerHTML = html;
   }
   catch (error) {
     alert("ERROR");

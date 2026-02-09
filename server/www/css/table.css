@@ -16,7 +16,7 @@
     color: var(--primary);
     text-align: left;
     font-weight: 700;
-    padding: 12px 15px;
+    padding: 16px 20px;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -32,7 +32,7 @@
 
 /* Body */
 .table td {
-    padding: 12px 15px;
+    padding: 16px 20px;
     color: var(--text-main);
     border-bottom: 1px solid var(--border);
     font-family: 'Inter', sans-serif;
@@ -53,8 +53,8 @@
 
 /* Buttons inside tables */
 .table button {
-    padding: 6px 12px;
-    font-size: 0.8rem;
+    padding: 4px 8px;
+    font-size: 0.75rem;
     background: transparent;
     border: 1px solid var(--primary);
     color: var(--primary);

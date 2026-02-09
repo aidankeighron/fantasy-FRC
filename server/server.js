@@ -587,8 +587,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('start_draft', async () => {
-    if (userID !== adminId) { return; }
-    if (draftStarted) { return; }
+    if (userID !== adminId) { 
+        socket.emit('start_draft_error', "Unauthorized: You are not the admin.");
+        return; 
+    }
+    if (draftStarted) { 
+        socket.emit('start_draft_error', "Draft has already started.");
+        return; 
+    }
     startUpEnded = false;
     console.log("draft started");
     draftStarted = true;

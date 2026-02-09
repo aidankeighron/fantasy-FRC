@@ -47,6 +47,10 @@
                 socket.emit("start_draft");
             }
 
+            socket.on('start_draft_error', (message) => {
+                alert(message);
+            });
+
             const SQLRegex = new RegExp("[\\\\;/\"\'\,\.]", 'g');
 
             async function addUser() {
