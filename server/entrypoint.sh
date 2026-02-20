@@ -19,8 +19,5 @@ echo "SECRET = \"${SECRET}\"" >> server_info.ini
 
 echo "server_info.ini created."
 
-echo "Starting cron..."
-cron
-
 # Execute the passed command (e.g., node server.js)
 exec "$@"

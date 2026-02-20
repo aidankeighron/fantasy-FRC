@@ -28,15 +28,8 @@ CREATE TABLE IF NOT EXISTS teams (
 );
 
 -- Grant permissions and fix authentication plugin for legacy mysql driver
--- Ensure root exists for both localhost (healthcheck) and % (app)
-CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY 'password';
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'password';
-GRANT ALL PRIVILEGES ON fantasy.* TO 'root'@'localhost';
-
-CREATE USER IF NOT EXISTS 'root'@'%' IDENTIFIED BY 'password';
-ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'password';
 GRANT ALL PRIVILEGES ON fantasy.* TO 'root'@'%';
-
+ALTER USER 'root'@'%' IDENTIFIED WITH mysql_native_password BY 'password';
 FLUSH PRIVILEGES;
 
 -- Create trades table
