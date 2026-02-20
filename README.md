@@ -17,6 +17,11 @@ The easiest way to run the application is using Docker.
     ```bash
     docker-compose up --build
     ```
+
+    Or Detached:
+    ```bash
+    docker compose up -d --build
+    ```
 4.  **Access the App**
     *   Open [http://localhost](http://localhost) in your browser.
 
