@@ -46,6 +46,5 @@ CREATE TABLE IF NOT EXISTS trades (
 );
 
 -- Insert admin user account
--- Username: Aidan, Password: mad77777 (hashed with bcrypt)
 INSERT INTO users (id, name, passw, teams, score, quals_score, elim_score, position)
 VALUES ('admin', 'Aidan', '$2b$10$hgbXyH7ob2FQjr1yBPNN9.vIny7yQRo0ON9Dl1L2rBG2DapZ5.oRi', '', 0, 0, 0, 0);

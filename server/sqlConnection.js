@@ -108,25 +108,6 @@ class SQLResponse {
         }
     }
 
-    static async getPasswordHash(conn) {
-        try {
-            return new Promise((resolve, reject)=>{
-                let hashedPassw = bcrypt.hashSync(String('mad77777').replace(/^"(.*)"$/, '$1'), saltRounds);
-                conn.query('UPDATE users SET passw = "'+String(hashedPassw)+'" WHERE name = "'+'Aidan'+'"',  (queryError, res)=>{
-                    if(queryError){
-                        console.log(queryError);
-                    }
-                });
-                return resolve("Completed");
-            });
-        }
-        catch (error) {
-            console.log("ERROR:");
-            console.log(error);
-            return "Error while adding user";
-        }
-    }
-
     static async updatePassword(conn, newPassw, repeatPassw, user) {
         try {
             return new Promise((resolve, reject)=>{
@@ -211,16 +192,14 @@ class SQLResponse {
 
     static async draftEnded(conn, users, teams) {
         try {
-            for (user in users) {
-                user = users[user];
+            for (const user of users) {
                 await conn.query('UPDATE users SET teams = '+'"'+String(user.current_teams).slice(0, -1)+'" WHERE name = '+'"'+user.name+'"',  (queryError, res)=>{
                     if(queryError){
                         console.log(queryError);
                     }
                 });
             }
-            for (team in teams) {
-                team = teams[team];
+            for (const team of teams) {
                 await conn.query('INSERT INTO teams (name, number, opr, average, score, location, owner) VALUES ('+'"'+team.name+'", '+team.number+', 0, 0, 0'+', "'+team.location+'"'+', "'+team.owner+'")',  (queryError, res)=>{
                     if(queryError){
                         console.log(queryError);
