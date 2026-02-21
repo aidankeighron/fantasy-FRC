@@ -61,21 +61,21 @@
                 <div class="queue" id="queue-container">
                     <h3>Queue</h3>
                     <table id="queue" class="table">
-                        <tr><thead>
+                        <thead><tr>
                             <th>Name</th>
                             <th>Number</th>
                             <th>Location</th>
-                        </thead></tr>
+                        </tr></thead>
                     </table>
                 </div>
                 <div class="my-team" id="my-team-container">
                     <h3>My Team</h3>
                     <table id="my-team" class="table">
-                        <tr><thead>
+                        <thead><tr>
                             <th>Name</th>
                             <th>Number</th>
                             <th>Location</th>
-                        </thead></tr>
+                        </tr></thead>
                     </table>
                 </div>
             </div>
@@ -99,8 +99,8 @@
         }
 
         function pickNextTeam() {
-            name = getPickedTeam(0);
-            number = getPickedTeam(1);
+            let name = getPickedTeam(0);
+            let number = getPickedTeam(1);
             if (name !== -1 && number !== -1) {
                 socket.emit('team_picked', number, name);
             }

@@ -20,7 +20,8 @@
             .users {
                 display: grid;
                 grid-template: repeat(10, 1fr) / repeat(10, 1fr);
-                grid-gap: 2px;
+                gap: 20px;
+                padding: 20px;
                 min-height: 0;
                 min-width: 0; /* needed for Firefox */
             }
@@ -46,6 +47,10 @@
             .tablediv {
                 max-width: 100%;
                 overflow: hidden;
+                background: var(--bg-surface);
+                border-radius: var(--radius-md);
+                backdrop-filter: blur(12px);
+                box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
             }
         </style>
     </head>
@@ -80,7 +85,7 @@
 
         function removeAllChildNodes(parent) {
             while (parent.firstChild) {
-                parent.removeChild(parent.firstChild);
+                parent.firstChild.remove();
             }
         }
 
@@ -102,7 +107,7 @@
                     let table = document.createElement('table');
                     table.setAttribute('class', 'table');
                     // Identifier for efficient updates
-                    table.setAttribute('data-owner', userName); 
+                    table.dataset.owner = userName; 
 
                     let thead = document.createElement('thead');
                     let tbody = document.createElement('tbody');
@@ -119,7 +124,7 @@
                     
                     // Existing Teams
                     let userTeams = user[1].current_teams.toString().split(",");
-                    for (userTeam of userTeams) {
+                    for (const userTeam of userTeams) {
                         if (userTeam == "" || userTeam == null) continue;
                         let row = document.createElement('tr');
                         let cell = document.createElement('td');
@@ -144,7 +149,7 @@
             const tables = document.querySelectorAll('table[data-owner]');
             let targetTable = null;
             for (let table of tables) {
-                if (table.getAttribute('data-owner') === ownerName) {
+                if (table.dataset.owner === ownerName) {
                     targetTable = table;
                     break;
                 }
