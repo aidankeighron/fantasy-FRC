@@ -61,7 +61,6 @@ passport.use(new LocalStrategy(
       if (SQLRegex.test(username) || SQLRegex.test(password)) {
         return done(null, false, { message: 'Invalid credentials'});
       }
-      await sqlConnection.SQLResponse.getPasswordHash(connection);
       const validUser = await sqlConnection.SQLResponse.verifyUser(connection, username, password);
       if (validUser == null || validUser == "") {
         return done(null, false, { message: 'Invalid credentials'});
