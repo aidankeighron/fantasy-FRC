@@ -40,7 +40,6 @@ const connection = sqlConnection.setupSQLConnection(config);
 const httpPort = 80;
 const SQLRegex = new RegExp("[\\;\\/\"\'\,\.]", 'g');
 
-const adminId = "cf3a7c";
 const adminName = "Aidan";
 
 let teamsJson;
@@ -585,8 +584,10 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('start_draft', async () => {
-    if (userID !== adminId) { 
+    socket.on('start_draft', async () => {
+    const userRes = await sqlConnection.SQLResponse.getUserInfo(connection, userID);
+    const user = userRes && userRes.length > 0 ? Object.values(JSON.parse(JSON.stringify(userRes[0]))) : null;
+    if (!user || user[1] !== adminName) { 
         socket.emit('start_draft_error', "Unauthorized: You are not the admin.");
         return; 
     }
