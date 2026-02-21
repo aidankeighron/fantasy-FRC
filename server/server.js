@@ -546,6 +546,7 @@ io.on('connection', (socket) => {
     store.get(socket.sessionId, function(err, session) {
       try {
         userID = session.passport.user;
+        socket.join(userID);
       } catch (error) {
         console.log(error);
       }
@@ -634,7 +635,7 @@ io.on('connection', (socket) => {
         else {
           io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser, userList["ID:"+userID].name);
           startTimer(true);
-          io.emit('get_next_team');
+          io.to(userIDList[0]).emit('get_next_team');
           io.emit("restart_timer", roundLength);
         }
       }
@@ -713,7 +714,7 @@ function startTimer(clicked) {
     startUpEnded = true;
     startTimer(true);
     io.emit("restart_timer", roundLength);
-    io.emit('get_next_team');
+    io.to(userIDList[0]).emit('get_next_team');
     console.log("picking now");
     return;
   }
@@ -759,7 +760,7 @@ function startTimer(clicked) {
         io.emit('team_removed', number, userList["ID:"+userIDList[0]].name, nextUser);
         startTimer(true);
         io.emit("restart_timer", roundLength);
-        io.emit('get_next_team');
+        io.to(userIDList[0]).emit('get_next_team');
         console.log(userList);
         console.log(userIDList.forEach((id, index) => {
           process.stdout.write(userList["ID:"+id].name + ", ");
