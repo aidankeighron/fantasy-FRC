@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('node:fs');
 const sqlConnection = require('./sqlConnection.js');
 const express = require('express');
 const uuid = require('uuid').v4;
@@ -8,7 +8,7 @@ const bodyParser = require('body-parser');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const ini = require('ini');
-const http = require('http');
+const http = require('node:http');
 const app = express();
 const server = http.createServer(app);
 const { Server } = require("socket.io");
@@ -38,7 +38,7 @@ if (process.env.SECRET) config.SERVER.SECRET = process.env.SECRET;
 
 const connection = sqlConnection.setupSQLConnection(config);
 const httpPort = 80;
-const SQLRegex = new RegExp("[\\;\\/\"\'\,\.]", 'g');
+const SQLRegex = /[;/ "'.,]/;
 
 const adminName = "Aidan";
 
@@ -89,16 +89,16 @@ passport.deserializeUser(async (id, done) => {
   done(null, user);
 });
 
-var name = 'connect.sid';
-var secret = config.SERVER.SECRET;
-var store = new FileStore();
+const sessionName = 'connect.sid';
+const secret = config.SERVER.SECRET;
+const store = new FileStore();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(session({
   genid: (req) => {
     return uuid();
   },
-  name: name,
+  name: sessionName,
   store: store,
   secret: secret,
   resave: false,
@@ -333,8 +333,9 @@ app.get('/allow-cors/all-teams', (req, res) => {
     res.set('Access-Control-Allow-Origin', '*');
     
     if (req.isAuthenticated()) {
-      if (Object.keys(teamList).length != 0) {
-        res.json(JSON.parse(JSON.stringify({"teams": teamList})));
+      if (Object.keys(teamList).length !== 0) {
+        // Send as a flat array to save overhead on keys
+        res.json({ "teams": Object.values(teamList) });
       }
       else {
         res.send(teamsJson);
@@ -522,19 +523,19 @@ server.listen(httpPort, () =>
 
 // DRAFTING //
 
-var userIDList = new Array();
-var teamList = {};
-var pickedTeamsList = {};
-var userList = {};
-var draftStarted = false;
+let userIDList = new Array();
+let teamList = {};
+let pickedTeamsList = {};
+let userList = {};
+let draftStarted = false;
 const roundLength = 20; // seconds
 const startLength = 5; // seconds
 const maxTeams = 8;
-var startUpEnded = false;
+let startUpEnded = false;
 
 io.on('connection', (socket) => {
   if (socket.handshake && socket.handshake.headers && socket.handshake.headers.cookie) {
-    var raw = cookie.parse(socket.handshake.headers.cookie)[name];
+    const raw = cookie.parse(socket.handshake.headers.cookie)[sessionName];
     if (raw) {
       // The cookie set by express-session begins with s: which indicates it
       // is a signed cookie. Remove the two characters before unsigning.
@@ -559,9 +560,9 @@ io.on('connection', (socket) => {
   socket.on("get_my_teams", () => {
     if (!draftStarted) return;
     try {
-      var userTeams = userList["ID:"+userID].current_teams.toString().split(",");
-      var teams = {};
-      for (userTeam in userTeams) {
+      const userTeams = userList["ID:"+userID].current_teams.toString().split(",");
+      const teams = {};
+      for (const userTeam in userTeams) {
         userTeam = userTeams[userTeam];
         teams["team"+userTeam] = pickedTeamsList["team"+userTeam];
       }
@@ -618,7 +619,7 @@ io.on('connection', (socket) => {
           userIDList.pop();
         }
         if (userIDList.length <= 1) {
-          var nextUser = "-";
+          nextUser = "-";
         }
         else {
           nextUser = userList["ID:"+userIDList[1]].name;
@@ -681,7 +682,7 @@ function isValidTeam(number, id) {
 }
 
 async function initializeDraft() {
-  var users = await sqlConnection.SQLResponse.getUserIDs(connection);
+  const users = await sqlConnection.SQLResponse.getUserIDs(connection);
   for (let i = 0; i < users.length; i++) {
     user = users[i]
     userList["ID:"+user.id] = {
@@ -695,9 +696,10 @@ async function initializeDraft() {
   .sort((a, b) => a.sort - b.sort)
   .map(({ value }) => value);
   let teams = JSON.parse(teamsJson)["teams"];
+  teamList = {}; // Reset
   for (let i = 0; i < teams.length; i++) {
-    team = teams[i];
-    teamList["team"+team.number.toString()] = {
+    const team = teams[i];
+    teamList["team" + team.number] = {
       "name": team.name,
       "number": team.number,
       "epa": team.epa,

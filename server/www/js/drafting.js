@@ -1,10 +1,11 @@
-const url =  window.location.origin;
+const url = globalThis.location.origin;
 
 function getPickedTeam(index) {
   try {
-    table = document.getElementById("queue");
-    number = table.rows[2].cells[index];
-    return number.textContent || number.innerText;
+    const table = document.getElementById("queue");
+    if (!table || table.rows.length < 3) return -1;
+    const cell = table.rows[2].cells[index];
+    return cell ? (cell.textContent || cell.innerText) : -1;
   } 
   catch (error) {
     return -1;
@@ -13,209 +14,205 @@ function getPickedTeam(index) {
 
 function addToTable(number, name, location, tableID) {
   try {
-    var table = document.getElementById(tableID);
+    const table = document.getElementById(tableID);
+    if (!table) return;
+
     if (tableID === "queue" && table.rows.length > 10) { // max teams
       return;
     }
-    for (let i in table.rows) {
-      let row = table.rows[i]
-      for (let j in row.cells) {
-        let col = row.cells[j]
-        try {
-          if (col.innerHTML.includes(name)) {
-            return;
-          }
-        } catch (error) { }
-      }  
-    }
-    var row = table.insertRow(-1);
-    row.id = number+"queue";
-    row.insertCell(0).innerHTML = name;
-    row.insertCell(1).innerHTML = number;
-    row.insertCell(2).innerHTML = location;
+
+    // Check if already in table
+    const existing = document.getElementById(number + tableID);
+    if (existing) return;
+
+    const row = table.insertRow(-1);
+    row.id = number + tableID;
+    row.insertCell(0).innerText = name;
+    row.insertCell(1).innerText = number;
+    row.insertCell(2).innerText = location;
+
     if (tableID !== "my-team") {
-      row.insertCell(3).innerHTML = '<td><button onclick="removeFromTable('+"'"+number+'queue'+"'"+')">Remove</button></td>';
+      const btnCell = row.insertCell(3);
+      const btn = document.createElement("button");
+      btn.innerText = "Remove";
+      btn.onclick = () => removeFromTable(number + tableID);
+      btnCell.appendChild(btn);
     }
+
     if (tableID === "queue") {
       pickNextTeam();
     }
   }
   catch (error) {
-    alert("ERROR");
-    console.log(error);
+    console.error("Error in addToTable:", error);
   }
 }
 
 function removeFromTable(id) {
   try {
-    document.getElementById(id).remove();
-  } catch (error) { }
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  } catch (error) { 
+    console.error("Error in removeFromTable:", error);
+  }
 }
 
 // type: 0 = string, 1 = double
-function sortTable(row, type, table, forward) {
+function sortTable(rowIdx, type, tableId, forward) {
   try {
-    var table, rows, switching, i, x, y, shouldSwitch;
-    table = document.getElementById(table);
-    switching = true;
-    while (switching) {
-      switching = false;
-      rows = table.rows;
-      for (i = 2; i < (rows.length - 1); i++) {
-        shouldSwitch = false;
-        x = rows[i].getElementsByTagName("td")[row];
-        y = rows[i + 1].getElementsByTagName("td")[row];
-        if (type == 0) {
-          if (forward) {
-            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-              shouldSwitch = true;
-              break;
-            }            
-          }
-          else {
-            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-              shouldSwitch = true;
-              break;
-            }
-          }
-        }
-        else {
-          if (forward) {
-            if (parseFloat(x.innerHTML) > parseFloat(y.innerHTML)) {
-              shouldSwitch = true;
-              break;
-            }
-          }
-          else {
-            if (parseFloat(x.innerHTML) < parseFloat(y.innerHTML)) {
-              shouldSwitch = true;
-              break;
-            }
-          }
-        }
+    const table = document.getElementById(tableId);
+    if (!table) return;
+    const rows = Array.from(table.rows).slice(2); 
+    
+    rows.sort((a, b) => {
+      const x = a.cells[rowIdx].innerText.toLowerCase();
+      const y = b.cells[rowIdx].innerText.toLowerCase();
+      
+      let comparison = 0;
+      if (type === 0) {
+        comparison = x.localeCompare(y);
+      } else {
+        comparison = Number.parseFloat(x) - Number.parseFloat(y);
       }
-      if (shouldSwitch) {
-        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-        switching = true;
-      }
-    }
+      
+      return forward ? comparison : -comparison;
+    });
+    
+    const tbody = table.tBodies[0] || table;
+    rows.forEach(row => tbody.appendChild(row));
   }
   catch (error) {
-    alert("ERROR");
-    console.log(error);
+    console.error("Error in sortTable:", error);
   }
 }
 
 function search(tableID, nameCol, numCol) {
   try {
-    var input, filter, table, tr, td, i, txtValue;
-    input = document.getElementById("search");
-    filter = input.value.toLowerCase();
-    table = document.getElementById(tableID);
-    tr = table.getElementsByTagName("tr");
-    for (i = 0; i < tr.length; i++) {
-      td = tr[i].getElementsByTagName("td")[numCol];
-      if (td) {
-        txtValue = td.textContent || td.innerText;
-        if (!isNaN(parseInt(filter))) {
-          if (txtValue.toLowerCase().indexOf(filter) > -1) {
-            tr[i].style.display = "";
-          } else {
-            tr[i].style.display = "none";
-          }
-          continue;
-        }
-        td = tr[i].getElementsByTagName("td")[nameCol];
-        if (td) {
-          txtValue = td.textContent || td.innerText;
-          if (txtValue.toLowerCase().indexOf(filter) > -1) {
-            tr[i].style.display = "";
-          } else {
-            tr[i].style.display = "none";
-          }
-        }
-      }       
-    }
-  }
-  catch (error) {
-    alert("ERROR");
-    console.log(error);
-  }
-}
+    const input = document.getElementById("search");
+    if (!input) return;
+    const filter = input.value.toLowerCase();
+    const table = document.getElementById(tableID);
+    if (!table) return;
+    const tr = table.getElementsByTagName("tr");
+    
+    requestAnimationFrame(() => {
+      for (let i = 1; i < tr.length; i++) { 
+        const tdNum = tr[i].getElementsByTagName("td")[numCol];
+        const tdName = tr[i].getElementsByTagName("td")[nameCol];
+        let visible = false;
 
-  async function loadTeams() {
-  try {
-    await fetch(url+'/allow-cors/all-teams', {mode:'cors'}).then(resp => {
-      resp.json().then(data => {
-        var html = "<input class='search' type='text' id='search' onkeyup='search("+'"team-list-table"'+", 1, 0)' placeholder='Search in table...' autocomplete='off'>";
-        html+="<table id='team-list-table' class='table'>";
-        html+= "<tr><thead>";
-        html+= '<th>Number</th>';
-        html+= '<th>Name</th>';
-        html+= '<th>EPA</th>';
-        html+= '<th>Location</th>'
-        html+= "</thead></tr>";
-        
-        if (data["teams"][0] != null) {
-          for (let i = 0; i < data["teams"].length; i++) {
-            team = data["teams"][i]
-            html+="<tr id="+team.number+"team-list>";
-            html+="<td>"+team.number+"</td>";
-            html+="<td>"+team.name+"</td>";
-            html+="<td>"+team.epa+"</td>";
-            html+="<td>"+team.location+"</td>"
-            html+='<td><button onclick="addToTable('+team.number+', '+"'"+team.name+"'"+', '+"'"+team.location+"'"+", 'queue'"+')">Add</button></td>';
-            html+="</tr>";
-          }
-          
-          html+="</table>";
-          document.getElementById("team-list").innerHTML = html;
-        } 
-        else {
-          Object.entries(data["teams"]).forEach(team => {
-            html+="<tr id="+team[1].number+"team-list>";
-            html+="<td>"+team[1].number+"</td>";
-            html+="<td>"+team[1].name+"</td>";
-            html+="<td>"+team[1].epa+"</td>";
-            html+="<td>"+team[1].location+"</td>";
-            html+='<td><button onclick="addToTable('+team[1].number+', '+"'"+team[1].name+"'"+', '+"'"+team[1].location+"'"+", 'queue'"+')">Add</button></td>';
-            html+="</tr>";
-          });
-          
-          html+="</table>";
-          document.getElementById("team-list").innerHTML = html;
+        if (tdNum && tdNum.innerText.toLowerCase().includes(filter)) {
+          visible = true;
+        } else if (tdName && tdName.innerText.toLowerCase().includes(filter)) {
+          visible = true;
         }
-      });
+
+        tr[i].style.display = visible ? "" : "none";
+      }
     });
   }
   catch (error) {
-    alert("ERROR");
-    console.log(error);
+    console.error("Error in search:", error);
+  }
+}
+
+async function loadTeams() {
+  try {
+    const resp = await fetch(url + '/allow-cors/all-teams', { mode: 'cors' });
+    const data = await resp.json();
+    const teams = Array.isArray(data.teams) ? data.teams : Object.values(data.teams);
+
+    if (!teams || teams.length === 0) return;
+
+    const container = document.getElementById("team-list");
+    if (!container) return;
+    container.innerHTML = ""; 
+
+    const searchInput = document.createElement("input");
+    searchInput.className = "search";
+    searchInput.type = "text";
+    searchInput.id = "search";
+    searchInput.placeholder = "Search in table...";
+    searchInput.autocomplete = "off";
+    searchInput.onkeyup = () => search("team-list-table", 1, 0);
+    container.appendChild(searchInput);
+
+    const table = document.createElement("table");
+    table.id = "team-list-table";
+    table.className = "table";
+
+    const thead = table.createTHead();
+    const headRow = thead.insertRow();
+    ["Number", "Name", "EPA", "Location", "Action"].forEach(text => {
+      const th = document.createElement("th");
+      th.innerText = text;
+      headRow.appendChild(th);
+    });
+
+    const tbody = document.createElement("tbody");
+    table.appendChild(tbody);
+
+    const fragment = document.createDocumentFragment();
+    teams.forEach(team => {
+      if (!team) return;
+      const row = document.createElement("tr");
+      row.id = team.number + "team-list";
+      
+      row.insertCell(0).innerText = team.number;
+      row.insertCell(1).innerText = team.name;
+      row.insertCell(2).innerText = team.epa;
+      row.insertCell(3).innerText = team.location;
+      
+      const c5 = row.insertCell(4);
+      const btn = document.createElement("button");
+      btn.innerText = "Add";
+      btn.onclick = () => addToTable(team.number, team.name, team.location, 'queue');
+      c5.appendChild(btn);
+      
+      fragment.appendChild(row);
+    });
+
+    tbody.appendChild(fragment);
+    container.appendChild(table);
+  }
+  catch (error) {
+    console.error("Error in loadTeams:", error);
   }
 }
 
 function loadMyTeams(teams) {
   try {
-    var html ="<table id='my-team' class='table'>";
-    html+= "<tr><thead>";
-    html+= '<th>Number</th>';
-    html+= '<th>Name</th>';
-    html+= '<th>Location</th>'
-    html+= "</thead></tr>";
-    
-    Object.entries(teams).forEach(team => {
-      html+="<tr>";
-      html+="<td>"+team[1].number+"</td>";
-      html+="<td>"+team[1].name+"</td>";
-      html+="<td>"+team[1].location+"</td>"
-      html+="</tr>";
+    const container = document.getElementById("my-team-container");
+    if (!container) return;
+    container.innerHTML = ""; 
+
+    const table = document.createElement("table");
+    table.id = "my-team";
+    table.className = "table";
+
+    const headRow = table.createTHead().insertRow();
+    ["Number", "Name", "Location"].forEach(text => {
+      const th = document.createElement("th");
+      th.innerText = text;
+      headRow.appendChild(th);
     });
-    
-    html+="</table>";
-    document.getElementById("my-team-container").innerHTML = html;
+
+    const tbody = document.createElement("tbody");
+    table.appendChild(tbody);
+
+    const teamEntries = Object.entries(teams);
+    if (teamEntries.length > 0) {
+      teamEntries.forEach(([_, team]) => {
+        const row = tbody.insertRow();
+        row.insertCell(0).innerText = team.number;
+        row.insertCell(1).innerText = team.name;
+        row.insertCell(2).innerText = team.location;
+      });
+    }
+
+    container.appendChild(table);
   }
   catch (error) {
-    alert("ERROR");
-    console.log(error);
+    console.error("Error in loadMyTeams:", error);
   }
 }

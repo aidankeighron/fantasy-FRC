@@ -10,46 +10,6 @@
         <link rel="stylesheet" href="./css/topnav.css">
         <link rel="stylesheet" href="./css/table.css">
         <link rel="stylesheet" href="./css/footer.css">
-        <style>
-            .trade-section {
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                background-color: rgba(0, 0, 0, 0.2);
-                margin: 20px;
-                padding: 20px;
-                border-radius: 10px;
-            }
-            .trade-form select {
-                padding: 10px;
-                margin: 5px;
-                border-radius: 5px;
-                background-color: rgba(255, 255, 255, 0.1);
-                color: white;
-                border: 1px solid rgba(255, 255, 255, 0.2);
-            }
-            .trade-form button {
-                padding: 10px 20px;
-                border-radius: 5px;
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                cursor: pointer;
-                transition: background 0.3s;
-            }
-            .trade-form button:hover {
-                background-color: #45a049;
-            }
-            .action-btn {
-                padding: 5px 10px;
-                margin: 0 5px;
-                border: none;
-                border-radius: 3px;
-                cursor: pointer;
-                color: white;
-            }
-            .accept-btn { background-color: #4CAF50; }
-            .reject-btn { background-color: #f44336; }
-            h2 { border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 20px; }
-        </style>
     </head>
     <body>
         <div class="topnav" id="topnav">
@@ -63,33 +23,38 @@
         </div>
 
         <div class="container">
-            <div class="trade-section">
+            <div class="trade-section glass-panel">
                 <h2>Propose a Trade</h2>
                 <div class="trade-form">
-                    <label>Trade with:</label>
-                    <select id="userSelect" onchange="loadTheirTeams()"></select>
+                    <div class="form-group">
+                        <label for="userSelect">Trade with:</label>
+                        <select id="userSelect" onchange="loadTheirTeams()"></select>
+                    </div>
                     
-                    <br><br>
+                    <div class="trade-selectors">
+                        <div class="form-group">
+                            <label for="theirTeamSelect">I want their team:</label>
+                            <select id="theirTeamSelect"></select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="myTeamSelect">For my team:</label>
+                            <select id="myTeamSelect"></select>
+                        </div>
+                    </div>
                     
-                    <label>I want their team:</label>
-                    <select id="theirTeamSelect"></select>
-                    
-                    <label>For my team:</label>
-                    <select id="myTeamSelect"></select>
-                    
-                    <br><br>
-                    <button onclick="proposeTrade()">Propose Trade</button>
+                    <button class="btn btn-primary" onclick="proposeTrade()">Propose Trade</button>
                     <p id="proposeMsg"></p>
                 </div>
             </div>
 
-            <div class="trade-section">
-                <h2>Incoming Trades (Action Required)</h2>
+            <div class="trade-section glass-panel">
+                <h2>Incoming Trades</h2>
                 <div id="pendingTrades">Loading...</div>
             </div>
 
-            <div class="trade-section">
-                <h2>Sent Trades (Waiting)</h2>
+            <div class="trade-section glass-panel">
+                <h2>Sent Trades</h2>
                 <div id="sentTrades">Loading...</div>
             </div>
         </div>

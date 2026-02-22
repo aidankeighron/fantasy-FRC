@@ -129,8 +129,8 @@ async function loadPendingTrades() {
                 <td>${t.sender_team}</td>
                 <td>${t.receiver_team}</td>
                 <td>
-                    <button class="action-btn accept-btn" onclick="respond('${t.id}', 'accepted')">Accept</button>
-                    <button class="action-btn reject-btn" onclick="respond('${t.id}', 'rejected')">Reject</button>
+                    <button class="btn btn-accept" onclick="respond('${t.id}', 'accepted')">Accept</button>
+                    <button class="btn btn-reject" onclick="respond('${t.id}', 'rejected')">Reject</button>
                 </td>
             </tr>`;
         });

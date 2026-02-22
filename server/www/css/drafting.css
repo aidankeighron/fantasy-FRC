@@ -18,6 +18,11 @@
 .table { /* Main drafting table area */
     flex-grow: 1;
     overflow-y: auto;
+    min-width: 600px;
+    background: var(--bg-surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 10px;
 }
 
 /* Time & Status */
@@ -52,8 +57,9 @@
     border-radius: var(--radius-lg);
     flex-grow: 1; /* Split height evenly */
     overflow-y: auto;
-    padding: 10px;
+    padding: 15px;
     box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    min-width: 300px;
 }
 
 .queue h3, .my-team h3 {
