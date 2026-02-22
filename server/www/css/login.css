@@ -19,7 +19,7 @@ body {
 .title-container .title {
     font-size: 3rem;
     color: var(--primary);
-    text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    text-shadow: 0 0 20px rgba(167, 139, 250, 0.4);
     font-weight: 800;
 }
 
@@ -43,7 +43,7 @@ body {
 
 .wrapper .title {
     height: 90px;
-    background: rgba(16, 185, 129, 0.2); /* Semi-transparent green */
+    background: rgba(167, 139, 250, 0.2); /* Semi-transparent purple */
     color: var(--text-main);
     font-size: 1.8rem;
     font-weight: 700;

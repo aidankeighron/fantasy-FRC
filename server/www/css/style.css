@@ -6,9 +6,9 @@
     --bg-surface: rgba(30, 41, 59, 0.7); /* Slate 800 - Glassy surface */
     --bg-surface-hover: rgba(51, 65, 85, 0.8);
     
-    --primary: #10b981;       /* Emerald 500 - Vibrant primary accent */
-    --primary-hover: #059669; /* Emerald 600 */
-    --primary-glow: rgba(16, 185, 129, 0.4);
+    --primary: #a78bfa;       /* Lavender Purple - Vibrant primary accent */
+    --primary-hover: #8b5cf6; /* Deep Lavender */
+    --primary-glow: rgba(167, 139, 250, 0.4);
 
     --text-main: #f1f5f9;     /* Slate 100 */
     --text-muted: #94a3b8;    /* Slate 400 */
@@ -152,7 +152,7 @@ table.table {
 }
 
 table.table th {
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(167, 139, 250, 0.1);
     color: var(--primary);
     font-family: 'JetBrains Mono', monospace;
     font-weight: 700;
@@ -183,7 +183,7 @@ table.table tr:hover td {
 table.table button {
     padding: 6px 12px;
     font-size: 0.8rem;
-    background: rgba(16, 185, 129, 0.2);
+    background: rgba(167, 139, 250, 0.2);
     color: var(--primary);
     border: 1px solid var(--primary);
 }

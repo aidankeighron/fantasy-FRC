@@ -20,7 +20,7 @@
 .user-stats:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    border-color: rgba(16, 185, 129, 0.3); /* Slight green border on hover */
+    border-color: rgba(167, 139, 250, 0.3); /* Slight purple border on hover */
 }
 
 .user-stats h3 {
@@ -59,7 +59,7 @@
 }
 
 .team-table thead tr {
-    background-color: rgba(16, 185, 129, 0.2); /* Low opacity prompt green */
+    background-color: rgba(167, 139, 250, 0.2); /* Low opacity prompt purple */
     color: var(--primary);
     text-align: left;
 }
