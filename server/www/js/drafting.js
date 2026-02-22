@@ -27,8 +27,8 @@ function addToTable(number, name, location, tableID) {
 
     const row = table.insertRow(-1);
     row.id = number + tableID;
-    row.insertCell(0).innerText = name;
-    row.insertCell(1).innerText = number;
+    row.insertCell(0).innerText = number;
+    row.insertCell(1).innerText = name;
     row.insertCell(2).innerText = location;
 
     if (tableID !== "my-team") {
