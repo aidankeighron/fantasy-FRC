@@ -86,10 +86,80 @@ function sortTable(rowIdx, type, tableId, forward) {
   }
 }
 
+globalThis.allTeams = [];
+globalThis.teamSearchFilter = "";
+
+function renderTeamList() {
+    console.time("Render Teams Table");
+    const table = document.getElementById("team-list-table");
+    if (!table) return;
+    
+    let tbody = table.getElementsByTagName("tbody")[0];
+    if (!tbody) {
+        tbody = document.createElement("tbody");
+        table.appendChild(tbody);
+    }
+    
+    tbody.innerHTML = ""; // Clear existing
+    
+    const filter = globalThis.teamSearchFilter.toLowerCase();
+    
+    // Filter and slice top 100
+    let count = 0;
+    const fragment = document.createDocumentFragment();
+    
+    for (let i = 0; i < globalThis.allTeams.length; i++) {
+        const team = globalThis.allTeams[i];
+        if (!team) continue;
+        
+        // Apply filter
+        if (filter !== "") {
+            const matchesNum = String(team.number).toLowerCase().includes(filter);
+            const matchesName = String(team.name).toLowerCase().includes(filter);
+            if (!matchesNum && !matchesName) {
+                continue;
+            }
+        }
+        
+        const row = document.createElement("tr");
+        row.id = team.number + "team-list";
+        
+        const c1 = row.insertCell(0); c1.innerText = team.number;
+        const c2 = row.insertCell(1); c2.innerText = team.name;
+        const c3 = row.insertCell(2); c3.innerText = team.epa;
+        const c4 = row.insertCell(3); c4.innerText = team.location;
+        
+        const c5 = row.insertCell(4);
+        const btn = document.createElement("button");
+        btn.innerText = "Add";
+        btn.onclick = () => addToTable(team.number, team.name, team.location, 'queue');
+        c5.appendChild(btn);
+        
+        fragment.appendChild(row);
+        
+        count++;
+        if (count >= 100) break; // Maximum 100 rows to keep DOM light
+    }
+    
+    tbody.appendChild(fragment);
+    console.timeEnd("Render Teams Table");
+}
+
 function search(tableID, nameCol, numCol) {
   try {
     const input = document.getElementById("search");
     if (!input) return;
+    
+    if (tableID === "team-list-table") {
+        globalThis.teamSearchFilter = input.value;
+        requestAnimationFrame(() => {
+            console.time("Search Execution");
+            renderTeamList();
+            console.timeEnd("Search Execution");
+        });
+        return;
+    }
+    
     const filter = input.value.toLowerCase();
     const table = document.getElementById(tableID);
     if (!table) return;
@@ -122,9 +192,9 @@ async function loadTeams() {
     const resp = await fetch(url + '/allow-cors/all-teams', { mode: 'cors' });
     const data = await resp.json();
     console.timeEnd("Fetch Teams");
-    const teams = Array.isArray(data.teams) ? data.teams : Object.values(data.teams);
+    globalThis.allTeams = Array.isArray(data.teams) ? data.teams : Object.values(data.teams);
 
-    if (!teams || teams.length === 0) return;
+    if (!globalThis.allTeams || globalThis.allTeams.length === 0) return;
 
     const container = document.getElementById("team-list");
     if (!container) return;
@@ -139,7 +209,6 @@ async function loadTeams() {
     searchInput.onkeyup = () => search("team-list-table", 1, 0);
     container.appendChild(searchInput);
 
-    console.time("Render Teams Table");
     const table = document.createElement("table");
     table.id = "team-list-table";
     table.className = "table";
@@ -154,30 +223,9 @@ async function loadTeams() {
 
     const tbody = document.createElement("tbody");
     table.appendChild(tbody);
-
-    const fragment = document.createDocumentFragment();
-    teams.forEach(team => {
-      if (!team) return;
-      const row = document.createElement("tr");
-      row.id = team.number + "team-list";
-      
-      const c1 = row.insertCell(0); c1.innerText = team.number;
-      const c2 = row.insertCell(1); c2.innerText = team.name;
-      const c3 = row.insertCell(2); c3.innerText = team.epa;
-      const c4 = row.insertCell(3); c4.innerText = team.location;
-      
-      const c5 = row.insertCell(4);
-      const btn = document.createElement("button");
-      btn.innerText = "Add";
-      btn.onclick = () => addToTable(team.number, team.name, team.location, 'queue');
-      c5.appendChild(btn);
-      
-      fragment.appendChild(row);
-    });
-
-    tbody.appendChild(fragment);
     container.appendChild(table);
-    console.timeEnd("Render Teams Table");
+
+    renderTeamList();
   }
   catch (error) {
     console.error("Error in loadTeams:", error);
