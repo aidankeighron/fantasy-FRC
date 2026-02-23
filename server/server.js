@@ -657,17 +657,17 @@ function isValidTeam(number, id) {
   try {
     let userTeams = userList["ID:"+id].current_teams.toString().split(",");
     let currentTeam;
-    for (team in teamList) {
-      team = teamList[team];
+    for (const key in teamList) {
+      const team = teamList[key];
       if (number == team.number) {
         currentTeam = team;
       }
     }
   
-    for (team in pickedTeamsList) {
-      team = pickedTeamsList[team];
-      for (userTeam in userTeams) {
-        userTeam = userTeams[userTeam];
+    for (const key in pickedTeamsList) {
+      const team = pickedTeamsList[key];
+      for (const uKey in userTeams) {
+        const userTeam = userTeams[uKey];
         if (userTeam == team.number && currentTeam.location == team.location) {
           console.log("invalid team");
           return null;
@@ -734,10 +734,13 @@ function startTimer(clicked) {
       let user = userIDList[0];
       index = 0;
       number = 0;
-      do {
-        number = Object.values(teamList)[index].number;
-        index++;
-      } while (isValidTeam(number, user) == null);
+      const teamValues = Object.values(teamList);
+      if (teamValues.length > 0) {
+        do {
+          number = teamValues[index].number;
+          index++;
+        } while (isValidTeam(number, user) == null && index < teamValues.length);
+      }
       teamList["team"+number].owner = userList["ID:"+user].name;
       pickedTeamsList["team"+number] = teamList["team"+number]
       delete teamList["team"+number];

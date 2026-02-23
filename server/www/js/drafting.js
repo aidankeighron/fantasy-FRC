@@ -3,8 +3,8 @@ const url = globalThis.location.origin;
 function getPickedTeam(index) {
   try {
     const table = document.getElementById("queue");
-    if (!table || table.rows.length < 3) return -1;
-    const cell = table.rows[2].cells[index];
+    if (!table || table.rows.length < 2) return -1;
+    const cell = table.rows[1].cells[index];
     return cell ? (cell.textContent || cell.innerText) : -1;
   } 
   catch (error) {
@@ -101,9 +101,7 @@ function search(tableID, nameCol, numCol) {
         const tdName = tr[i].getElementsByTagName("td")[nameCol];
         let visible = false;
 
-        if (tdNum && tdNum.innerText.toLowerCase().includes(filter)) {
-          visible = true;
-        } else if (tdName && tdName.innerText.toLowerCase().includes(filter)) {
+        if (tdNum?.textContent?.toLowerCase().includes(filter) || tdName?.textContent?.toLowerCase().includes(filter)) {
           visible = true;
         }
 
