@@ -654,6 +654,7 @@ io.on('connection', (socket) => {
 });
 
 function isValidTeam(number, id) {
+  const start = Date.now();
   try {
     let userTeams = userList["ID:"+id].current_teams.toString().split(",");
     let currentTeam;
@@ -673,6 +674,10 @@ function isValidTeam(number, id) {
           return null;
         }
       }
+    }
+    const end = Date.now();
+    if (end - start > 10) {
+      console.log(`[PERF] isValidTeam check took ${end - start}ms`);
     }
     return currentTeam.location;
   } catch (error) {
@@ -731,6 +736,7 @@ function startTimer(clicked) {
   else {
     if (!clicked && draftStarted) {
       console.log("team override");
+      console.time("Auto-pick Execution");
       let user = userIDList[0];
       index = 0;
       number = 0;
@@ -744,6 +750,7 @@ function startTimer(clicked) {
       teamList["team"+number].owner = userList["ID:"+user].name;
       pickedTeamsList["team"+number] = teamList["team"+number]
       delete teamList["team"+number];
+      console.timeEnd("Auto-pick Execution");
 
       userIDList.push(userIDList.shift());
       userList["ID:"+user].current_teams += number+",";

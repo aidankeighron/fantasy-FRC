@@ -96,6 +96,7 @@ function search(tableID, nameCol, numCol) {
     const tr = table.getElementsByTagName("tr");
     
     requestAnimationFrame(() => {
+      console.time("Search Execution");
       for (let i = 1; i < tr.length; i++) { 
         const tdNum = tr[i].getElementsByTagName("td")[numCol];
         const tdName = tr[i].getElementsByTagName("td")[nameCol];
@@ -107,6 +108,7 @@ function search(tableID, nameCol, numCol) {
 
         tr[i].style.display = visible ? "" : "none";
       }
+      console.timeEnd("Search Execution");
     });
   }
   catch (error) {
@@ -116,8 +118,10 @@ function search(tableID, nameCol, numCol) {
 
 async function loadTeams() {
   try {
+    console.time("Fetch Teams");
     const resp = await fetch(url + '/allow-cors/all-teams', { mode: 'cors' });
     const data = await resp.json();
+    console.timeEnd("Fetch Teams");
     const teams = Array.isArray(data.teams) ? data.teams : Object.values(data.teams);
 
     if (!teams || teams.length === 0) return;
@@ -150,6 +154,7 @@ async function loadTeams() {
     const tbody = document.createElement("tbody");
     table.appendChild(tbody);
 
+    console.time("Render Teams Table");
     const fragment = document.createDocumentFragment();
     teams.forEach(team => {
       if (!team) return;
@@ -172,6 +177,7 @@ async function loadTeams() {
 
     tbody.appendChild(fragment);
     container.appendChild(table);
+    console.timeEnd("Render Teams Table");
   }
   catch (error) {
     console.error("Error in loadTeams:", error);
