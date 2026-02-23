@@ -562,9 +562,10 @@ io.on('connection', (socket) => {
     try {
       const userTeams = userList["ID:"+userID].current_teams.toString().split(",");
       const teams = {};
-      for (const userTeam in userTeams) {
-        userTeam = userTeams[userTeam];
-        teams["team"+userTeam] = pickedTeamsList["team"+userTeam];
+      for (const teamIndex in userTeams) {
+        let userTeamNum = userTeams[teamIndex];
+        if (userTeamNum === "") continue;
+        teams["team"+userTeamNum] = pickedTeamsList["team"+userTeamNum];
       }
       socket.emit("sending_my_teams", teams);
     }
@@ -610,6 +611,7 @@ io.on('connection', (socket) => {
   socket.on('team_picked', (number, name) => {
     if (!draftStarted || !startUpEnded) { return; }
     console.log("team picked");
+    const pickStartTime = Date.now();
     if (userID === userIDList[0]) {
       let location = isValidTeam(number, userID);
       if (location != null) {
@@ -645,6 +647,10 @@ io.on('connection', (socket) => {
         socket.emit('wrong_next_team', number);
         io.emit("restart_timer", roundLength);
       }
+      
+      const pickDuration = Date.now() - pickStartTime;
+      console.log(`[PERF] Pick processing took ${pickDuration}ms`);
+
       console.log(userList);
       console.log(userIDList.forEach((id, index) => {
         process.stdout.write(userList["ID:"+id].name + ", ");
@@ -656,32 +662,35 @@ io.on('connection', (socket) => {
 function isValidTeam(number, id) {
   const start = Date.now();
   try {
-    let userTeams = userList["ID:"+id].current_teams.toString().split(",");
-    let currentTeam;
-    for (const key in teamList) {
-      const team = teamList[key];
-      if (number == team.number) {
-        currentTeam = team;
+    const currentTeam = teamList["team" + number];
+    if (!currentTeam) {
+      // If it's already in pickedTeamsList, it's definitely not "valid" to pick again
+      if (pickedTeamsList["team" + number]) {
+        console.log("invalid team (already picked)");
+      }
+      return null;
+    }
+
+    const userTeamsStr = userList["ID:" + id].current_teams.toString();
+    const userTeams = userTeamsStr.split(",").filter(t => t !== "");
+    
+    // Efficiently check if the user already has a team in the same location
+    // We can pre-process this or just check pickedTeamsList for the user's teams
+    for (const userTeamNum of userTeams) {
+      const pickedTeam = pickedTeamsList["team" + userTeamNum];
+      if (pickedTeam && pickedTeam.location === currentTeam.location) {
+        console.log("invalid team (location conflict: " + pickedTeam.location + ")");
+        return null;
       }
     }
-  
-    for (const key in pickedTeamsList) {
-      const team = pickedTeamsList[key];
-      for (const uKey in userTeams) {
-        const userTeam = userTeams[uKey];
-        if (userTeam == team.number && currentTeam.location == team.location) {
-          console.log("invalid team");
-          return null;
-        }
-      }
-    }
+
     const end = Date.now();
-    if (end - start > 10) {
+    if (end - start > 5) {
       console.log(`[PERF] isValidTeam check took ${end - start}ms`);
     }
     return currentTeam.location;
   } catch (error) {
-    console.log(error);
+    console.log("Error in isValidTeam:", error);
     return null;
   }
 }

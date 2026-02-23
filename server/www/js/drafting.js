@@ -139,6 +139,7 @@ async function loadTeams() {
     searchInput.onkeyup = () => search("team-list-table", 1, 0);
     container.appendChild(searchInput);
 
+    console.time("Render Teams Table");
     const table = document.createElement("table");
     table.id = "team-list-table";
     table.className = "table";
@@ -154,17 +155,16 @@ async function loadTeams() {
     const tbody = document.createElement("tbody");
     table.appendChild(tbody);
 
-    console.time("Render Teams Table");
     const fragment = document.createDocumentFragment();
     teams.forEach(team => {
       if (!team) return;
       const row = document.createElement("tr");
       row.id = team.number + "team-list";
       
-      row.insertCell(0).innerText = team.number;
-      row.insertCell(1).innerText = team.name;
-      row.insertCell(2).innerText = team.epa;
-      row.insertCell(3).innerText = team.location;
+      const c1 = row.insertCell(0); c1.innerText = team.number;
+      const c2 = row.insertCell(1); c2.innerText = team.name;
+      const c3 = row.insertCell(2); c3.innerText = team.epa;
+      const c4 = row.insertCell(3); c4.innerText = team.location;
       
       const c5 = row.insertCell(4);
       const btn = document.createElement("button");

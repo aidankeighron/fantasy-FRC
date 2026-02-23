@@ -192,23 +192,33 @@ class SQLResponse {
 
     static async draftEnded(conn, users, teams) {
         try {
-            for (const user of users) {
-                await conn.query('UPDATE users SET teams = '+'"'+String(user.current_teams).slice(0, -1)+'" WHERE name = '+'"'+user.name+'"',  (queryError, res)=>{
-                    if(queryError){
-                        console.log(queryError);
-                    }
+            const userUpdates = Object.values(users).map(user => {
+                return new Promise((resolve, reject) => {
+                    const teamsStr = String(user.current_teams).endsWith(',') ? String(user.current_teams).slice(0, -1) : String(user.current_teams);
+                    conn.query('UPDATE users SET teams = ? WHERE name = ?', [teamsStr, user.name], (queryError, res) => {
+                        if (queryError) return reject(queryError);
+                        resolve(res);
+                    });
                 });
-            }
-            for (const team of teams) {
-                await conn.query('INSERT INTO teams (name, number, opr, average, score, location, owner) VALUES ('+'"'+team.name+'", '+team.number+', 0, 0, 0'+', "'+team.location+'"'+', "'+team.owner+'")',  (queryError, res)=>{
-                    if(queryError){
-                        console.log(queryError);
-                    }
+            });
+
+            const teamUpdates = Object.values(teams).map(team => {
+                return new Promise((resolve, reject) => {
+                    conn.query('INSERT INTO teams (name, number, opr, average, score, location, owner) VALUES (?, ?, ?, ?, ?, ?, ?)', 
+                        [team.name, team.number, 0, 0, 0, team.location, team.owner], 
+                        (queryError, res) => {
+                            if (queryError) return reject(queryError);
+                            resolve(res);
+                        }
+                    );
                 });
-            }
+            });
+
+            await Promise.all([...userUpdates, ...teamUpdates]);
+            console.log("Draft data saved successfully.");
         }
         catch (error) {
-            console.log("ERROR:");
+            console.log("ERROR in draftEnded:");
             console.log(error);
         }
     }

@@ -124,10 +124,12 @@
         });
         
         socket.on('team_removed', (number, current, next) => {
+            console.time("Team Removed Update");
             removeFromTable(number+"queue");
             removeFromTable(number+"team-list");
             document.getElementById("current").innerHTML = "Picking: "+current;
             document.getElementById("next").innerHTML = "Next: "+next;
+            console.timeEnd("Team Removed Update");
         });
 
         socket.on('wrong_next_team', (number, delay) => {
