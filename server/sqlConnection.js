@@ -276,80 +276,94 @@ class SQLResponse {
         }
     }
 
-    static async respondToTrade(conn, tradeId, action) {
+    static async respondToTrade(pool, tradeId, action) {
         // action: 'accepted' or 'rejected'
         if (action !== 'accepted' && action !== 'rejected') return "Invalid action";
         
         try {
             return new Promise((resolve, reject) => {
-                conn.beginTransaction(async (err) => {
+                pool.getConnection((err, conn) => {
                     if (err) return reject(err);
-
-                    try {
-                        // 1. Get Trade Details
-                        const getTrade = () => new Promise((res, rej) => {
-                            conn.query('SELECT * FROM trades WHERE id = ?', [tradeId], (e, r) => e ? rej(e) : res(r[0]));
-                        });
-                        const trade = await getTrade();
-                        
-                        if (!trade || trade.status !== 'pending') {
-                            throw new Error("Trade not available");
+                    
+                    conn.beginTransaction(async (err) => {
+                        if (err) {
+                            conn.release();
+                            return reject(err);
                         }
 
-                        // 2. Update Trade Status
-                        const updateStatus = () => new Promise((res, rej) => {
-                            conn.query('UPDATE trades SET status = ? WHERE id = ?', [action, tradeId], (e, r) => e ? rej(e) : res(r));
-                        });
-                        await updateStatus();
-
-                        if (action === 'accepted') {
-                            // 3. Perform Swap
-                            // Get Users to swap teams string
-                            const getUser = (id) => new Promise((res, rej) => {
-                                conn.query('SELECT id, name, teams FROM users WHERE id = ?', [id], (e, r) => e ? rej(e) : res(r[0]));
+                        try {
+                            // 1. Get Trade Details
+                            const getTrade = () => new Promise((res, rej) => {
+                                conn.query('SELECT * FROM trades WHERE id = ?', [tradeId], (e, r) => e ? rej(e) : res(r[0]));
                             });
+                            const trade = await getTrade();
                             
-                            const sender = await getUser(trade.sender_id);
-                            const receiver = await getUser(trade.receiver_id);
+                            if (!trade || trade.status !== 'pending') {
+                                throw new Error("Trade not available");
+                            }
 
-                            // Swap team numbers in comma separated strings
-                            const swapTeamInList = (listStr, removeTeam, addTeam) => {
-                                let list = listStr.split(',').filter(t => t.trim() !== '' && t != removeTeam);
-                                list.push(addTeam);
-                                return list.join(',');
-                            };
-
-                            const newSenderTeams = swapTeamInList(sender.teams, trade.sender_team, trade.receiver_team);
-                            const newReceiverTeams = swapTeamInList(receiver.teams, trade.receiver_team, trade.sender_team);
-
-                            // Update Users
-                            const updateUser = (id, teams) => new Promise((res, rej) => {
-                                conn.query('UPDATE users SET teams = ? WHERE id = ?', [teams, id], (e, r) => e ? rej(e) : res(r));
+                            // 2. Update Trade Status
+                            const updateStatus = () => new Promise((res, rej) => {
+                                conn.query('UPDATE trades SET status = ? WHERE id = ?', [action, tradeId], (e, r) => e ? rej(e) : res(r));
                             });
-                            
-                            await updateUser(sender.id, newSenderTeams);
-                            await updateUser(receiver.id, newReceiverTeams);
+                            await updateStatus();
 
-                            // Update Teams Table Owner
-                            const updateTeamOwner = (teamNum, ownerName) => new Promise((res, rej) => {
-                                conn.query('UPDATE teams SET owner = ? WHERE number = ?', [ownerName, teamNum], (e, r) => e ? rej(e) : res(r));
+                            if (action === 'accepted') {
+                                // 3. Perform Swap
+                                // Get Users to swap teams string
+                                const getUser = (id) => new Promise((res, rej) => {
+                                    conn.query('SELECT id, name, teams FROM users WHERE id = ?', [id], (e, r) => e ? rej(e) : res(r[0]));
+                                });
+                                
+                                const sender = await getUser(trade.sender_id);
+                                const receiver = await getUser(trade.receiver_id);
+
+                                // Swap team numbers in comma separated strings
+                                const swapTeamInList = (listStr, removeTeam, addTeam) => {
+                                    let list = listStr.split(',').filter(t => t.trim() !== '' && t != removeTeam);
+                                    list.push(addTeam);
+                                    return list.join(',');
+                                };
+
+                                const newSenderTeams = swapTeamInList(sender.teams, trade.sender_team, trade.receiver_team);
+                                const newReceiverTeams = swapTeamInList(receiver.teams, trade.receiver_team, trade.sender_team);
+
+                                // Update Users
+                                const updateUser = (id, teams) => new Promise((res, rej) => {
+                                    conn.query('UPDATE users SET teams = ? WHERE id = ?', [teams, id], (e, r) => e ? rej(e) : res(r));
+                                });
+                                
+                                await updateUser(sender.id, newSenderTeams);
+                                await updateUser(receiver.id, newReceiverTeams);
+
+                                // Update Teams Table Owner
+                                const updateTeamOwner = (teamNum, ownerName) => new Promise((res, rej) => {
+                                    conn.query('UPDATE teams SET owner = ? WHERE number = ?', [ownerName, teamNum], (e, r) => e ? rej(e) : res(r));
+                                });
+
+                                await updateTeamOwner(trade.sender_team, receiver.name);
+                                await updateTeamOwner(trade.receiver_team, sender.name);
+                            }
+
+                            conn.commit((err) => {
+                                if (err) {
+                                    return conn.rollback(() => {
+                                        conn.release();
+                                        reject(err);
+                                    });
+                                }
+                                conn.release();
+                                resolve(action === 'accepted' ? "Trade accepted and processed" : "Trade rejected");
                             });
 
-                            await updateTeamOwner(trade.sender_team, receiver.name);
-                            await updateTeamOwner(trade.receiver_team, sender.name);
+                        } catch (error) {
+                            conn.rollback(() => {
+                                conn.release();
+                                console.log("Transaction Error:", error);
+                                reject(error);
+                            });
                         }
-
-                        conn.commit((err) => {
-                            if (err) return conn.rollback(() => reject(err));
-                            resolve(action === 'accepted' ? "Trade accepted and processed" : "Trade rejected");
-                        });
-
-                    } catch (error) {
-                        conn.rollback(() => {
-                            console.log("Transaction Error:", error);
-                            reject(error);
-                        });
-                    }
+                    });
                 });
             });
         } catch (error) {
@@ -379,17 +393,12 @@ module.exports = {
             }
         }
         
-        const sqlServer = mysql.createConnection({
+        const sqlServer = mysql.createPool({
+          connectionLimit: 10,
           host: config.SQL.SQL_IP,
           user: config.SQL.SQL_User,
           password: config.SQL.SQL_Passw,
           database: config.SQL.SQL_Database
-        });
-
-        sqlServer.connect((error) => {
-            if (error) {
-                console.log("Error: " + error);
-            }
         });
 
         return sqlServer;
