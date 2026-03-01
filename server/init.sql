@@ -47,4 +47,4 @@ CREATE TABLE IF NOT EXISTS trades (
 
 -- Insert admin user account
 INSERT INTO users (id, name, passw, teams, score, quals_score, elim_score, position)
-VALUES ('cf3a7c', 'Aidan', '$2b$10$6dnc4mRYSReMB7vBBhcfp.47otF9R9eK5aIkvLPw.V0PrqmNIgLhG', '', 0, 0, 0, 0);
+VALUES ('cf3a7c', 'Aidan', '$2a$12$t/AcRxrXvC0gwKVRFKuB7OtUwWE8AKPmRSEvBpaMTr6xkLInhWnym', '', 0, 0, 0, 0);
