@@ -154,14 +154,10 @@ class SQLResponse {
                     if (queryError) {
                         return reject(queryError);
                     }
-                    let user_data = Object.values(JSON.parse(JSON.stringify(res[0])));
-                    let result = bcrypt.compareSync(passw, user_data[2]);
-                    if (result) {
-                        return resolve(res);
-                    }
-                    else {
+                    if (!res || res.length === 0) {
                         return resolve(null);
                     }
+                    return resolve(res);
                 });
             });
         }
