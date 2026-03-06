@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
-
+  
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Fetch user details from Firestore
           const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
           const userData = userDoc.exists() ? userDoc.data() : null;
-
+          
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
@@ -56,13 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     });
-
+    
     return () => unsubscribe();
   }, []);
-
+  
   return (
     <AuthContext.Provider value={{ user, loading }}>
-      {children}
+    {children}
     </AuthContext.Provider>
   );
 }
