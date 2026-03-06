@@ -1,0 +1,157 @@
+.container {
+  padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.heroCard {
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 10;
+}
+
+.heroTitle {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: white;
+}
+
+.heroSubtitle {
+  color: var(--text-muted);
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.closeButton {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: var(--transition);
+  z-index: 20;
+}
+
+.closeButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr 1.5fr;
+  }
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  color: white;
+}
+
+.tableContainer {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.tableContainer::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.tableContainer::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+.tableContainer::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+}
+
+.virtualScroll {
+  height: 600px;
+  overflow: auto;
+  position: relative;
+}
+
+.searchInput {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--surface-border);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  width: 100%;
+  max-width: 300px;
+  transition: var(--transition);
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.rankBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.rank1 {
+  background: linear-gradient(135deg, #fbbf24, #d97706);
+  color: black;
+  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+.rank2 {
+  background: linear-gradient(135deg, #e5e7eb, #9ca3af);
+  color: black;
+}
+
+.rank3 {
+  background: linear-gradient(135deg, #fcd34d, #b45309);
+  color: black;
+}
+
+/* User Table Specific */
+.userRow {
+  cursor: pointer;
+}
+
+.userRow:hover td {
+  color: white;
+}
