@@ -2,8 +2,45 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+    
+    // Global helper functions
+    function isAdmin() {
+      return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
+    
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    // `draft_state`: Everyone can read. Only admins can write.
+    match /draft_state/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // `teams`: Everyone can read. Only backend or admins can write.
+    match /teams/{teamNumber} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    
+    // `users`: Everyone can read basic ranking info
+    match /users/{userId} {
+      allow read: if true; // Allows the ranking page to display users
+      allow write: if request.auth.uid == userId || isAdmin();
+    }
+    
+    // `trades`: Users can read their own trades and create ones involving their team.
+    match /trades/{tradeId} {
+      allow read, update: if isAuthed() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
+      allow create: if isAuthed() && request.auth.uid == request.resource.data.senderId;
+      allow delete: if isAdmin() || (isAuthed() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId));
+    }
+    
+    // `signup_links`: Only admins can manage. Users can read them temporarily to validate.
+    match /signup_links/{linkId} {
+      allow read: if true; // Needed so unauthenticated users can verify the link
+      allow write: if isAdmin();
     }
   }
 }
