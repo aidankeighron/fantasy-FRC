@@ -22,5 +22,16 @@
         "npm --prefix \"$RESOURCE_DIR\" run build"
       ]
     }
-  ]
+  ],
+  "apphosting": {
+    "backendId": "fantasy-frc-backend",
+    "rootDir": "src",
+    "ignore": [
+      "node_modules",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "functions"
+    ]
+  }
 }

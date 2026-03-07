@@ -112,14 +112,43 @@ service cloud.firestore {
 
 2. Run `firebase deploy --only firestore:rules` to deploy these rules.
 
-## 7. Next.js App Hosting
-We will be using `next start` on a custom node environment, or Next.js App Hosting (the modern way for Firebase). If the CLI prompts you about "Experimental Web Frameworks", say **Yes**. When you deploy via `firebase deploy --only hosting`, Firebase will automatically build and host the Next.js SSR functions.
+## 7. Firebase App Hosting (Recommended for Next.js)
+Firebase App Hosting is the newest, purpose-built solution for full-stack web frameworks like Next.js and Angular. It seamlessly handles Server-Side Rendering (SSR), API routes, and static assets without requiring complex configuration.
+1. In the Firebase Console, go to **Build > App Hosting**.
+2. Click **Get started** and connect your GitHub repository.
+3. Select your root directory and the branch you want to deploy.
+4. App Hosting will automatically detect Next.js. You can set environment variables and secrets directly in the console setup wizard.
+5. Once configured, App Hosting will automatically deploy every time you push to your selected branch.
 
 ## 8. Backend Keys (TBA API & Admin SDK)
-Your Firebase Functions will need the Old Blue Alliance API Key, and maybe Statbotics. Use Google Cloud Secret Manager or Firebase environment config for functions:
+Your Firebase Functions will need secret keys like The Blue Alliance (TBA) API Key. Setting keys via `functions:config:set` is deprecated. Instead, use Google Cloud Secret Manager:
 
+1. Use the Firebase CLI to set a secret (e.g., for `TBA_API_KEY`):
 ```bash
-firebase functions:config:set tba.key="YOUR_BLUE_ALLIANCE_KEY"
+firebase functions:secrets:set TBA_API_KEY
+```
+2. Enter your secret value when prompted. 
+3. In your Firebase Functions code, declare and access the secret by using the `defineSecret` method provided by `firebase-functions/params`.
+
+*(For Next.js App Hosting, enter your secrets directly in the App Hosting console during setup, and locally place them in your `.env.local` file).*
+
+## 9. Deploying Firebase Functions
+When you write or update your Firebase Cloud Functions in the `functions` directory, you need to deploy them to the cloud.
+
+1. Ensure you are in the root directory of your project (where `firebase.json` is located).
+2. (Optional but recommended) Navigate to the functions folder and build to check for errors:
+```bash
+cd functions
+npm run build
+cd ..
+```
+3. Deploy the functions using the Firebase CLI:
+```bash
+firebase deploy --only functions
+```
+If you only want to deploy a specific function, you can run:
+```bash
+firebase deploy --only functions:functionName
 ```
 
-Once you've done this, the Next.js app will be able to connect securely to Firebase!
+Once you've completed these steps, your Next.js app and Firebase backend will be fully configured and deployed!
