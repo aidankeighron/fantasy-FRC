@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db, functions } from "@/lib/firebase";
-import { collection, getDocs, getDoc, doc, setDoc, deleteDoc, updateDoc } from "firebase/firestore";
+import { collection, getDocs, getDoc, doc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { useRouter } from "next/navigation";
 
@@ -94,10 +94,11 @@ export default function AdminPage() {
     }
   };
 
-  const toggleAdmin = async (userId: string, currentStatus: boolean) => {
+  const toggleAdmin = async (userId: string) => {
     setActionLoading(true);
     try {
-      await updateDoc(doc(db, "users", userId), { isAdmin: !currentStatus });
+      const toggleFn = httpsCallable(functions, "toggleUserAdmin");
+      await toggleFn({ userId });
       fetchAdminData();
     } 
     catch (err) {
@@ -207,7 +208,7 @@ export default function AdminPage() {
                     <td>{u.email}</td>
                     <td>{u.isAdmin ? "Yes" : "No"}</td>
                     <td>
-                      <button onClick={() => toggleAdmin(u.id, u.isAdmin)} className="btn-secondary" disabled={actionLoading || u.id === user.uid}
+                      <button onClick={() => toggleAdmin(u.id)} className="btn-secondary" disabled={actionLoading || u.id === user.uid}
                         style={{ padding: "4px 8px", fontSize: "0.75rem", marginRight: "8px" }}>
                         Toggle Admin
                       </button>

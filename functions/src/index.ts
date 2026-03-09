@@ -358,7 +358,6 @@ export const deleteUserAccount = functions.https.onCall(async (data, context) =>
   return { success: true };
 });
 
-export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async (context) => {
 export const generateSignupLink = functions.https.onCall(async (data, context) => {
   await requireAdmin(context);
 
@@ -386,6 +385,30 @@ export const deleteSignupLink = functions.https.onCall(async (data, context) => 
   await linkRef.delete();
   return { success: true };
 });
+
+export const toggleUserAdmin = functions.https.onCall(async (data, context) => {
+  await requireAdmin(context);
+
+  if (typeof data.userId !== "string" || !data.userId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid user ID.");
+  }
+
+  if (data.userId === context.auth!.uid) {
+    throw new functions.https.HttpsError("invalid-argument", "Cannot modify your own admin status.");
+  }
+
+  const userRef = db.collection("users").doc(data.userId);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) {
+    throw new functions.https.HttpsError("not-found", "User not found.");
+  }
+
+  const currentStatus = userSnap.data()?.isAdmin || false;
+  await userRef.update({ isAdmin: !currentStatus });
+  return { success: true, isAdmin: !currentStatus };
+});
+
+export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async () => {
   console.log("Running Daily Point Updates");
 
   const ds = await db.collection("draft_state").doc("global").get();
