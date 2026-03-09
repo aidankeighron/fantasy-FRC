@@ -10,6 +10,19 @@ const tbaKey = defineSecret("TBA_API_KEY");
 
 const TBA_BASE_URL = "https://www.thebluealliance.com/api/v3";
 
+async function requireAdmin(context: functions.https.CallableContext): Promise<admin.firestore.DocumentData> {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
+  const user = await db.collection("users").doc(context.auth.uid).get();
+  if (!user.data()?.isAdmin) {
+    throw new functions.https.HttpsError("permission-denied", "Admin only.");
+  }
+
+  return user.data()!;
+}
+
 async function tbaRequest(endpoint: string): Promise<any> {
   const key = tbaKey.value();
   if (!key) {
@@ -23,14 +36,12 @@ async function tbaRequest(endpoint: string): Promise<any> {
 }
 
 export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
-  const user = await db.collection("users").doc(context.auth.uid).get();
-  if (!user.data()?.isAdmin) throw new functions.https.HttpsError("permission-denied", "Admin only.");
-  
-  const year = data.year || new Date().getFullYear().toString();
-  
-  // Update Draft State active year
+  await requireAdmin(context);
+
+  const year = typeof data.year === "string" && /^\d{4}$/.test(data.year)
+    ? data.year
+    : new Date().getFullYear().toString();
+
   await db.collection("draft_state").doc("global").set({ active_year: year }, { merge: true });
   
   let pageNum = 0;
@@ -59,6 +70,8 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
 
         if (batchCount >= 400) {
           await batch.commit();
+          batch = db.batch();
+          batchCount = 0;
         }
       }
       pageNum++;
@@ -77,12 +90,8 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
 });
 
 export const startNewDraft = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
-  const user = await db.collection("users").doc(context.auth.uid).get();
-  if (!user.data()?.isAdmin) throw new functions.https.HttpsError("permission-denied", "Admin only.");
-  
-  // Clear all users' teams
+  await requireAdmin(context);
+
   const usersSnap = await db.collection("users").get();
   const batch = db.batch();
   const userIds: string[] = [];
@@ -333,10 +342,8 @@ export const cancelTrade = functions.https.onCall(async (data, context) => {
 });
 
 export const deleteUserAccount = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required");
-  const adminDoc = await db.collection("users").doc(context.auth.uid).get();
-  if (!adminDoc.data()?.isAdmin) throw new functions.https.HttpsError("permission-denied", "Admin only.");
-  
+  await requireAdmin(context);
+
   const { uid } = data;
   if (typeof uid !== "string" || !uid) {
     throw new functions.https.HttpsError("invalid-argument", "Invalid user ID.");
