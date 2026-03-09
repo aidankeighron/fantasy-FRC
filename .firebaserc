@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "fantasy-frc-17f9f"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }

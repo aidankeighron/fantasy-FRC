@@ -7,7 +7,7 @@ import { getStorage } from "firebase/storage";
 import { getFunctions } from "firebase/functions";
 
 const getFirebaseConfig = () => {
-  const configFromEnv = process.env.FIREBASE_WEBAPP_CONFIG;
+  const configFromEnv = process.env.NEXT_PUBLIC_FIREBASE_WEBAPP_CONFIG || process.env.FIREBASE_WEBAPP_CONFIG;
   if (configFromEnv) {
     try {
       return JSON.parse(configFromEnv);
