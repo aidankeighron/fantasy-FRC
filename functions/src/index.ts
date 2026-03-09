@@ -228,7 +228,27 @@ export const createTrade = functions.https.onCall(async (data, context) => {
   if (ds.data()?.status !== "completed") {
     throw new functions.https.HttpsError("failed-precondition", "Trading requires completed draft.");
   }
-  
+
+  const senderDoc = await db.collection("users").doc(context.auth.uid).get();
+  const senderTeams: string[] = senderDoc.data()?.teams || [];
+  for (const team of offeredTeams) {
+    if (!senderTeams.includes(team)) {
+      throw new functions.https.HttpsError("invalid-argument", `You do not own team ${team}.`);
+    }
+  }
+
+  const receiverDoc = await db.collection("users").doc(receiverId).get();
+  if (!receiverDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Receiver not found.");
+  }
+
+  const receiverTeams: string[] = receiverDoc.data()?.teams || [];
+  for (const team of requestedTeams) {
+    if (!receiverTeams.includes(team)) {
+      throw new functions.https.HttpsError("invalid-argument", `Receiver does not own team ${team}.`);
+    }
+  }
+
   await db.collection("trades").add({
     senderId: context.auth.uid,
     receiverId,
