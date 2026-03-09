@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 
 interface AppUser {
   uid: string;
@@ -31,8 +31,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firebaseUser) {
         try {
           // Fetch user details from Firestore
-          const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-          const userData = userDoc.exists() ? userDoc.data() : null;
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          let userData = userDoc.exists() ? userDoc.data() : null;
+          
+          if (!userData) {
+            // Create user document if it doesn't exist (e.g., manually created in console)
+            userData = {
+              email: firebaseUser.email,
+              isAdmin: false,
+              teams: [],
+              score: 0,
+              rank: 0,
+              createdAt: new Date().toISOString(),
+            };
+            await setDoc(userDocRef, userData);
+          }
           
           setUser({
             uid: firebaseUser.uid,
