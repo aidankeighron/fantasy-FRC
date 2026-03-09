@@ -292,19 +292,21 @@ export const deleteUserAccount = functions.https.onCall(async (data, context) =>
 
 export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async (context) => {
   console.log("Running Daily Point Updates");
-  
-  // Get active year
+
   const ds = await db.collection("draft_state").doc("global").get();
   const activeYear = ds.data()?.active_year;
-  if (!activeYear) return;
-  
-  // Get all drafted teams
+  if (!activeYear) {
+    return;
+  }
+
   const usersSnap = await db.collection("users").get();
   const draftedTeamIds = new Set<string>();
   usersSnap.docs.forEach(u => u.data().teams?.forEach((t: string) => draftedTeamIds.add(t)));
-  
-  if (draftedTeamIds.size === 0) return;
-  
+
+  if (draftedTeamIds.size === 0) {
+    return;
+  }
+
   for (const teamNum of Array.from(draftedTeamIds)) {
     try {
       const events = await tbaRequest(`/team/frc${teamNum}/events/${activeYear}/keys`);
@@ -317,29 +319,36 @@ export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] })
       let playedElims = 0;
       
       for (const event of events) {
-        if (event.includes("week0")) continue;
-        
-        // Qual Status
+        if (event.includes("week0")) {
+          continue;
+        }
+
         let statusRes = null;
-        try { statusRes = await tbaRequest(`/team/frc${teamNum}/event/${event}/status`); } catch(e) {}
-        
+        try {
+          statusRes = await tbaRequest(`/team/frc${teamNum}/event/${event}/status`);
+        }
+        catch (e) {
+          // Silently skip events with no status
+        }
+
         if (statusRes && statusRes.qual && statusRes.qual.ranking) {
           teamAvg += statusRes.qual.ranking.sort_orders?.[2] || 0;
           teamQualWins += statusRes.qual.ranking.record?.wins || 0;
           teamQualMatches += statusRes.qual.ranking.matches_played || 0;
           playedQuals++;
         }
-        
-        // Elim status
+
         if (statusRes && statusRes.playoff && statusRes.playoff.record) {
           teamElimWins += statusRes.playoff.record.wins || 0;
           teamElimMatches += (statusRes.playoff.record.wins + statusRes.playoff.record.losses + statusRes.playoff.record.ties) || 0;
           playedElims++;
         }
       }
-      
-      if (playedQuals === 0) continue;
-      
+
+      if (playedQuals === 0) {
+        continue;
+      }
+
       teamAvg /= playedQuals;
       const qualWinPercent = teamQualMatches > 0 ? (teamQualWins / teamQualMatches) : 0;
       
@@ -361,8 +370,7 @@ export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] })
       console.error(`Failed to update points for ${teamNum}`, err);
     }
   }
-  
-  // Now recalculate users' scores and ranks
+
   const updatedUsersSnap = await db.collection("users").get();
   const userScores: { uid: string, score: number }[] = [];
   
