@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import axios from "axios";
 import { defineSecret } from "firebase-functions/params";
+import * as crypto from "crypto";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -116,84 +117,86 @@ export const startNewDraft = functions.https.onCall(async (data, context) => {
 });
 
 export const processDraftPick = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
-  const { teamNumber, userId, force } = data;
-  const targetUser = userId || context.auth.uid;
-  
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
+  const teamNumber = data.teamNumber;
+  if (typeof teamNumber !== "string" || !/^\d+$/.test(teamNumber)) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid team number.");
+  }
+
+  const force = !!data.force;
+  const targetUser = (typeof data.userId === "string" && data.userId) || context.auth.uid;
+
   if (force) {
-    const adminDoc = await db.collection("users").doc(context.auth.uid).get();
-    if (!adminDoc.data()?.isAdmin) throw new functions.https.HttpsError("permission-denied", "Admin only.");
+    await requireAdmin(context);
   }
-  
-  const dsRef = db.collection("draft_state").doc("global");
-  const dsSnap = await dsRef.get();
-  const draftState = dsSnap.data();
-  
-  if (!draftState || draftState.status !== "active") {
-    throw new functions.https.HttpsError("failed-precondition", "Draft is not active.");
-  }
-  
-  if (!force && draftState.current_turn_userId !== context.auth.uid) {
-    throw new functions.https.HttpsError("permission-denied", "It is not your turn.");
-  }
-  
-  // Check if team is available
-  const teamSnap = await db.collection("teams").doc(teamNumber).get();
-  if (!teamSnap.exists) throw new functions.https.HttpsError("not-found", "Team not found.");
-  
-  // TODO We could strictly enforce state/country logic on backend, but for draft continuity we trust the frontend
-  if (!force) {
-    const allUsersSnap = await db.collection("users").get();
-    for (const u of allUsersSnap.docs) {
-      if ((u.data().teams || []).includes(teamNumber)) {
-        throw new functions.https.HttpsError("already-exists", "Team already drafted.");
+
+  await db.runTransaction(async (transaction) => {
+    const dsRef = db.collection("draft_state").doc("global");
+    const dsSnap = await transaction.get(dsRef);
+    const draftState = dsSnap.data();
+
+    if (!draftState || draftState.status !== "active") {
+      throw new functions.https.HttpsError("failed-precondition", "Draft is not active.");
+    }
+
+    if (!force && draftState.current_turn_userId !== context.auth!.uid) {
+      throw new functions.https.HttpsError("permission-denied", "It is not your turn.");
+    }
+
+    const teamSnap = await transaction.get(db.collection("teams").doc(teamNumber));
+    if (!teamSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "Team not found.");
+    }
+
+    if (!force) {
+      const allUsersSnap = await transaction.get(db.collection("users"));
+      for (const u of allUsersSnap.docs) {
+        if ((u.data().teams || []).includes(teamNumber)) {
+          throw new functions.https.HttpsError("already-exists", "Team already drafted.");
+        }
       }
     }
-  }
-  
-  // Update User
-  const userRef = db.collection("users").doc(targetUser);
-  const userSnap = await userRef.get();
-  const draftedTeams = userSnap.data()?.teams || [];
-  if (draftedTeams.length >= 8) {
-    throw new functions.https.HttpsError("out-of-range", "User already has 8 teams.");
-  }
-  
-  const newTeamsList = [...draftedTeams, teamNumber];
-  await userRef.update({ teams: newTeamsList });
-  
-  // Update global draft turn
-  const order: string[] = draftState.draft_order;
-  let nextUser = draftState.current_turn_userId;
-  
-  // TODO make sure if this is the last pick it completes
-  if (!force) {
-    const nextPickCount = (draftState.pick_count || 0) + 1;
-    // Simple serpentine or standard round robin logic. Let's do Standard Round Robin (Looping).
-    const currentIndex = order.indexOf(draftState.current_turn_userId);
-    let nextIndex = currentIndex + 1;
-    let status = "active";
-    
-    if (nextIndex >= order.length) {
-      nextIndex = 0; // new round
-      // check if everyone has 8 teams
-      const nextRoundNum = Math.floor(nextPickCount / order.length);
-      if (nextRoundNum >= 8) {
-        status = "completed";
-        nextUser = null;
-      } 
+
+    const userRef = db.collection("users").doc(targetUser);
+    const userSnap = await transaction.get(userRef);
+    const draftedTeams = userSnap.data()?.teams || [];
+    if (draftedTeams.length >= 8) {
+      throw new functions.https.HttpsError("out-of-range", "User already has 8 teams.");
+    }
+
+    const newTeamsList = [...draftedTeams, teamNumber];
+    transaction.update(userRef, { teams: newTeamsList });
+
+    if (!force) {
+      const order: string[] = draftState.draft_order;
+      const nextPickCount = (draftState.pick_count || 0) + 1;
+      const currentIndex = order.indexOf(draftState.current_turn_userId);
+      let nextIndex = currentIndex + 1;
+      let status = "active";
+      let nextUser: string | null = draftState.current_turn_userId;
+
+      if (nextIndex >= order.length) {
+        nextIndex = 0;
+        const nextRoundNum = Math.floor(nextPickCount / order.length);
+        if (nextRoundNum >= 8) {
+          status = "completed";
+          nextUser = null;
+        }
+        else {
+          nextUser = order[nextIndex];
+        }
+      }
       else {
         nextUser = order[nextIndex];
       }
-    } 
-    else {
-      nextUser = order[nextIndex];
+
+      transaction.update(dsRef, { current_turn_userId: nextUser, pick_count: nextPickCount, status });
     }
-    
-    await dsRef.update({ current_turn_userId: nextUser, pick_count: nextPickCount, status });
-  }
-  
+  });
+
   return { success: true };
 });
 
