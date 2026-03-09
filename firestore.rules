@@ -23,10 +23,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
-    // `users`: Everyone can read basic ranking info
+    // `users`: Everyone can read basic ranking info.
+    // Users can update their own document but CANNOT modify protected fields.
     match /users/{userId} {
-      allow read: if true; // Allows the ranking page to display users
-      allow write: if request.auth.uid == userId || isAdmin();
+      allow read: if true;
+      allow create: if isAuthed() && request.auth.uid == userId;
+      allow update: if (request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score']))
+        || isAdmin();
+      allow delete: if isAdmin();
     }
     
     // `trades`: Users can read their own trades and create ones involving their team.
