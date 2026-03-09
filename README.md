@@ -1,143 +1,103 @@
 # Fantasy FRC
 
-A fantasy sports web application for the FIRST Robotics Competition (FRC), built with Node.js, MySQL, and Docker.
+Fantasy sports application for the FIRST Robotics Competition (FRC).
 
-https://cloud.oracle.com/networking/vcns
+This project allows users to participate in a fantasy draft of FRC teams, tracking their performance and calculating scores based on real-time data from The Blue Alliance (TBA) and Statbotics.
 
-## Quick Start (Docker)
+## Features
 
-The easiest way to run the application is using Docker.
-
-1.  **Clone the repository**
-2.  **Configure environment variables**
-    *   **Docker:** The application runs on a `.ini` file, but the Docker container **automatically generates** this file from environment variables.
-    *   You can modify `docker-compose.yml` directly or create a `.env` file to set variables like `SQL_PASSWORD` and `BLUE_ALLIANCE`.
-
-3.  **Start the Application**
-    ```bash
-    docker-compose up --build
-    ```
-
-    Or Detached:
-    ```bash
-    docker compose up -d --build
-    ```
-4.  **Access the App**
-    *   Open [http://localhost](http://localhost) in your browser.
+- **Next.js Framework**: Modern, fast, and SEO-friendly.
+- **Firebase Backend**: Real-time database (Firestore), scalable serverless functions, and secure authentication.
+- **Dynamic Drafting**: Real-time drafting system for FRC teams.
+- **Stat Tracking**: Automatic scoring using data from TBA and Statbotics APIs.
 
 ---
 
-## Local Installation (Without Docker)
+## Getting Started
 
 ### Prerequisites
-*   Node.js (v18+)
-*   MySQL Server (v8.0+)
-*   Python (v3.x) with `pip`
 
-### Setup
-1.  **Install Node Dependencies**
-    ```bash
-    cd server
-    npm install
-    ```
-2.  **Install Python Dependencies**
-    ```bash
-    pip install numpy mysql-connector-python requests statbotics
-    ```
-3.  **Setup Database**
-    *   Log in to MySQL and run the initialization script:
-    ```bash
-    mysql -u root -p < server/init.sql
-    ```
-4.  **Configuration**
-    *   Create `server/server_info.ini` with your credentials:
-    ```ini
-    [SQL]
-    SQL_Passw = "your_password"
-    SQL_IP = "localhost"
-    SQL_User = "root"
-    SQL_Database = "fantasy"
+- **Node.js** (v20+ recommended)
+- **Firebase CLI** (`npm install -g firebase-tools`)
+- **Git**
 
-    [TBA]
-    BLUE_ALLIANCE = "your_tba_api_key"
+### 1. Clone the Repository
 
-    [SERVER]
-    SECRET = "your_session_secret"
-    ```
-5.  **Run the Server**
-    ```bash
-    node server/server.js
-    ```
+```bash
+git clone https://github.com/aidankeighron/fantasy-FRC.git
+cd fantasy-FRC
+```
 
----
+### 2. Install Dependencies
 
-## Updating Team Info (New Season)
+```bash
+npm install
+cd functions
+npm install
+cd ..
+```
 
-The application pulls team data from The Blue Alliance (TBA) and Statbotics. To update the data for a new season:
+### 3. Setup Firebase
 
-1.  **Edit the Script**
-    *   Open `server/get_team_info.py`.
-    *   Update the `YEAR` variable to the current season (e.g., `YEAR = 2026`).
-2.  **Run the Update Script**
-    *   **Docker:**
-        ```bash
-        docker-compose run app python3 server/get_team_info.py
-        ```
-    *   **Local:**
-        ```bash
-        python3 server/get_team_info.py
-        ```
-    *   This will generate a new `server/team_info.json` file.
-3.  **Restart the Server** to load the new data.
+Detailed setup instructions, including Firestore rules, Firebase Functions, and environment variables, can be found in [instructions.md](file:///c:/Users/aidan/OneDrive/Documents/fantasy-FRC/instructions.md).
+
+1. Create a Firebase project at the [Firebase Console](https://console.firebase.google.com/).
+2. Enable Authentication (Email/Password), Firestore, and Functions.
+3. Configure your `.env.local` with your Firebase project credentials (see `instructions.md` for the template).
+
+### 4. Local Development
+
+To run the Next.js development server:
+
+```bash
+npm run dev
+```
+
+The application will be available at [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Admin User Management
+## Deployment & Updating
 
-The admin user has special privileges to start drafts and manage users.
+### Deploying the Web App
 
-### Changing the Admin User
-Currently, the admin user is defined in the server code. To change it:
+We recommend using **Firebase App Hosting** for Next.js projects. It handles SSR and API routes automatically.
 
-1.  **Open `server/server.js`**.
-2.  Locate the admin configuration (around line 43):
-    ```javascript
-    const adminId = "your_admin_id"; // e.g., "cf3a7c"
-    const adminName = "YourUsername"; // e.g., "Aidan"
-    ```
-3.  **Update `adminName`** to the username of the account you want to be admin.
-4.  **Update `adminId`**:
-    *   You can find a user's ID by checking the `users` table in the database:
-        ```sql
-        SELECT * FROM users WHERE name = 'YourUsername';
-        ```
-    *   Or by logging `req.user` in the code for debugging.
-5.  **Restart the server** for changes to take effect.
+1. Connect your GitHub repository in the Firebase Console under **App Hosting**.
+2. Push your changes to the main branch for automatic deployment.
 
-### Creating a New Admin Account via Database
-If you initialized the database using `init.sql`, the default admin is:
-*   **Username:** `Aidan`
-*   **Password:** `mad77777`
+### Deploying Firebase Functions
 
-To manually create a different admin in SQL:
-```sql
-INSERT INTO users (id, name, passw, teams, score, quals_score, elim_score, position)
-VALUES ('new_admin_id', 'NewAdminName', 'bcrypt_hashed_password', '', 0, 0, 0, 0);
+When you update code in the `functions/` directory:
+
+```bash
+firebase deploy --only functions
+```
+
+### Updating Rules and Indexes
+
+```bash
+firebase deploy --only firestore
 ```
 
 ---
 
 ## Project Structure
 
-*   `server/` - Node.js backend code.
-    *   `server.js` - Main application entry point.
-    *   `sqlConnection.js` - Database interaction logic.
-    *   `www/` - Frontend HTML, CSS, and JS files.
-    *   `get_team_info.py` - Script to fetch FRC team data.
-*   `docker-compose.yml` - Docker service definition.
+- `src/`: Next.js application source code (components, pages, styles).
+- `functions/`: Firebase Cloud Functions (backend logic, data syncing).
+- `public/`: Static assets (images, icons).
+- `legacy/`: Contains the previous Node.js/MySQL/Docker version of the project.
+- `instructions.md`: Comprehensive setup and technical configuration guide.
 
-## Usage
+## Contributing
 
-1.  **Login/Signup:** Create an account to participate.
-2.  **Draft:** The admin starts the draft. Users take turns picking FRC teams.
-3.  **Scoring:** Points are calculated based on the performance of drafted teams (using data from Statbotics/TBA).
+1. Create a new branch for your feature or bugfix.
+2. Ensure your code follows the project's linting and type-checking rules.
+3. Submit a pull request for review.
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](file:///c:/Users/aidan/OneDrive/Documents/fantasy-FRC/LICENSE) file for details.
