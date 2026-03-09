@@ -35,9 +35,10 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
   
   let pageNum = 0;
   let fetching = true;
-  const batch = db.batch();
+  let batch = db.batch();
   let count = 0;
-  
+  let batchCount = 0;
+
   while (fetching) {
     try {
       const teams = await tbaRequest(`/teams/${year}/${pageNum}`);
@@ -54,8 +55,9 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
           country: t.country || "",
         }, { merge: true });
         count++;
-        
-        if (count % 400 === 0) {
+        batchCount++;
+
+        if (batchCount >= 400) {
           await batch.commit();
         }
       }
@@ -66,8 +68,11 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
       fetching = false;
     }
   }
-  
-  await batch.commit(); // commit remaining
+
+  if (batchCount > 0) {
+    await batch.commit();
+  }
+
   return { success: true, total: count, year };
 });
 
