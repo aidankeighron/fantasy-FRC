@@ -1,7 +1,7 @@
 {
   "name": "fantasy-frc-functions",
   "scripts": {
-    "lint": "set ESLINT_USE_FLAT_CONFIG=false&& eslint .",
+    "lint": "set ESLINT_USE_FLAT_CONFIG=false&& eslint src --ext .ts",
     "build": "tsc",
     "serve": "npm run build && firebase emulators:start --only functions",
     "shell": "npm run build && firebase functions:shell",
