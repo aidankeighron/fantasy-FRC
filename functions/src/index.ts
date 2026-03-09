@@ -359,6 +359,16 @@ export const deleteUserAccount = functions.https.onCall(async (data, context) =>
 });
 
 export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async (context) => {
+export const generateSignupLink = functions.https.onCall(async (data, context) => {
+  await requireAdmin(context);
+
+  const token = crypto.randomBytes(24).toString("hex");
+  await db.collection("signup_links").doc(token).set({
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { success: true, token };
+});
   console.log("Running Daily Point Updates");
 
   const ds = await db.collection("draft_state").doc("global").get();

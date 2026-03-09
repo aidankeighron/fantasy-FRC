@@ -65,10 +65,8 @@ export default function AdminPage() {
   const generateLink = async () => {
     setActionLoading(true);
     try {
-      const newId = Math.random().toString(36).substring(2, 15);
-      await setDoc(doc(db, "signup_links", newId), {
-        createdAt: new Date().toISOString(),
-      });
+      const generateFn = httpsCallable(functions, "generateSignupLink");
+      await generateFn();
       fetchAdminData();
     } 
     catch (err) {
