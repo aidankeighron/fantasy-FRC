@@ -4,22 +4,23 @@ exports.updateDraftedTeamsPoints = exports.deleteUserAccount = exports.cancelTra
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const axios_1 = require("axios");
+const params_1 = require("firebase-functions/params");
 admin.initializeApp();
 const db = admin.firestore();
-// Use Firebase Functions config or Secret Manager for TBA Key
-// For this rewrite, we assume `process.env.TBA_API_KEY` or `functions.config().tba.key` is set.
-const getTbaKey = () => { var _a; return process.env.TBA_API_KEY || ((_a = functions.config().tba) === null || _a === void 0 ? void 0 : _a.key) || ""; };
+// Define the TBA API key secret
+const tbaKey = (0, params_1.defineSecret)("TBA_API_KEY");
 const TBA_BASE_URL = "https://www.thebluealliance.com/api/v3";
 async function tbaRequest(endpoint) {
-    const key = getTbaKey();
-    if (!key)
+    const key = tbaKey.value();
+    if (!key) {
         throw new Error("TBA API Key not configured.");
+    }
     const res = await axios_1.default.get(`${TBA_BASE_URL}${endpoint}`, {
         headers: { "X-TBA-Auth-Key": key },
     });
     return res.data;
 }
-exports.syncTeamData = functions.https.onCall(async (data, context) => {
+exports.syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
     var _a;
     if (!context.auth)
         throw new functions.https.HttpsError("unauthenticated", "Login required.");
@@ -255,7 +256,7 @@ exports.deleteUserAccount = functions.https.onCall(async (data, context) => {
     await db.collection("users").doc(uid).delete();
     return { success: true };
 });
-exports.updateDraftedTeamsPoints = functions.pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async (context) => {
+exports.updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async (context) => {
     var _a, _b, _c;
     console.log("Running Daily Point Updates");
     // Get active year
