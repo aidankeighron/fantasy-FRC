@@ -2,20 +2,34 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import axios from "axios";
 import { defineSecret } from "firebase-functions/params";
+import * as crypto from "crypto";
 
 admin.initializeApp();
 const db = admin.firestore();
 
-// Define the TBA API key secret
 const tbaKey = defineSecret("TBA_API_KEY");
 
 const TBA_BASE_URL = "https://www.thebluealliance.com/api/v3";
+
+async function requireAdmin(context: functions.https.CallableContext): Promise<admin.firestore.DocumentData> {
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
+  const user = await db.collection("users").doc(context.auth.uid).get();
+  if (!user.data()?.isAdmin) {
+    throw new functions.https.HttpsError("permission-denied", "Admin only.");
+  }
+
+  return user.data()!;
+}
 
 async function tbaRequest(endpoint: string): Promise<any> {
   const key = tbaKey.value();
   if (!key) {
     throw new Error("TBA API Key not configured.");
   }
+
   const res = await axios.get(`${TBA_BASE_URL}${endpoint}`, {
     headers: { "X-TBA-Auth-Key": key },
   });
@@ -23,21 +37,20 @@ async function tbaRequest(endpoint: string): Promise<any> {
 }
 
 export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
-  const user = await db.collection("users").doc(context.auth.uid).get();
-  if (!user.data()?.isAdmin) throw new functions.https.HttpsError("permission-denied", "Admin only.");
-  
-  const year = data.year || new Date().getFullYear().toString();
-  
-  // Update Draft State active year
+  await requireAdmin(context);
+
+  const year = typeof data.year === "string" && /^\d{4}$/.test(data.year)
+    ? data.year
+    : new Date().getFullYear().toString();
+
   await db.collection("draft_state").doc("global").set({ active_year: year }, { merge: true });
   
   let pageNum = 0;
   let fetching = true;
-  const batch = db.batch();
+  let batch = db.batch();
   let count = 0;
-  
+  let batchCount = 0;
+
   while (fetching) {
     try {
       const teams = await tbaRequest(`/teams/${year}/${pageNum}`);
@@ -48,16 +61,18 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
       
       for (const t of teams) {
         const docRef = db.collection("teams").doc(t.team_number.toString());
-        // Merge so we don't overwrite stats if they exist
         batch.set(docRef, {
           name: t.nickname || t.name,
           state: t.state_prov || "",
           country: t.country || "",
         }, { merge: true });
         count++;
-        
-        if (count % 400 === 0) {
+        batchCount++;
+
+        if (batchCount >= 400) {
           await batch.commit();
+          batch = db.batch();
+          batchCount = 0;
         }
       }
       pageNum++;
@@ -67,18 +82,17 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
       fetching = false;
     }
   }
-  
-  await batch.commit(); // commit remaining
+
+  if (batchCount > 0) {
+    await batch.commit();
+  }
+
   return { success: true, total: count, year };
 });
 
 export const startNewDraft = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
-  const user = await db.collection("users").doc(context.auth.uid).get();
-  if (!user.data()?.isAdmin) throw new functions.https.HttpsError("permission-denied", "Admin only.");
-  
-  // Clear all users' teams
+  await requireAdmin(context);
+
   const usersSnap = await db.collection("users").get();
   const batch = db.batch();
   const userIds: string[] = [];
@@ -87,11 +101,9 @@ export const startNewDraft = functions.https.onCall(async (data, context) => {
     userIds.push(doc.id);
     batch.update(doc.ref, { teams: [], score: 0 });
   });
-  
-  // Randomize order
+
   const shuffled = userIds.sort(() => 0.5 - Math.random());
-  
-  // Set draft state
+
   const draftStateRef = db.collection("draft_state").doc("global");
   batch.set(draftStateRef, {
     status: "active",
@@ -105,101 +117,141 @@ export const startNewDraft = functions.https.onCall(async (data, context) => {
 });
 
 export const processDraftPick = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
-  const { teamNumber, userId, force } = data;
-  const targetUser = userId || context.auth.uid;
-  
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
+  const teamNumber = data.teamNumber;
+  if (typeof teamNumber !== "string" || !/^\d+$/.test(teamNumber)) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid team number.");
+  }
+
+  const force = !!data.force;
+  const targetUser = (typeof data.userId === "string" && data.userId) || context.auth.uid;
+
   if (force) {
-    const adminDoc = await db.collection("users").doc(context.auth.uid).get();
-    if (!adminDoc.data()?.isAdmin) throw new functions.https.HttpsError("permission-denied", "Admin only.");
+    await requireAdmin(context);
   }
-  
-  const dsRef = db.collection("draft_state").doc("global");
-  const dsSnap = await dsRef.get();
-  const draftState = dsSnap.data();
-  
-  if (!draftState || draftState.status !== "active") {
-    throw new functions.https.HttpsError("failed-precondition", "Draft is not active.");
-  }
-  
-  if (!force && draftState.current_turn_userId !== context.auth.uid) {
-    throw new functions.https.HttpsError("permission-denied", "It is not your turn.");
-  }
-  
-  // Check if team is available
-  const teamSnap = await db.collection("teams").doc(teamNumber).get();
-  if (!teamSnap.exists) throw new functions.https.HttpsError("not-found", "Team not found.");
-  
-  // TODO We could strictly enforce state/country logic on backend, but for draft continuity we trust the frontend
-  if (!force) {
-    const allUsersSnap = await db.collection("users").get();
-    for (const u of allUsersSnap.docs) {
-      if ((u.data().teams || []).includes(teamNumber)) {
-        throw new functions.https.HttpsError("already-exists", "Team already drafted.");
+
+  await db.runTransaction(async (transaction) => {
+    const dsRef = db.collection("draft_state").doc("global");
+    const dsSnap = await transaction.get(dsRef);
+    const draftState = dsSnap.data();
+
+    if (!draftState || draftState.status !== "active") {
+      throw new functions.https.HttpsError("failed-precondition", "Draft is not active.");
+    }
+
+    if (!force && draftState.current_turn_userId !== context.auth!.uid) {
+      throw new functions.https.HttpsError("permission-denied", "It is not your turn.");
+    }
+
+    const teamSnap = await transaction.get(db.collection("teams").doc(teamNumber));
+    if (!teamSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "Team not found.");
+    }
+
+    if (!force) {
+      const allUsersSnap = await transaction.get(db.collection("users"));
+      for (const u of allUsersSnap.docs) {
+        if ((u.data().teams || []).includes(teamNumber)) {
+          throw new functions.https.HttpsError("already-exists", "Team already drafted.");
+        }
       }
     }
-  }
-  
-  // Update User
-  const userRef = db.collection("users").doc(targetUser);
-  const userSnap = await userRef.get();
-  const draftedTeams = userSnap.data()?.teams || [];
-  if (draftedTeams.length >= 8) {
-    throw new functions.https.HttpsError("out-of-range", "User already has 8 teams.");
-  }
-  
-  const newTeamsList = [...draftedTeams, teamNumber];
-  await userRef.update({ teams: newTeamsList });
-  
-  // Update global draft turn
-  const order: string[] = draftState.draft_order;
-  let nextUser = draftState.current_turn_userId;
-  
-  // TODO make sure if this is the last pick it completes
-  if (!force) {
-    const nextPickCount = (draftState.pick_count || 0) + 1;
-    // Simple serpentine or standard round robin logic. Let's do Standard Round Robin (Looping).
-    const currentIndex = order.indexOf(draftState.current_turn_userId);
-    let nextIndex = currentIndex + 1;
-    let status = "active";
-    
-    if (nextIndex >= order.length) {
-      nextIndex = 0; // new round
-      // check if everyone has 8 teams
-      const nextRoundNum = Math.floor(nextPickCount / order.length);
-      if (nextRoundNum >= 8) {
-        status = "completed";
-        nextUser = null;
-      } 
+
+    const userRef = db.collection("users").doc(targetUser);
+    const userSnap = await transaction.get(userRef);
+    const draftedTeams = userSnap.data()?.teams || [];
+    if (draftedTeams.length >= 8) {
+      throw new functions.https.HttpsError("out-of-range", "User already has 8 teams.");
+    }
+
+    const newTeamsList = [...draftedTeams, teamNumber];
+    transaction.update(userRef, { teams: newTeamsList });
+
+    if (!force) {
+      const order: string[] = draftState.draft_order;
+      const nextPickCount = (draftState.pick_count || 0) + 1;
+      const currentIndex = order.indexOf(draftState.current_turn_userId);
+      let nextIndex = currentIndex + 1;
+      let status = "active";
+      let nextUser: string | null = draftState.current_turn_userId;
+
+      if (nextIndex >= order.length) {
+        nextIndex = 0;
+        const nextRoundNum = Math.floor(nextPickCount / order.length);
+        if (nextRoundNum >= 8) {
+          status = "completed";
+          nextUser = null;
+        }
+        else {
+          nextUser = order[nextIndex];
+        }
+      }
       else {
         nextUser = order[nextIndex];
       }
-    } 
-    else {
-      nextUser = order[nextIndex];
+
+      transaction.update(dsRef, { current_turn_userId: nextUser, pick_count: nextPickCount, status });
     }
-    
-    await dsRef.update({ current_turn_userId: nextUser, pick_count: nextPickCount, status });
-  }
-  
+  });
+
   return { success: true };
 });
 
 export const createTrade = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
-  const { receiverId, offeredTeams, requestedTeams } = data;
-  if (!receiverId || (!offeredTeams.length && !requestedTeams.length)) {
-    throw new functions.https.HttpsError("invalid-argument", "Missing trade data.");
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
   }
-  
-  // Draft must be completed
+
+  const { receiverId, offeredTeams, requestedTeams } = data;
+
+  if (typeof receiverId !== "string" || !receiverId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid receiver ID.");
+  }
+
+  if (!Array.isArray(offeredTeams) || !Array.isArray(requestedTeams)) {
+    throw new functions.https.HttpsError("invalid-argument", "Teams must be arrays.");
+  }
+
+  if (!offeredTeams.every((t: unknown) => typeof t === "string") || !requestedTeams.every((t: unknown) => typeof t === "string")) {
+    throw new functions.https.HttpsError("invalid-argument", "Team entries must be strings.");
+  }
+
+  if (offeredTeams.length === 0 && requestedTeams.length === 0) {
+    throw new functions.https.HttpsError("invalid-argument", "Must offer or request at least one team.");
+  }
+
+  if (receiverId === context.auth.uid) {
+    throw new functions.https.HttpsError("invalid-argument", "Cannot trade with yourself.");
+  }
+
   const ds = await db.collection("draft_state").doc("global").get();
   if (ds.data()?.status !== "completed") {
     throw new functions.https.HttpsError("failed-precondition", "Trading requires completed draft.");
   }
-  
+
+  const senderDoc = await db.collection("users").doc(context.auth.uid).get();
+  const senderTeams: string[] = senderDoc.data()?.teams || [];
+  for (const team of offeredTeams) {
+    if (!senderTeams.includes(team)) {
+      throw new functions.https.HttpsError("invalid-argument", `You do not own team ${team}.`);
+    }
+  }
+
+  const receiverDoc = await db.collection("users").doc(receiverId).get();
+  if (!receiverDoc.exists) {
+    throw new functions.https.HttpsError("not-found", "Receiver not found.");
+  }
+
+  const receiverTeams: string[] = receiverDoc.data()?.teams || [];
+  for (const team of requestedTeams) {
+    if (!receiverTeams.includes(team)) {
+      throw new functions.https.HttpsError("invalid-argument", `Receiver does not own team ${team}.`);
+    }
+  }
+
   await db.collection("trades").add({
     senderId: context.auth.uid,
     receiverId,
@@ -213,19 +265,32 @@ export const createTrade = functions.https.onCall(async (data, context) => {
 });
 
 export const acceptTrade = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
   const { tradeId } = data;
+  if (typeof tradeId !== "string" || !tradeId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid trade ID.");
+  }
+
   const tradeRef = db.collection("trades").doc(tradeId);
   
   await db.runTransaction(async (t) => {
     const tradeSnap = await t.get(tradeRef);
-    if (!tradeSnap.exists) throw new functions.https.HttpsError("not-found", "Trade missing");
-    
+    if (!tradeSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "Trade missing");
+    }
+
     const tradeData = tradeSnap.data()!;
-    if (tradeData.receiverId !== context.auth!.uid) throw new functions.https.HttpsError("permission-denied", "Only receiver can accept.");
-    if (tradeData.status !== "pending") throw new functions.https.HttpsError("failed-precondition", "Not pending.");
-    
+    if (tradeData.receiverId !== context.auth!.uid) {
+      throw new functions.https.HttpsError("permission-denied", "Only receiver can accept.");
+    }
+
+    if (tradeData.status !== "pending") {
+      throw new functions.https.HttpsError("failed-precondition", "Not pending.");
+    }
+
     const senderRef = db.collection("users").doc(tradeData.senderId);
     const receiverRef = db.collection("users").doc(tradeData.receiverId);
     
@@ -234,9 +299,19 @@ export const acceptTrade = functions.https.onCall(async (data, context) => {
     
     let senderTeams: string[] = senderSnap.data()?.teams || [];
     let receiverTeams: string[] = receiverSnap.data()?.teams || [];
-    
-    // Check Minimum 5 teams rule for receiver
-    // Receiver gives requestedTeams, gets offeredTeams
+
+    for (const team of tradeData.offeredTeams) {
+      if (!senderTeams.includes(team)) {
+        throw new functions.https.HttpsError("failed-precondition", `Sender no longer owns team ${team}.`);
+      }
+    }
+
+    for (const team of tradeData.requestedTeams) {
+      if (!receiverTeams.includes(team)) {
+        throw new functions.https.HttpsError("failed-precondition", `Receiver no longer owns team ${team}.`);
+      }
+    }
+
     const nextReceiverCount = receiverTeams.length - tradeData.requestedTeams.length + tradeData.offeredTeams.length;
     if (nextReceiverCount < 5) {
       throw new functions.https.HttpsError("failed-precondition", "Receiver must maintain minimum 5 teams.");
@@ -246,8 +321,7 @@ export const acceptTrade = functions.https.onCall(async (data, context) => {
     if (nextSenderCount < 5) {
       throw new functions.https.HttpsError("failed-precondition", "Sender must maintain minimum 5 teams.");
     }
-    
-    // Apply trade
+
     tradeData.offeredTeams.forEach((team: string) => {
       senderTeams = senderTeams.filter(t => t !== team);
       receiverTeams.push(team);
@@ -267,10 +341,21 @@ export const acceptTrade = functions.https.onCall(async (data, context) => {
 });
 
 export const cancelTrade = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
+  if (typeof data.tradeId !== "string" || !data.tradeId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid trade ID.");
+  }
+
   const tradeRef = db.collection("trades").doc(data.tradeId);
   const snap = await tradeRef.get();
+
+  if (!snap.exists) {
+    throw new functions.https.HttpsError("not-found", "Trade not found.");
+  }
+
   if (snap.data()?.senderId !== context.auth.uid && snap.data()?.receiverId !== context.auth.uid) {
     throw new functions.https.HttpsError("permission-denied", "Not your trade.");
   }
@@ -280,31 +365,89 @@ export const cancelTrade = functions.https.onCall(async (data, context) => {
 });
 
 export const deleteUserAccount = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required");
-  const adminDoc = await db.collection("users").doc(context.auth.uid).get();
-  if (!adminDoc.data()?.isAdmin) throw new functions.https.HttpsError("permission-denied", "Admin only.");
-  
+  await requireAdmin(context);
+
   const { uid } = data;
+  if (typeof uid !== "string" || !uid) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid user ID.");
+  }
+
+  if (uid === context.auth!.uid) {
+    throw new functions.https.HttpsError("invalid-argument", "Cannot delete your own account.");
+  }
+
   await admin.auth().deleteUser(uid);
   await db.collection("users").doc(uid).delete();
   return { success: true };
 });
 
-export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async (context) => {
+export const generateSignupLink = functions.https.onCall(async (data, context) => {
+  await requireAdmin(context);
+
+  const token = crypto.randomBytes(24).toString("hex");
+  await db.collection("signup_links").doc(token).set({
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return { success: true, token };
+});
+
+export const deleteSignupLink = functions.https.onCall(async (data, context) => {
+  await requireAdmin(context);
+
+  if (typeof data.linkId !== "string" || !data.linkId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid link ID.");
+  }
+
+  const linkRef = db.collection("signup_links").doc(data.linkId);
+  const linkSnap = await linkRef.get();
+  if (!linkSnap.exists) {
+    throw new functions.https.HttpsError("not-found", "Signup link not found.");
+  }
+
+  await linkRef.delete();
+  return { success: true };
+});
+
+export const toggleUserAdmin = functions.https.onCall(async (data, context) => {
+  await requireAdmin(context);
+
+  if (typeof data.userId !== "string" || !data.userId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid user ID.");
+  }
+
+  if (data.userId === context.auth!.uid) {
+    throw new functions.https.HttpsError("invalid-argument", "Cannot modify your own admin status.");
+  }
+
+  const userRef = db.collection("users").doc(data.userId);
+  const userSnap = await userRef.get();
+  if (!userSnap.exists) {
+    throw new functions.https.HttpsError("not-found", "User not found.");
+  }
+
+  const currentStatus = userSnap.data()?.isAdmin || false;
+  await userRef.update({ isAdmin: !currentStatus });
+  return { success: true, isAdmin: !currentStatus };
+});
+
+export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async () => {
   console.log("Running Daily Point Updates");
-  
-  // Get active year
+
   const ds = await db.collection("draft_state").doc("global").get();
   const activeYear = ds.data()?.active_year;
-  if (!activeYear) return;
-  
-  // Get all drafted teams
+  if (!activeYear) {
+    return;
+  }
+
   const usersSnap = await db.collection("users").get();
   const draftedTeamIds = new Set<string>();
   usersSnap.docs.forEach(u => u.data().teams?.forEach((t: string) => draftedTeamIds.add(t)));
-  
-  if (draftedTeamIds.size === 0) return;
-  
+
+  if (draftedTeamIds.size === 0) {
+    return;
+  }
+
   for (const teamNum of Array.from(draftedTeamIds)) {
     try {
       const events = await tbaRequest(`/team/frc${teamNum}/events/${activeYear}/keys`);
@@ -317,29 +460,36 @@ export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] })
       let playedElims = 0;
       
       for (const event of events) {
-        if (event.includes("week0")) continue;
-        
-        // Qual Status
+        if (event.includes("week0")) {
+          continue;
+        }
+
         let statusRes = null;
-        try { statusRes = await tbaRequest(`/team/frc${teamNum}/event/${event}/status`); } catch(e) {}
-        
+        try {
+          statusRes = await tbaRequest(`/team/frc${teamNum}/event/${event}/status`);
+        }
+        catch (e) {
+          // Silently skip events with no status
+        }
+
         if (statusRes && statusRes.qual && statusRes.qual.ranking) {
           teamAvg += statusRes.qual.ranking.sort_orders?.[2] || 0;
           teamQualWins += statusRes.qual.ranking.record?.wins || 0;
           teamQualMatches += statusRes.qual.ranking.matches_played || 0;
           playedQuals++;
         }
-        
-        // Elim status
+
         if (statusRes && statusRes.playoff && statusRes.playoff.record) {
           teamElimWins += statusRes.playoff.record.wins || 0;
           teamElimMatches += (statusRes.playoff.record.wins + statusRes.playoff.record.losses + statusRes.playoff.record.ties) || 0;
           playedElims++;
         }
       }
-      
-      if (playedQuals === 0) continue;
-      
+
+      if (playedQuals === 0) {
+        continue;
+      }
+
       teamAvg /= playedQuals;
       const qualWinPercent = teamQualMatches > 0 ? (teamQualWins / teamQualMatches) : 0;
       
@@ -361,8 +511,7 @@ export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] })
       console.error(`Failed to update points for ${teamNum}`, err);
     }
   }
-  
-  // Now recalculate users' scores and ranks
+
   const updatedUsersSnap = await db.collection("users").get();
   const userScores: { uid: string, score: number }[] = [];
   

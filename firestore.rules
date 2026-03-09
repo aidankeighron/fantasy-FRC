@@ -3,7 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Global helper functions
     function isAdmin() {
       return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
     }
@@ -24,22 +23,31 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     
-    // `users`: Everyone can read basic ranking info
+    // `users`: Everyone can read basic ranking info.
+    // Users can update their own document but CANNOT modify protected fields.
     match /users/{userId} {
-      allow read: if true; // Allows the ranking page to display users
-      allow write: if request.auth.uid == userId || isAdmin();
+      allow read: if true;
+      allow create: if isAuthed() && request.auth.uid == userId;
+      allow update: if (request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score']))
+        || isAdmin();
+      allow delete: if isAdmin();
     }
     
     // `trades`: Users can read their own trades and create ones involving their team.
     match /trades/{tradeId} {
-      allow read, update: if isAuthed() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
+      allow read: if isAuthed() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
       allow create: if isAuthed() && request.auth.uid == request.resource.data.senderId;
+      allow update: if isAuthed()
+        && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
       allow delete: if isAdmin() || (isAuthed() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId));
     }
     
-    // `signup_links`: Only admins can manage. Users can read them temporarily to validate.
+    // `signup_links`: Only admins can manage. Users can get a specific link by ID to validate, but cannot list all links.
     match /signup_links/{linkId} {
-      allow read: if true; // Needed so unauthenticated users can verify the link
+      allow get: if true;
+      allow list: if isAdmin();
       allow write: if isAdmin();
     }
   }

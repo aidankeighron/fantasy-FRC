@@ -79,8 +79,8 @@ function SignupForm() {
 
       router.push("/team");
     } 
-    catch (err: any) {
-      setError(err.message || "Failed to create account.");
+    catch (err: unknown) {
+      setError("Failed to create account. Please try again.");
     } 
     finally {
       setSubmitting(false);
