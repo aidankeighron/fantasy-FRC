@@ -6,7 +6,6 @@ import { defineSecret } from "firebase-functions/params";
 admin.initializeApp();
 const db = admin.firestore();
 
-// Define the TBA API key secret
 const tbaKey = defineSecret("TBA_API_KEY");
 
 const TBA_BASE_URL = "https://www.thebluealliance.com/api/v3";
@@ -16,6 +15,7 @@ async function tbaRequest(endpoint: string): Promise<any> {
   if (!key) {
     throw new Error("TBA API Key not configured.");
   }
+
   const res = await axios.get(`${TBA_BASE_URL}${endpoint}`, {
     headers: { "X-TBA-Auth-Key": key },
   });
@@ -48,7 +48,6 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
       
       for (const t of teams) {
         const docRef = db.collection("teams").doc(t.team_number.toString());
-        // Merge so we don't overwrite stats if they exist
         batch.set(docRef, {
           name: t.nickname || t.name,
           state: t.state_prov || "",
@@ -87,11 +86,9 @@ export const startNewDraft = functions.https.onCall(async (data, context) => {
     userIds.push(doc.id);
     batch.update(doc.ref, { teams: [], score: 0 });
   });
-  
-  // Randomize order
+
   const shuffled = userIds.sort(() => 0.5 - Math.random());
-  
-  // Set draft state
+
   const draftStateRef = db.collection("draft_state").doc("global");
   batch.set(draftStateRef, {
     status: "active",
@@ -187,14 +184,32 @@ export const processDraftPick = functions.https.onCall(async (data, context) => 
 });
 
 export const createTrade = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
-  const { receiverId, offeredTeams, requestedTeams } = data;
-  if (!receiverId || (!offeredTeams.length && !requestedTeams.length)) {
-    throw new functions.https.HttpsError("invalid-argument", "Missing trade data.");
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
   }
-  
-  // Draft must be completed
+
+  const { receiverId, offeredTeams, requestedTeams } = data;
+
+  if (typeof receiverId !== "string" || !receiverId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid receiver ID.");
+  }
+
+  if (!Array.isArray(offeredTeams) || !Array.isArray(requestedTeams)) {
+    throw new functions.https.HttpsError("invalid-argument", "Teams must be arrays.");
+  }
+
+  if (!offeredTeams.every((t: unknown) => typeof t === "string") || !requestedTeams.every((t: unknown) => typeof t === "string")) {
+    throw new functions.https.HttpsError("invalid-argument", "Team entries must be strings.");
+  }
+
+  if (offeredTeams.length === 0 && requestedTeams.length === 0) {
+    throw new functions.https.HttpsError("invalid-argument", "Must offer or request at least one team.");
+  }
+
+  if (receiverId === context.auth.uid) {
+    throw new functions.https.HttpsError("invalid-argument", "Cannot trade with yourself.");
+  }
+
   const ds = await db.collection("draft_state").doc("global").get();
   if (ds.data()?.status !== "completed") {
     throw new functions.https.HttpsError("failed-precondition", "Trading requires completed draft.");
@@ -213,19 +228,32 @@ export const createTrade = functions.https.onCall(async (data, context) => {
 });
 
 export const acceptTrade = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
   const { tradeId } = data;
+  if (typeof tradeId !== "string" || !tradeId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid trade ID.");
+  }
+
   const tradeRef = db.collection("trades").doc(tradeId);
   
   await db.runTransaction(async (t) => {
     const tradeSnap = await t.get(tradeRef);
-    if (!tradeSnap.exists) throw new functions.https.HttpsError("not-found", "Trade missing");
-    
+    if (!tradeSnap.exists) {
+      throw new functions.https.HttpsError("not-found", "Trade missing");
+    }
+
     const tradeData = tradeSnap.data()!;
-    if (tradeData.receiverId !== context.auth!.uid) throw new functions.https.HttpsError("permission-denied", "Only receiver can accept.");
-    if (tradeData.status !== "pending") throw new functions.https.HttpsError("failed-precondition", "Not pending.");
-    
+    if (tradeData.receiverId !== context.auth!.uid) {
+      throw new functions.https.HttpsError("permission-denied", "Only receiver can accept.");
+    }
+
+    if (tradeData.status !== "pending") {
+      throw new functions.https.HttpsError("failed-precondition", "Not pending.");
+    }
+
     const senderRef = db.collection("users").doc(tradeData.senderId);
     const receiverRef = db.collection("users").doc(tradeData.receiverId);
     
@@ -234,9 +262,19 @@ export const acceptTrade = functions.https.onCall(async (data, context) => {
     
     let senderTeams: string[] = senderSnap.data()?.teams || [];
     let receiverTeams: string[] = receiverSnap.data()?.teams || [];
-    
-    // Check Minimum 5 teams rule for receiver
-    // Receiver gives requestedTeams, gets offeredTeams
+
+    for (const team of tradeData.offeredTeams) {
+      if (!senderTeams.includes(team)) {
+        throw new functions.https.HttpsError("failed-precondition", `Sender no longer owns team ${team}.`);
+      }
+    }
+
+    for (const team of tradeData.requestedTeams) {
+      if (!receiverTeams.includes(team)) {
+        throw new functions.https.HttpsError("failed-precondition", `Receiver no longer owns team ${team}.`);
+      }
+    }
+
     const nextReceiverCount = receiverTeams.length - tradeData.requestedTeams.length + tradeData.offeredTeams.length;
     if (nextReceiverCount < 5) {
       throw new functions.https.HttpsError("failed-precondition", "Receiver must maintain minimum 5 teams.");
@@ -246,8 +284,7 @@ export const acceptTrade = functions.https.onCall(async (data, context) => {
     if (nextSenderCount < 5) {
       throw new functions.https.HttpsError("failed-precondition", "Sender must maintain minimum 5 teams.");
     }
-    
-    // Apply trade
+
     tradeData.offeredTeams.forEach((team: string) => {
       senderTeams = senderTeams.filter(t => t !== team);
       receiverTeams.push(team);
@@ -267,10 +304,21 @@ export const acceptTrade = functions.https.onCall(async (data, context) => {
 });
 
 export const cancelTrade = functions.https.onCall(async (data, context) => {
-  if (!context.auth) throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "Login required.");
+  }
+
+  if (typeof data.tradeId !== "string" || !data.tradeId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid trade ID.");
+  }
+
   const tradeRef = db.collection("trades").doc(data.tradeId);
   const snap = await tradeRef.get();
+
+  if (!snap.exists) {
+    throw new functions.https.HttpsError("not-found", "Trade not found.");
+  }
+
   if (snap.data()?.senderId !== context.auth.uid && snap.data()?.receiverId !== context.auth.uid) {
     throw new functions.https.HttpsError("permission-denied", "Not your trade.");
   }
@@ -285,6 +333,14 @@ export const deleteUserAccount = functions.https.onCall(async (data, context) =>
   if (!adminDoc.data()?.isAdmin) throw new functions.https.HttpsError("permission-denied", "Admin only.");
   
   const { uid } = data;
+  if (typeof uid !== "string" || !uid) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid user ID.");
+  }
+
+  if (uid === context.auth!.uid) {
+    throw new functions.https.HttpsError("invalid-argument", "Cannot delete your own account.");
+  }
+
   await admin.auth().deleteUser(uid);
   await db.collection("users").doc(uid).delete();
   return { success: true };
