@@ -121,16 +121,18 @@ Firebase App Hosting is the newest, purpose-built solution for full-stack web fr
 5. Once configured, App Hosting will automatically deploy every time you push to your selected branch.
 
 ## 8. Backend Keys (TBA API & Admin SDK)
-Your Firebase Functions will need secret keys like The Blue Alliance (TBA) API Key. Setting keys via `functions:config:set` is deprecated. Instead, use Google Cloud Secret Manager:
+Your Firebase Functions need secret keys like The Blue Alliance (TBA) API Key. Setting keys via `functions:config:set` is deprecated. Instead, use Google Cloud Secret Manager:
 
-1. Use the Firebase CLI to set a secret (e.g., for `TBA_API_KEY`):
+1. **Get a TBA API Key**: Register for an account on [The Blue Alliance](https://www.thebluealliance.com/) and generate a Read API Key in your Account Settings.
+2. **Set the Secret**: Use the Firebase CLI to set the secret in your project:
 ```bash
 firebase functions:secrets:set TBA_API_KEY
 ```
-2. Enter your secret value when prompted. 
-3. In your Firebase Functions code, declare and access the secret by using the `defineSecret` method provided by `firebase-functions/params`.
-
-*(For Next.js App Hosting, enter your secrets directly in the App Hosting console during setup, and locally place them in your `.env.local` file).*
+3. **Enter the Value**: Enter your TBA API key when prompted.
+4. **Deploy**: In the functions code, we use `defineSecret('TBA_API_KEY')` and `runWith({ secrets: ['TBA_API_KEY'] })`. Deploy your functions for the changes to take effect:
+```bash
+firebase deploy --only functions
+```
 
 ## 9. Deploying Firebase Functions
 When you write or update your Firebase Cloud Functions in the `functions` directory, you need to deploy them to the cloud.
