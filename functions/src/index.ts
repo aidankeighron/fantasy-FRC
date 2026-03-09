@@ -369,6 +369,23 @@ export const generateSignupLink = functions.https.onCall(async (data, context) =
 
   return { success: true, token };
 });
+
+export const deleteSignupLink = functions.https.onCall(async (data, context) => {
+  await requireAdmin(context);
+
+  if (typeof data.linkId !== "string" || !data.linkId) {
+    throw new functions.https.HttpsError("invalid-argument", "Invalid link ID.");
+  }
+
+  const linkRef = db.collection("signup_links").doc(data.linkId);
+  const linkSnap = await linkRef.get();
+  if (!linkSnap.exists) {
+    throw new functions.https.HttpsError("not-found", "Signup link not found.");
+  }
+
+  await linkRef.delete();
+  return { success: true };
+});
   console.log("Running Daily Point Updates");
 
   const ds = await db.collection("draft_state").doc("global").get();

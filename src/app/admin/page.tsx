@@ -81,7 +81,8 @@ export default function AdminPage() {
   const deleteLink = async (id: string) => {
     setActionLoading(true);
     try {
-      await deleteDoc(doc(db, "signup_links", id));
+      const deleteFn = httpsCallable(functions, "deleteSignupLink");
+      await deleteFn({ linkId: id });
       fetchAdminData();
     } 
     catch (err) {
