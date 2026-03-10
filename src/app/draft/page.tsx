@@ -149,8 +149,14 @@ export default function DraftPage() {
 
     // Sort
     result.sort((a, b) => {
-      const aVal = a[sortConfig.key];
-      const bVal = b[sortConfig.key];
+      let aVal: any = a[sortConfig.key];
+      let bVal: any = b[sortConfig.key];
+
+      if (sortConfig.key === "number") {
+        aVal = Number(aVal) || 0;
+        bVal = Number(bVal) || 0;
+      }
+
       if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
       if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
       return 0;

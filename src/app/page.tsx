@@ -129,8 +129,14 @@ export default function Home() {
     }
 
     const sorted = filtered.sort((a, b) => {
-      const aVal = a[teamSortConfig.key];
-      const bVal = b[teamSortConfig.key];
+      let aVal: any = a[teamSortConfig.key];
+      let bVal: any = b[teamSortConfig.key];
+
+      if (teamSortConfig.key === "number") {
+        aVal = Number(aVal) || 0;
+        bVal = Number(bVal) || 0;
+      }
+
       if (aVal < bVal) return teamSortConfig.direction === "asc" ? -1 : 1;
       if (aVal > bVal) return teamSortConfig.direction === "asc" ? 1 : -1;
       return 0;
