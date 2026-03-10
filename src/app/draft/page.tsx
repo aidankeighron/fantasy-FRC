@@ -50,18 +50,26 @@ export default function DraftPage() {
   useEffect(() => {
     const fetchTeams = async () => {
       try {
+        const { getDoc } = await import("firebase/firestore");
+        const dsRef = doc(db, "draft_state", "global");
+        const dsSnap = await getDoc(dsRef);
+        const activeYearStr = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
+        const prevYear = (parseInt(activeYearStr) - 1).toString();
+
         const teamsSnap = await getDocs(collection(db, "teams"));
         const teamsMap = new Map<string, Team>();
         teamsSnap.docs.forEach(d => {
+          const tData = d.data();
+          const pStats = tData.stats?.[prevYear] || {};
           teamsMap.set(d.id, {
             number: d.id,
-            name: d.data().name || "",
-            state: d.data().state || "",
-            country: d.data().country || "",
-            opr: d.data().opr || 0,
-            average: d.data().average || 0,
-            score: d.data().score || 0,
-            winPercent: d.data().winPercent || 0,
+            name: tData.name || "",
+            state: tData.state || "",
+            country: tData.country || "",
+            opr: pStats.opr || 0,
+            average: pStats.average || 0,
+            score: pStats.score || 0,
+            winPercent: pStats.winPercent || 0,
           });
         });
         setTeams(teamsMap);
@@ -305,7 +313,7 @@ export default function DraftPage() {
                       <th onClick={() => handleSort("number")}>Team {sortConfig.key === 'number' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
                       <th onClick={() => handleSort("name")}>Name {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
                       <th onClick={() => handleSort("state")}>Region {sortConfig.key === 'state' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
-                      <th onClick={() => handleSort("score")} style={{ textAlign: "right" }}>Score (Prev) {sortConfig.key === 'score' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
+                      <th onClick={() => handleSort("score")} style={{ textAlign: "right" }}>Score (Last Yr) {sortConfig.key === 'score' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
                       <th style={{ textAlign: "right", width: "100px" }}>Action</th>
                     </tr>
                   </thead>

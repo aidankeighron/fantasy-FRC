@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, documentId, where } from "firebase/firestore";
+import { collection, getDocs, query, documentId, where, doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
 interface Team {
@@ -47,19 +47,25 @@ export default function TeamManagementPage() {
         setUserRank(rankIndex !== -1 ? rankIndex + 1 : 0);
 
         if (user.teams && user.teams.length > 0) {
-          // Batch fetch teams based on user.teams IDs
-          // Firestore 'in' query supports up to 10 elements. Since a user has max 8 teams (per rules), this is safe.
+          const dsRef = doc(db, "draft_state", "global");
+          const dsSnap = await getDoc(dsRef);
+          const activeYear = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
+
           const teamsQuery = query(collection(db, "teams"), where(documentId(), "in", user.teams));
           const teamsSnap = await getDocs(teamsQuery);
           
-          const fetchedTeams: Team[] = teamsSnap.docs.map(doc => ({
-            number: doc.id,
-            name: doc.data().name || "",
-            opr: doc.data().opr || 0,
-            average: doc.data().average || 0,
-            score: doc.data().score || 0,
-            winPercent: doc.data().winPercent || 0,
-          }));
+          const fetchedTeams: Team[] = teamsSnap.docs.map(teamDoc => {
+            const tData = teamDoc.data();
+            const yrStats = tData.stats?.[activeYear] || {};
+            return {
+              number: teamDoc.id,
+              name: tData.name || "",
+              opr: yrStats.opr || 0,
+              average: yrStats.average || 0,
+              score: yrStats.score || 0,
+              winPercent: yrStats.winPercent || 0,
+            };
+          });
           
           setTeams(fetchedTeams);
         }

@@ -50,6 +50,11 @@ export default function Home() {
     // Fetch data
     const fetchData = async () => {
       try {
+        const { doc, getDoc } = await import("firebase/firestore");
+        const dsRef = doc(db, "draft_state", "global");
+        const dsSnap = await getDoc(dsRef);
+        const activeYear = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
+
         const usersSnapshot = await getDocs(query(collection(db, "users")));
         const usersData = usersSnapshot.docs.map(doc => ({
           id: doc.id,
@@ -60,16 +65,20 @@ export default function Home() {
         }));
         
         const teamsSnapshot = await getDocs(query(collection(db, "teams")));
-        const teamsData = teamsSnapshot.docs.map(doc => ({
-          number: doc.id,
-          name: doc.data().name || "",
-          state: doc.data().state || "",
-          country: doc.data().country || "",
-          opr: doc.data().opr || 0,
-          average: doc.data().average || 0,
-          score: doc.data().score || 0,
-          winPercent: doc.data().winPercent || 0,
-        }));
+        const teamsData = teamsSnapshot.docs.map(doc => {
+          const tData = doc.data();
+          const yrStats = tData.stats?.[activeYear] || {};
+          return {
+            number: doc.id,
+            name: tData.name || "",
+            state: tData.state || "",
+            country: tData.country || "",
+            opr: yrStats.opr || 0,
+            average: yrStats.average || 0,
+            score: yrStats.score || 0,
+            winPercent: yrStats.winPercent || 0,
+          };
+        });
         
         setUsers(usersData);
         setTeams(teamsData);
