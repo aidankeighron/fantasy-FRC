@@ -492,20 +492,13 @@ async function performTeamPointsUpdate(): Promise<void> {
     return;
   }
 
-  const usersSnap = await db.collection("users").get();
-  const draftedTeamIds = new Set<string>();
-  usersSnap.docs.forEach(u => u.data().teams?.forEach((t: string) => draftedTeamIds.add(t)));
-
-  if (draftedTeamIds.size === 0) {
-    return;
-  }
-
-  const yearlyStats = await fetchYearlyStats(activeYear, draftedTeamIds);
+  const yearlyStats = await fetchYearlyStats(activeYear);
 
   let teamBatch = db.batch();
   let bCount = 0;
   for (const [teamNum, stats] of yearlyStats.entries()) {
     teamBatch.set(db.collection("teams").doc(teamNum), {
+      activeYears: admin.firestore.FieldValue.arrayUnion(activeYear),
       stats: {
         [activeYear]: stats
       }
