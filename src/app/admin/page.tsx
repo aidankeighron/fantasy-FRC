@@ -174,7 +174,7 @@ export default function AdminPage() {
                         Toggle Admin
                       </button>
                       <button onClick={() => deleteUser(u.id)} className="btn-secondary" disabled={actionLoading || u.id === user.uid}
-                        style={{ padding: "4px 8px", fontSize: "0.75rem", color: "#f87171", borderColor: "#f87171" }}>
+                        style={{ padding: "4px 8px", fontSize: "0.75rem", color: "var(--accent)", borderColor: "var(--accent)" }}>
                         Delete
                       </button>
                     </td>

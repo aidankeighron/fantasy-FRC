@@ -5,10 +5,10 @@
   --surface: rgba(255, 255, 255, 0.03);
   --surface-hover: rgba(255, 255, 255, 0.06);
   --surface-border: rgba(255, 255, 255, 0.08);
-  --accent: #e11d48; /* FRC Red */
-  --accent-hover: #be123c;
-  --accent-glow: rgba(225, 29, 72, 0.3);
-  --secondary: #3b82f6; /* FRC Blue */
+  --accent: #059669; /* Accessible Emerald Green */
+  --accent-hover: #047857;
+  --accent-glow: rgba(5, 150, 105, 0.3);
+  --secondary: #0d9488; /* Accessible Teal Accent */
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   
@@ -45,8 +45,8 @@ body::before {
   width: 100vw;
   height: 100vh;
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(225, 29, 72, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+    radial-gradient(circle at 10% 20%, rgba(5, 150, 105, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(13, 148, 136, 0.06) 0%, transparent 40%);
   z-index: -1;
   pointer-events: none;
 }
