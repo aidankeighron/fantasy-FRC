@@ -123,6 +123,23 @@ export default function AdminPage() {
     }
   };
 
+  const updatePoints = async () => {
+    setActionLoading(true);
+    try {
+      const triggerFn = httpsCallable(functions, "triggerTeamPointsUpdate");
+      await triggerFn();
+      alert("Team points update successful!");
+      fetchAdminData();
+    } 
+    catch (err) {
+      console.error(err);
+      alert("Failed to update team points.");
+    } 
+    finally {
+      setActionLoading(false);
+    }
+  };
+
   const forcePick = async () => {
     if (!forcePickUser || !forcePickTeam) return alert("Select user and enter team.");
     setActionLoading(true);
@@ -202,6 +219,17 @@ export default function AdminPage() {
             </p>
           </div>
           
+          <hr style={{ borderTop: "1px solid rgba(255,255,255,0.1)", margin: "1.5rem 0" }} />
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <button onClick={updatePoints} disabled={actionLoading} className="btn-secondary" style={{ width: "100%" }}>
+              Update Team Points Now
+            </button>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
+              Manually triggers the daily team points calculation logic.
+            </p>
+          </div>
+
           <hr style={{ borderTop: "1px solid rgba(255,255,255,0.1)", margin: "1.5rem 0" }} />
           
           <div style={{ marginBottom: "1.5rem" }}>

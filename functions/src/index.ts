@@ -35,6 +35,73 @@ async function tbaRequest(endpoint: string): Promise<any> {
   return res.data;
 }
 
+async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise<Map<string, any>> {
+  const events = await tbaRequest(`/events/${year}/keys`);
+  const teamStats = new Map<string, {
+    teamAvg: number, teamQualWins: number, teamQualMatches: number, teamElimWins: number, teamElimMatches: number, playedQuals: number, playedElims: number
+  }>();
+
+  // Process events in chunks to avoid TBA rate limits while still being fast
+  const chunkSize = 10;
+  for (let i = 0; i < events.length; i += chunkSize) {
+    const chunk = events.slice(i, i + chunkSize);
+    await Promise.all(chunk.map(async (event: string) => {
+      if (event.includes("week0")) return;
+      
+      let statuses: any = null;
+      try {
+        statuses = await tbaRequest(`/event/${event}/statuses`);
+      } catch (e) {
+        return;
+      }
+      
+      if (!statuses) return;
+
+      for (const [teamKey, status] of Object.entries(statuses)) {
+        const teamNum = teamKey.replace("frc", "");
+        if (teamFilter && !teamFilter.has(teamNum)) continue;
+
+        if (!teamStats.has(teamNum)) {
+          teamStats.set(teamNum, { teamAvg: 0, teamQualWins: 0, teamQualMatches: 0, teamElimWins: 0, teamElimMatches: 0, playedQuals: 0, playedElims: 0 });
+        }
+        const stats = teamStats.get(teamNum)!;
+        const s = status as any;
+
+        if (s && s.qual && s.qual.ranking) {
+          stats.teamAvg += s.qual.ranking.sort_orders?.[2] || 0;
+          stats.teamQualWins += s.qual.ranking.record?.wins || 0;
+          stats.teamQualMatches += s.qual.ranking.matches_played || 0;
+          stats.playedQuals++;
+        }
+
+        if (s && s.playoff && s.playoff.record) {
+          stats.teamElimWins += s.playoff.record.wins || 0;
+          stats.teamElimMatches += (s.playoff.record.wins + s.playoff.record.losses + s.playoff.record.ties) || 0;
+          stats.playedElims++;
+        }
+      }
+    }));
+  }
+
+  const finalStats = new Map<string, any>();
+  for (const [teamNum, stats] of teamStats.entries()) {
+    if (stats.playedQuals === 0) continue;
+    
+    const avg = stats.teamAvg / stats.playedQuals;
+    const qualWinPercent = stats.teamQualMatches > 0 ? (stats.teamQualWins / stats.teamQualMatches) : 0;
+    
+    let finalWinPercent = qualWinPercent;
+    if (stats.playedElims > 0) {
+      finalWinPercent = (stats.teamQualWins + stats.teamElimWins) / (stats.teamQualMatches + stats.teamElimMatches);
+    }
+    
+    const score = finalWinPercent * avg;
+    finalStats.set(teamNum, { average: avg, score: score, winPercent: finalWinPercent });
+  }
+
+  return finalStats;
+}
+
 export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
   await requireAdmin(context);
 
@@ -44,6 +111,8 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
 
   await db.collection("draft_state").doc("global").set({ active_year: year }, { merge: true });
   
+  const allTeamStats = await fetchYearlyStats(year);
+
   let pageNum = 0;
   let fetching = true;
   let batch = db.batch();
@@ -59,12 +128,22 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
       }
       
       for (const t of teams) {
-        const docRef = db.collection("teams").doc(t.team_number.toString());
-        batch.set(docRef, {
+        const teamNum = t.team_number.toString();
+        const docRef = db.collection("teams").doc(teamNum);
+        
+        const updateData: any = {
           name: t.nickname || t.name,
           state: t.state_prov || "",
           country: t.country || "",
-        }, { merge: true });
+        };
+
+        if (allTeamStats.has(teamNum)) {
+          updateData.stats = {
+            [year]: allTeamStats.get(teamNum)
+          };
+        }
+
+        batch.set(docRef, updateData, { merge: true });
         count++;
         batchCount++;
 
@@ -403,7 +482,7 @@ export const toggleUserAdmin = functions.https.onCall(async (data, context) => {
   return { success: true, isAdmin: !currentStatus };
 });
 
-export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async () => {
+async function performTeamPointsUpdate(): Promise<void> {
   console.log("Running Daily Point Updates");
 
   const ds = await db.collection("draft_state").doc("global").get();
@@ -420,68 +499,25 @@ export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] })
     return;
   }
 
-  for (const teamNum of Array.from(draftedTeamIds)) {
-    try {
-      const events = await tbaRequest(`/team/frc${teamNum}/events/${activeYear}/keys`);
-      let teamAvg = 0;
-      let teamQualWins = 0;
-      let teamQualMatches = 0;
-      let teamElimWins = 0;
-      let teamElimMatches = 0;
-      let playedQuals = 0;
-      let playedElims = 0;
-      
-      for (const event of events) {
-        if (event.includes("week0")) {
-          continue;
-        }
+  const yearlyStats = await fetchYearlyStats(activeYear, draftedTeamIds);
 
-        let statusRes = null;
-        try {
-          statusRes = await tbaRequest(`/team/frc${teamNum}/event/${event}/status`);
-        }
-        catch (e) {
-          // Silently skip events with no status
-        }
-
-        if (statusRes && statusRes.qual && statusRes.qual.ranking) {
-          teamAvg += statusRes.qual.ranking.sort_orders?.[2] || 0;
-          teamQualWins += statusRes.qual.ranking.record?.wins || 0;
-          teamQualMatches += statusRes.qual.ranking.matches_played || 0;
-          playedQuals++;
-        }
-
-        if (statusRes && statusRes.playoff && statusRes.playoff.record) {
-          teamElimWins += statusRes.playoff.record.wins || 0;
-          teamElimMatches += (statusRes.playoff.record.wins + statusRes.playoff.record.losses + statusRes.playoff.record.ties) || 0;
-          playedElims++;
-        }
+  let teamBatch = db.batch();
+  let bCount = 0;
+  for (const [teamNum, stats] of yearlyStats.entries()) {
+    teamBatch.set(db.collection("teams").doc(teamNum), {
+      stats: {
+        [activeYear]: stats
       }
-
-      if (playedQuals === 0) {
-        continue;
-      }
-
-      teamAvg /= playedQuals;
-      const qualWinPercent = teamQualMatches > 0 ? (teamQualWins / teamQualMatches) : 0;
-      
-      let finalWinPercent = qualWinPercent;
-      if (playedElims > 0) {
-        finalWinPercent = (teamQualWins + teamElimWins) / (teamQualMatches + teamElimMatches);
-      }
-      
-      const teamScore = finalWinPercent * teamAvg;
-      
-      await db.collection("teams").doc(teamNum).update({
-        average: teamAvg,
-        score: teamScore,
-        winPercent: finalWinPercent,
-      });
-      
-    } 
-    catch(err) {
-      console.error(`Failed to update points for ${teamNum}`, err);
+    }, { merge: true });
+    bCount++;
+    if (bCount >= 400) {
+      await teamBatch.commit();
+      teamBatch = db.batch();
+      bCount = 0;
     }
+  }
+  if (bCount > 0) {
+    await teamBatch.commit();
   }
 
   const updatedUsersSnap = await db.collection("users").get();
@@ -489,7 +525,10 @@ export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] })
   
   const teamsCache = new Map();
   const updatedTeamsSnap = await db.collection("teams").get();
-  updatedTeamsSnap.docs.forEach(d => teamsCache.set(d.id, d.data().score || 0));
+  updatedTeamsSnap.docs.forEach(d => {
+    const data = d.data();
+    teamsCache.set(d.id, data.stats?.[activeYear]?.score || 0);
+  });
   
   for (const u of updatedUsersSnap.docs) {
     let uScore = 0;
@@ -502,14 +541,24 @@ export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] })
   
   userScores.sort((a, b) => b.score - a.score);
   
-  const batch = db.batch();
+  const userBatch = db.batch();
   userScores.forEach((ms, idx) => {
-    batch.update(db.collection("users").doc(ms.uid), {
+    userBatch.update(db.collection("users").doc(ms.uid), {
       score: ms.score,
       rank: idx + 1
     });
   });
-  await batch.commit();
+  await userBatch.commit();
   
   console.log("Daily point updates completed.");
+}
+
+export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async () => {
+  await performTeamPointsUpdate();
+});
+
+export const triggerTeamPointsUpdate = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
+  await requireAdmin(context);
+  await performTeamPointsUpdate();
+  return { success: true };
 });
