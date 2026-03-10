@@ -1,30 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
+  const [isSignup, setIsSignup] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/");
+      if (isSignup) {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+
+        await setDoc(doc(db, "users", user.uid), {
+          email: user.email,
+          isAdmin: false,
+          teams: [],
+          score: 0,
+          rank: 0,
+          createdAt: new Date().toISOString(),
+        });
+
+        router.push("/team");
+      } 
+      else {
+        await signInWithEmailAndPassword(auth, email, password);
+        router.push("/");
+      }
     } 
     catch (err: unknown) {
-      setError("Invalid email or password.");
-    } 
+      console.error("Auth error:", err);
+      setError(isSignup ? "Failed to create account. Email may be in use." : "Invalid email or password.");
+    }  
     finally {
       setLoading(false);
     }
@@ -34,10 +54,10 @@ export default function LoginPage() {
     <div className="flex-center" style={{ minHeight: "80vh" }}>
       <div className="glass-panel" style={{ width: "100%", maxWidth: "400px", padding: "2rem" }}>
         <h1 style={{ fontSize: "1.75rem", marginBottom: "0.5rem", color: "white", textAlign: "center" }}>
-          Welcome Back
+          {isSignup ? "Create Account" : "Welcome Back"}
         </h1>
         <p className="text-muted" style={{ textAlign: "center", marginBottom: "2rem" }}>
-          Log in to manage your Fantasy FRC team
+          {isSignup ? "Join Fantasy FRC today" : "Log in to manage your Fantasy FRC team"}
         </p>
 
         {error && (
@@ -46,7 +66,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
             <label htmlFor="email" style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.875rem", color: "var(--text-muted)" }}>
               Email Address
@@ -60,14 +80,25 @@ export default function LoginPage() {
               Password
             </label>
             <input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              className="input-field" placeholder="••••••••" required />
+              className="input-field" placeholder="••••••••" required minLength={isSignup ? 6 : undefined} />
           </div>
 
           <button type="submit" className="btn-primary" style={{ width: "100%", marginTop: "1rem", opacity: loading ? 0.7 : 1 }}
             disabled={loading} >
-            {loading ? "Logging in..." : "Log In"}
+            {loading && isSignup && "Creating Account..."}
+            {loading && !isSignup && "Logging in..."}
+            {!loading && isSignup && "Sign Up"}
+            {!loading && !isSignup && "Log In"}
           </button>
         </form>
+
+        <div style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.875rem", color: "var(--text-muted)" }}>
+          {isSignup ? "Already have an account? " : "Don't have an account? "}
+          <button type="button" onClick={() => { setIsSignup(!isSignup); setError(""); setPassword(""); }} 
+            style={{ color: "var(--accent)", textDecoration: "underline", background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "inherit", fontFamily: "inherit" }}>
+            {isSignup ? "Log In" : "Sign Up"}
+          </button>
+        </div>
 
         <div style={{ marginTop: "2rem", textAlign: "center", fontSize: "0.875rem", color: "var(--text-muted)" }}>
           <Link href="/" style={{ textDecoration: "underline" }}>
