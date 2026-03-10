@@ -27,7 +27,7 @@ service cloud.firestore {
     // Users can update their own document but CANNOT modify protected fields.
     match /users/{userId} {
       allow read: if true;
-      allow create: if isAuthed() && request.auth.uid == userId;
+      allow create: if isAuthed() && request.auth.uid == userId && request.resource.data.isAdmin == false;
       allow update: if (request.auth.uid == userId
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score']))
         || isAdmin();
@@ -44,11 +44,5 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isAuthed() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId));
     }
     
-    // `signup_links`: Only admins can manage. Users can get a specific link by ID to validate, but cannot list all links.
-    match /signup_links/{linkId} {
-      allow get: if true;
-      allow list: if isAdmin();
-      allow write: if isAdmin();
-    }
   }
 }

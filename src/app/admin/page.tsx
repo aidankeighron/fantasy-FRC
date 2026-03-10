@@ -13,17 +13,11 @@ interface UserData {
   isAdmin: boolean;
 }
 
-interface SignupLink {
-  id: string;
-  createdAt: string;
-}
-
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   
   const [users, setUsers] = useState<UserData[]>([]);
-  const [links, setLinks] = useState<SignupLink[]>([]);
   const [draftYear, setDraftYear] = useState(new Date().getFullYear().toString());
   const [activeYear, setActiveYear] = useState("");
   
@@ -47,9 +41,6 @@ export default function AdminPage() {
     try {
       const usersSnap = await getDocs(collection(db, "users"));
       setUsers(usersSnap.docs.map(d => ({ id: d.id, ...d.data() } as UserData)));
-
-      const linksSnap = await getDocs(collection(db, "signup_links"));
-      setLinks(linksSnap.docs.map(d => ({ id: d.id, createdAt: d.data().createdAt })));
       
       const draftStateRef = doc(db, "draft_state", "global");
       const dsSnap = await getDoc(draftStateRef);
@@ -62,37 +53,7 @@ export default function AdminPage() {
     }
   };
 
-  const generateLink = async () => {
-    setActionLoading(true);
-    try {
-      const generateFn = httpsCallable(functions, "generateSignupLink");
-      await generateFn();
-      fetchAdminData();
-    } 
-    catch (err) {
-      console.error(err);
-      alert("Failed to create link.");
-    } 
-    finally {
-      setActionLoading(false);
-    }
-  };
 
-  const deleteLink = async (id: string) => {
-    setActionLoading(true);
-    try {
-      const deleteFn = httpsCallable(functions, "deleteSignupLink");
-      await deleteFn({ linkId: id });
-      fetchAdminData();
-    } 
-    catch (err) {
-      console.error(err);
-      alert("Failed to delete link.");
-    } 
-    finally {
-      setActionLoading(false);
-    }
-  };
 
   const toggleAdmin = async (userId: string) => {
     setActionLoading(true);
@@ -224,32 +185,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Invite Links */}
-        <div className="glass" style={{ padding: "1.5rem" }}>
-          <div className="flex-between" style={{ marginBottom: "1rem" }}>
-            <h2 style={{ fontSize: "1.25rem", color: "white" }}>Signup Links</h2>
-            <button onClick={generateLink} disabled={actionLoading} className="btn-primary" style={{ padding: "6px 12px", fontSize: "0.875rem" }}>
-              Generate Link
-            </button>
-          </div>
-          <div style={{ maxHeight: "300px", overflowY: "auto" }}>
-            {links.length === 0 ? <p className="text-muted">No active links.</p> : (
-              <ul style={{ listStyle: "none", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {links.map(link => {
-                  const url = `${window.location.origin}/signup?token=${link.id}`;
-                  return (
-                    <li key={link.id} style={{ background: "rgba(0,0,0,0.2)", padding: "0.75rem", borderRadius: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", marginRight: "1rem" }}>
-                        <code style={{ fontSize: "0.75rem", color: "var(--accent)" }}>{url}</code>
-                      </div>
-                      <button onClick={() => deleteLink(link.id)} disabled={actionLoading} style={{ color: "#f87171", fontSize: "0.875rem" }}>Remove</button>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
-          </div>
-        </div>
 
         {/* Draft Controls */}
         <div className="glass" style={{ padding: "1.5rem" }}>

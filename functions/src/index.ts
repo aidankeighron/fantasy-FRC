@@ -2,7 +2,6 @@ import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import axios from "axios";
 import { defineSecret } from "firebase-functions/params";
-import * as crypto from "crypto";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -381,33 +380,6 @@ export const deleteUserAccount = functions.https.onCall(async (data, context) =>
   return { success: true };
 });
 
-export const generateSignupLink = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
-
-  const token = crypto.randomBytes(24).toString("hex");
-  await db.collection("signup_links").doc(token).set({
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
-
-  return { success: true, token };
-});
-
-export const deleteSignupLink = functions.https.onCall(async (data, context) => {
-  await requireAdmin(context);
-
-  if (typeof data.linkId !== "string" || !data.linkId) {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid link ID.");
-  }
-
-  const linkRef = db.collection("signup_links").doc(data.linkId);
-  const linkSnap = await linkRef.get();
-  if (!linkSnap.exists) {
-    throw new functions.https.HttpsError("not-found", "Signup link not found.");
-  }
-
-  await linkRef.delete();
-  return { success: true };
-});
 
 export const toggleUserAdmin = functions.https.onCall(async (data, context) => {
   await requireAdmin(context);
