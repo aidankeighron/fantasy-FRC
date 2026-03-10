@@ -16,6 +16,7 @@ interface Team {
   average: number;
   score: number;
   winPercent: number;
+  activeYears?: string[];
 }
 
 interface UserData {
@@ -60,6 +61,9 @@ export default function DraftPage() {
         const teamsMap = new Map<string, Team>();
         teamsSnap.docs.forEach(d => {
           const tData = d.data();
+          const activeYrs = tData.activeYears || [];
+          if (!activeYrs.includes(activeYearStr)) return;
+
           const pStats = tData.stats?.[prevYear] || {};
           teamsMap.set(d.id, {
             number: d.id,

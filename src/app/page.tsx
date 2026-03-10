@@ -15,6 +15,7 @@ interface Team {
   average: number;
   score: number;
   winPercent: number;
+  activeYears?: string[];
 }
 
 interface UserData {
@@ -65,20 +66,23 @@ export default function Home() {
         }));
         
         const teamsSnapshot = await getDocs(query(collection(db, "teams")));
-        const teamsData = teamsSnapshot.docs.map(doc => {
-          const tData = doc.data();
-          const yrStats = tData.stats?.[activeYear] || {};
-          return {
-            number: doc.id,
-            name: tData.name || "",
-            state: tData.state || "",
-            country: tData.country || "",
-            opr: yrStats.opr || 0,
-            average: yrStats.average || 0,
-            score: yrStats.score || 0,
-            winPercent: yrStats.winPercent || 0,
-          };
-        });
+        const teamsData: Team[] = teamsSnapshot.docs
+          .map(doc => {
+            const tData = doc.data();
+            const yrStats = tData.stats?.[activeYear] || {};
+            return {
+              number: doc.id,
+              name: tData.name || "",
+              state: tData.state || "",
+              country: tData.country || "",
+              opr: yrStats.opr || 0,
+              average: yrStats.average || 0,
+              score: yrStats.score || 0,
+              winPercent: yrStats.winPercent || 0,
+              activeYears: tData.activeYears || []
+            };
+          })
+          .filter(t => t.activeYears.includes(activeYear));
         
         setUsers(usersData);
         setTeams(teamsData);

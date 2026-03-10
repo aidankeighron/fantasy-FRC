@@ -135,6 +135,7 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
           name: t.nickname || t.name,
           state: t.state_prov || "",
           country: t.country || "",
+          activeYears: admin.firestore.FieldValue.arrayUnion(year)
         };
 
         if (allTeamStats.has(teamNum)) {
