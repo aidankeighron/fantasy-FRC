@@ -8,6 +8,7 @@ import { getCachedRawTeams } from "@/lib/teamsCache";
 import { DRAFT_CONFIG } from "@/lib/draftConfig";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 import styles from "./draft.module.css";
 
 interface Team {
@@ -231,6 +232,7 @@ function TeamPickerColumn({label, rules, pickedTeams, availableTeams, maxSlots, 
 export default function DraftPage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
+  const toast = useToast();
 
   const [allTeams, setAllTeams] = useState<Map<string, Team>>(new Map());
   const [standardPicks, setStandardPicks] = useState<string[]>([]);
@@ -415,7 +417,7 @@ export default function DraftPage() {
 
     const allPicks = [...standardPicks, ...wildcardPicks];
     if (allPicks.length !== DRAFT_CONFIG.TOTAL_TEAMS) {
-      alert(`You must pick exactly ${DRAFT_CONFIG.TOTAL_TEAMS} teams (${DRAFT_CONFIG.STANDARD.count} standard + ${DRAFT_CONFIG.WILDCARD.count} wildcard).`);
+      toast.error(`You must pick exactly ${DRAFT_CONFIG.TOTAL_TEAMS} teams (${DRAFT_CONFIG.STANDARD.count} standard + ${DRAFT_CONFIG.WILDCARD.count} wildcard).`);
       return;
     }
 
@@ -424,12 +426,12 @@ export default function DraftPage() {
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, { teams: allPicks });
       await refreshUser();
-      alert("Your team has been saved!");
+      toast.success("Your team has been saved!");
       router.push("/team");
     }
     catch (error) {
       console.error("Failed to save team:", error);
-      alert("Failed to save your team. Please try again.");
+      toast.error("Failed to save your team. Please try again.");
     }
     finally {
       setSaving(false);

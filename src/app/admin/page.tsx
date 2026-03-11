@@ -6,6 +6,8 @@ import { db, functions } from "@/lib/firebase";
 import { collection, getDocs, getDoc, doc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 interface UserData {
   id: string;
@@ -17,6 +19,8 @@ interface UserData {
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const toast = useToast();
+  const confirm = useConfirm();
   
   const [users, setUsers] = useState<UserData[]>([]);
   const [draftYear, setDraftYear] = useState(new Date().getFullYear().toString());
@@ -65,7 +69,7 @@ export default function AdminPage() {
     } 
     catch (err) {
       console.error(err);
-      alert("Failed to update user.");
+      toast.error("Failed to update user.");
     } 
     finally {
       setActionLoading(false);
@@ -73,7 +77,8 @@ export default function AdminPage() {
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm("Are you sure? This will delete the user's data and they won't be able to log in. You must also delete them from Authentication tab manually unless a cloud function is set up.")) return;
+    const ok = await confirm("Are you sure? This will delete the user's data and they won't be able to log in. You must also delete them from Authentication tab manually unless a cloud function is set up.");
+    if (!ok) return;
     setActionLoading(true);
     try {
       // Deletes their user document. Complete deletion requires Admin SDK via Callable Function.
@@ -83,7 +88,7 @@ export default function AdminPage() {
     } 
     catch (err) {
       console.error(err);
-      alert("Failed to delete user. Make sure the Firebase function is deployed.");
+      toast.error("Failed to delete user. Make sure the Firebase function is deployed.");
     } 
     finally {
       setActionLoading(false);
@@ -91,17 +96,21 @@ export default function AdminPage() {
   };
 
   const toggleLock = async () => {
+    console.log("[Admin] toggleLock called, toast:", toast);
     setActionLoading(true);
     try {
       const lockFn = httpsCallable(functions, "toggleTeamPickingLock");
       const res = await lockFn();
       const data = res.data as { locked: boolean };
       setPickingLocked(data.locked);
-      alert(data.locked ? "Team picking is now LOCKED." : "Team picking is now UNLOCKED.");
-    } 
+      console.log("[Admin] about to call toast.success");
+      toast.success(data.locked ? "Team picking is now LOCKED." : "Team picking is now UNLOCKED.");
+      console.log("[Admin] toast.success returned");
+    }
     catch (err) {
       console.error(err);
-      alert("Failed to toggle picking lock.");
+      console.log("[Admin] about to call toast.error");
+      toast.error("Failed to toggle picking lock.");
     } 
     finally {
       setActionLoading(false);
@@ -128,12 +137,12 @@ export default function AdminPage() {
     try {
       const syncTeamsFn = httpsCallable(functions, "syncTeamData", { timeout: 600_000 });
       await syncTeamsFn({ year: draftYear });
-      alert("Team synchronization initiated for year: " + draftYear);
+      toast.success("Team synchronization initiated for year: " + draftYear);
       fetchAdminData();
     } 
     catch (err) {
       console.error(err);
-      alert("Failed to update year and sync teams.");
+      toast.error("Failed to update year and sync teams.");
     } 
     finally {
       setActionLoading(false);

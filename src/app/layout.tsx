@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
-import { AuthProvider } from "@/context/AuthContext";
+import Providers from "@/components/Providers";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -18,12 +18,12 @@ export default function RootLayout({children}: Readonly<{children: React.ReactNo
   return (
     <html lang="en" className={outfit.className}>
       <body>
-        <AuthProvider>
+        <Providers>
           <Navbar />
           <main className="container">
             {children}
           </main>
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   );
