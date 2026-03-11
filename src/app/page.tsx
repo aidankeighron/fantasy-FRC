@@ -32,6 +32,9 @@ export default function Home() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [users, setUsers] = useState<UserData[]>([]);
   const [teamSearch, setTeamSearch] = useState("");
+  const [activeYear, setActiveYear] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<string>("");
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
   
   const [teamSortConfig, setTeamSortConfig] = useState<{ key: keyof Team; direction: "asc" | "desc" }>({
     key: "score",
@@ -49,27 +52,49 @@ export default function Home() {
     const heroHidden = localStorage.getItem("hideHero") === "true";
     if (heroHidden) setShowHero(false);
     
-    // Fetch data
     const fetchData = async () => {
       try {
         const { doc, getDoc } = await import("firebase/firestore");
         const dsRef = doc(db, "draft_state", "global");
         const dsSnap = await getDoc(dsRef);
-        const activeYear = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
+        const activeYearStr = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
+        setActiveYear(activeYearStr);
+        
+        const yearToFetch = selectedYear || activeYearStr;
+        if (!selectedYear) {
+          setSelectedYear(activeYearStr);
+        }
 
         const usersSnapshot = await getDocs(query(collection(db, "users")));
-        const usersData = usersSnapshot.docs.map(doc => ({
-          id: doc.id,
-          name: doc.data().username || doc.data().email?.split("@")[0] || "Unknown",
-          score: doc.data().score || 0,
-          rank: doc.data().rank || 0,
-          teams: doc.data().teams || [],
-        }));
+        const usersData: UserData[] = usersSnapshot.docs.map(doc => {
+          const data = doc.data();
+          const seasonData = data.seasons?.[yearToFetch];
+          
+          return {
+            id: doc.id,
+            name: data.username || data.email?.split("@")[0] || "Unknown",
+            score: (yearToFetch === activeYearStr) ? (data.score || 0) : (seasonData?.score || 0),
+            rank: (yearToFetch === activeYearStr) ? (data.rank || 0) : (seasonData?.rank || 0),
+            teams: (yearToFetch === activeYearStr) ? (data.teams || []) : (seasonData?.teams || []),
+            seasons: data.seasons // Used to extract all years
+          };
+        });
+
+        // Extract all years from all users
+        const allYearsSet = new Set<string>();
+        allYearsSet.add(activeYearStr);
+        usersSnapshot.docs.forEach(doc => {
+          const seasons = doc.data().seasons;
+          if (seasons) {
+            Object.keys(seasons).forEach(y => allYearsSet.add(y));
+          }
+        });
+        setAvailableYears(Array.from(allYearsSet).sort((a, b) => b.localeCompare(a)));
         
         const rawTeams = await getCachedRawTeams(db);
         const teamsData: Team[] = rawTeams
           .map(tData => {
-            const yrStats = tData.stats?.[activeYear] || {};
+            const yrStats = tData.stats?.[yearToFetch] || {};
             return {
               number: tData.id,
               name: tData.name || "",
@@ -82,7 +107,7 @@ export default function Home() {
               activeYears: tData.activeYears || []
             };
           })
-          .filter(t => t.activeYears.includes(activeYear));
+          .filter(t => t.activeYears.includes(yearToFetch));
         
         setUsers(usersData);
         setTeams(teamsData);
@@ -96,7 +121,7 @@ export default function Home() {
     };
     
     fetchData();
-  }, []);
+  }, [selectedYear]);
 
   const hideHero = () => {
     setShowHero(false);
@@ -207,7 +232,22 @@ export default function Home() {
         {/* Users / Ranking Table */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Current Rankings</h2>
+            <h2 className={styles.sectionTitle}>
+              {selectedYear === activeYear ? "Current Rankings" : `${selectedYear} Rankings`}
+            </h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span className="text-muted" style={{ fontSize: "0.875rem" }}>Year:</span>
+              <select 
+                value={selectedYear} 
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className={styles.searchInput}
+                style={{ width: "auto", padding: "4px 8px", cursor: "pointer" }}
+              >
+                {availableYears.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className={`glass ${styles.tableContainer}`}>
             <table className="data-table">

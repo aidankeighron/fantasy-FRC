@@ -5,12 +5,19 @@ import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
+interface SeasonData {
+  teams: string[];
+  score: number;
+  rank: number;
+}
+
 interface AppUser {
   uid: string;
   email: string | null;
   username: string;
   isAdmin: boolean;
   teams: string[];
+  seasons?: Record<string, SeasonData>;
 }
 
 interface AuthContextType {
@@ -56,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             username: userData?.username || firebaseUser.email?.split("@")[0] || "Unknown",
             isAdmin: userData?.isAdmin || false,
             teams: userData?.teams || [],
+            seasons: userData?.seasons || {},
           });
         } 
         catch (error) {

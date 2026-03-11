@@ -24,6 +24,9 @@ export default function TeamManagementPage() {
   const [userRank, setUserRank] = useState<number>(0);
   const [dataLoading, setDataLoading] = useState(true);
   const [pickingLocked, setPickingLocked] = useState(false);
+  const [activeYear, setActiveYear] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<string>("");
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
 
   const [sortConfig, setSortConfig] = useState<{ key: keyof Team; direction: "asc" | "desc" }>({
     key: "score",
@@ -50,17 +53,46 @@ export default function TeamManagementPage() {
 
         const dsRef = doc(db, "draft_state", "global");
         const dsSnap = await getDoc(dsRef);
-        const activeYear = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
+        const activeYearStr = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
+        setActiveYear(activeYearStr);
+        
+        const yearToFetch = selectedYear || activeYearStr;
+        if (!selectedYear) {
+          setSelectedYear(activeYearStr);
+        }
+
         if (dsSnap.exists() && dsSnap.data().team_picking_locked !== undefined) {
           setPickingLocked(dsSnap.data().team_picking_locked);
         }
 
-        if (user.teams && user.teams.length > 0) {
+        // Determine available years from user seasons or at least current year
+        const years = Object.keys(user.seasons || {}).sort((a, b) => b.localeCompare(a));
+        if (!years.includes(activeYearStr)) {
+          years.unshift(activeYearStr);
+        }
+        setAvailableYears(Array.from(new Set(years)));
+
+        // Get teams for the selected year
+        const seasonData = user.seasons?.[yearToFetch];
+        const teamIds = (yearToFetch === activeYearStr) ? (user.teams || []) : (seasonData?.teams || []);
+        
+        if (yearToFetch === activeYearStr) {
+          const usersSnap = await getDocs(collection(db, "users"));
+          const allUsers = usersSnap.docs.map(d => ({ id: d.id, score: d.data().score || 0 }));
+          allUsers.sort((a, b) => b.score - a.score);
+          const rankIndex = allUsers.findIndex(u => u.id === user.uid);
+          setUserRank(rankIndex !== -1 ? rankIndex + 1 : 0);
+        } 
+        else {
+          setUserRank(seasonData?.rank || 0);
+        }
+
+        if (teamIds.length > 0) {
           const rawTeams = await getCachedRawTeams(db);
-          const userTeamsRaw = rawTeams.filter(t => user.teams.includes(t.id));
+          const userTeamsRaw = rawTeams.filter(t => teamIds.includes(t.id));
           
           const fetchedTeams: Team[] = userTeamsRaw.map(tData => {
-            const yrStats = tData.stats?.[activeYear] || {};
+            const yrStats = tData.stats?.[yearToFetch] || {};
             return {
               number: tData.id,
               name: tData.name || "",
@@ -72,6 +104,9 @@ export default function TeamManagementPage() {
           });
           
           setTeams(fetchedTeams);
+        }
+        else {
+          setTeams([]);
         }
       } 
       catch (err) {
@@ -126,14 +161,41 @@ export default function TeamManagementPage() {
       
       {/* Header & Stats Dashboard */}
       <div className="flex-between">
-        <h1 style={{ fontSize: "2rem", color: "white" }}>Team Management</h1>
+        <div>
+          <h1 style={{ fontSize: "2rem", color: "white" }}>Team Management</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "0.5rem" }}>
+            <span style={{ color: "var(--text-muted)" }}>Season:</span>
+            <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="glass"
+              style={{ 
+                padding: "6px 12px", 
+                borderRadius: "8px", 
+                background: "rgba(255,255,255,0.05)", 
+                color: "white", 
+                border: "1px solid var(--surface-border)",
+                cursor: "pointer",
+                outline: "none"
+              }}
+            >
+              {availableYears.map(year => (
+                <option key={year} value={year} style={{ background: "var(--surface)" }}>{year}</option>
+              ))}
+            </select>
+          </div>
+        </div>
         <button 
           className="btn-primary" 
           onClick={() => router.push("/draft")}
-          disabled={pickingLocked}
-          style={{ padding: "10px 24px", opacity: pickingLocked ? 0.5 : 1, cursor: pickingLocked ? "not-allowed" : "pointer" }}
+          disabled={pickingLocked || selectedYear !== activeYear}
+          style={{ 
+            padding: "10px 24px", 
+            opacity: (pickingLocked || selectedYear !== activeYear) ? 0.5 : 1, 
+            cursor: (pickingLocked || selectedYear !== activeYear) ? "not-allowed" : "pointer" 
+          }}
         >
-          {pickingLocked ? "Picking Locked" : (user.teams?.length ? "Edit Team" : "Create Team")}
+          {selectedYear !== activeYear ? "View Only" : (pickingLocked ? "Picking Locked" : (user.teams?.length ? "Edit Team" : "Create Team"))}
         </button>
       </div>
 
