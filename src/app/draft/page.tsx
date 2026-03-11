@@ -264,7 +264,7 @@ export default function DraftPage() {
         const activeYearStr = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
         const previousYear = (parseInt(activeYearStr) - 1).toString();
 
-        const rawTeams = await getCachedRawTeams(db);
+        const rawTeams = await getCachedRawTeams(db, activeYearStr);
         const teamsMap = new Map<string, Team>();
 
         rawTeams.forEach((teamData) => {
