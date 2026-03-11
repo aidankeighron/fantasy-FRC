@@ -229,7 +229,7 @@ function TeamPickerColumn({label, rules, pickedTeams, availableTeams, maxSlots, 
 }
 
 export default function DraftPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
 
   const [allTeams, setAllTeams] = useState<Map<string, Team>>(new Map());
@@ -423,6 +423,7 @@ export default function DraftPage() {
     try {
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, { teams: allPicks });
+      await refreshUser();
       alert("Your team has been saved!");
       router.push("/team");
     }

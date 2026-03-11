@@ -23,11 +23,13 @@ interface AppUser {
 interface AuthContextType {
   user: AppUser | null;
   loading: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  refreshUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -85,9 +87,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     return () => unsubscribe();
   }, []);
-  
+
+  const refreshUser = async () => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
+    try {
+      const userDocRef = doc(db, "users", currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        setUser({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          username: userData.username || currentUser.email?.split("@")[0] || "Unknown",
+          isAdmin: userData.isAdmin || false,
+          teams: userData.teams || [],
+          seasons: userData.seasons || {},
+        });
+      }
+    } catch (error) {
+      console.error("Error refreshing user data:", error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading, refreshUser }}>
     {children}
     </AuthContext.Provider>
   );
