@@ -304,3 +304,53 @@ export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey], t
     await performTeamPointsUpdate(activeYear);
   }
 });
+
+export const recalcUserScores = functions.https.onCall(async (_data: any, context: functions.https.CallableContext) => {
+  await requireAdmin(context);
+
+  const ds = await db.collection("draft_state").doc("global").get();
+  const year = ds.data()?.active_year;
+  if (!year) {
+    throw new functions.https.HttpsError("failed-precondition", "No active year set.");
+  }
+
+  const teamsSnap = await db.collection("teams").get();
+  const teamsCache = new Map<string, number>();
+  teamsSnap.docs.forEach(d => {
+    teamsCache.set(d.id, d.data().stats?.[year]?.score || 0);
+  });
+
+  const usersSnap = await db.collection("users").get();
+  const userScores: { uid: string, score: number }[] = [];
+
+  for (const u of usersSnap.docs) {
+    let uScore = 0;
+    const uTeams = u.data().teams || [];
+    uTeams.forEach((t: string) => {
+      uScore += teamsCache.get(t) || 0;
+    });
+    userScores.push({ uid: u.id, score: uScore });
+  }
+
+  userScores.sort((a, b) => b.score - a.score);
+
+  const batch = db.batch();
+  userScores.forEach((ms, idx) => {
+    const userDoc = usersSnap.docs.find(d => d.id === ms.uid);
+    const userTeams = userDoc?.data().teams || [];
+    batch.set(db.collection("users").doc(ms.uid), {
+      score: ms.score,
+      rank: idx + 1,
+      seasons: {
+        [year]: {
+          score: ms.score,
+          rank: idx + 1,
+          teams: userTeams
+        }
+      }
+    }, { merge: true });
+  });
+  await batch.commit();
+
+  return { updated: userScores.length, year };
+});

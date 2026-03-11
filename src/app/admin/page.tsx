@@ -6,6 +6,7 @@ import { db, functions } from "@/lib/firebase";
 import { collection, getDocs, getDoc, doc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/Toast";
 
 interface UserData {
   id: string;
@@ -17,6 +18,7 @@ interface UserData {
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const toast = useToast();
   
   const [users, setUsers] = useState<UserData[]>([]);
   const [draftYear, setDraftYear] = useState(new Date().getFullYear().toString());
@@ -65,7 +67,7 @@ export default function AdminPage() {
     } 
     catch (err) {
       console.error(err);
-      alert("Failed to update user.");
+      toast.error("Failed to update user.");
     } 
     finally {
       setActionLoading(false);
@@ -73,7 +75,7 @@ export default function AdminPage() {
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm("Are you sure? This will delete the user's data and they won't be able to log in. You must also delete them from Authentication tab manually unless a cloud function is set up.")) return;
+    if (!window.confirm("Are you sure? This will delete the user's data and they won't be able to log in. You must also delete them from Authentication tab manually unless a cloud function is set up.")) return;
     setActionLoading(true);
     try {
       // Deletes their user document. Complete deletion requires Admin SDK via Callable Function.
@@ -83,7 +85,7 @@ export default function AdminPage() {
     } 
     catch (err) {
       console.error(err);
-      alert("Failed to delete user. Make sure the Firebase function is deployed.");
+      toast.error("Failed to delete user. Make sure the Firebase function is deployed.");
     } 
     finally {
       setActionLoading(false);
@@ -97,13 +99,28 @@ export default function AdminPage() {
       const res = await lockFn();
       const data = res.data as { locked: boolean };
       setPickingLocked(data.locked);
-      alert(data.locked ? "Team picking is now LOCKED." : "Team picking is now UNLOCKED.");
-    } 
+      toast.success(data.locked ? "Team picking is now LOCKED." : "Team picking is now UNLOCKED.");
+    }
     catch (err) {
       console.error(err);
-      alert("Failed to toggle picking lock.");
+      toast.error("Failed to toggle picking lock.");
     } 
     finally {
+      setActionLoading(false);
+    }
+  };
+
+  const recalcScores = async () => {
+    setActionLoading(true);
+    try {
+      const recalcFn = httpsCallable(functions, "recalcUserScores");
+      const res = await recalcFn();
+      const data = res.data as { updated: number; year: string };
+      toast.success(`Updated scores & ranks for ${data.updated} users (year ${data.year}).`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to recalculate scores.");
+    } finally {
       setActionLoading(false);
     }
   };
@@ -113,12 +130,12 @@ export default function AdminPage() {
     try {
       const syncTeamsFn = httpsCallable(functions, "syncTeamData", { timeout: 600_000 });
       await syncTeamsFn({ year: draftYear });
-      alert("Team synchronization initiated for year: " + draftYear);
+      toast.success("Team synchronization initiated for year: " + draftYear);
       fetchAdminData();
     } 
     catch (err) {
       console.error(err);
-      alert("Failed to update year and sync teams.");
+      toast.error("Failed to update year and sync teams.");
     } 
     finally {
       setActionLoading(false);
@@ -187,7 +204,18 @@ export default function AdminPage() {
           </div>
 
           <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
-          
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <button onClick={recalcScores} disabled={actionLoading} className="btn-secondary" style={{ width: "100%" }}>
+              Update All Scores &amp; Rankings
+            </button>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
+              Recalculates every user's score and rank from existing team data. Does not fetch new data from TBA.
+            </p>
+          </div>
+
+          <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
+
           <div style={{ marginBottom: "1.5rem" }}>
             <button onClick={toggleLock} disabled={actionLoading} className="btn-primary" style={{ width: "100%", backgroundColor: pickingLocked ? "var(--success)" : "var(--error)", color: "#050505", border: "none" }}>
               {pickingLocked ? "Unlock Team Picking" : "Lock Team Picking"}
