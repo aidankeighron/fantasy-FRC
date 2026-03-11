@@ -264,7 +264,7 @@ export default function DraftPage() {
               ) : (
                 <ul style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                   {myDraftedTeamsDetails.map(t => (
-                    <li key={t.number} style={{ display: "flex", justifyContent: "space-between", background: "rgba(255,255,255,0.05)", padding: "0.5rem 1rem", borderRadius: "8px", fontSize: "0.875rem" }}>
+                    <li key={t.number} style={{ display: "flex", justifyContent: "space-between", background: "var(--surface-hover)", padding: "0.5rem 1rem", borderRadius: "8px", fontSize: "0.875rem" }}>
                       <span style={{ color: "white", fontWeight: "bold" }}>{t.number}</span>
                       <span className="text-muted">{t.country === "USA" ? t.state : t.country}</span>
                     </li>
@@ -282,7 +282,7 @@ export default function DraftPage() {
                   if (!u) return null;
                   const isCurrent = draftState.current_turn_userId === userId;
                   return (
-                    <div key={userId} style={{ padding: "0.75rem", borderRadius: "8px", background: isCurrent ? "rgba(225,29,72,0.1)" : "rgba(255,255,255,0.02)", border: isCurrent ? "1px solid var(--accent)" : "1px solid transparent" }}>
+                    <div key={userId} style={{ padding: "0.75rem", borderRadius: "8px", background: isCurrent ? "var(--accent-glow)" : "var(--surface)", border: isCurrent ? "1px solid var(--accent)" : "1px solid transparent" }}>
                       <p style={{ color: "white", fontSize: "0.875rem", fontWeight: "bold", marginBottom: "0.25rem" }}>
                         {idx + 1}. {u.username}
                       </p>

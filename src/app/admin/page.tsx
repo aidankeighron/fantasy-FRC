@@ -203,10 +203,10 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <hr style={{ borderTop: "1px solid rgba(255,255,255,0.1)", margin: "1.5rem 0" }} />
+          <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
           
           <div style={{ marginBottom: "1.5rem" }}>
-            <button onClick={startDraft} disabled={actionLoading} className="btn-primary" style={{ width: "100%", background: "#f87171", color: "white" }}>
+            <button onClick={startDraft} disabled={actionLoading} className="btn-primary" style={{ width: "100%" }}>
               Start New Draft
             </button>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
@@ -214,7 +214,7 @@ export default function AdminPage() {
             </p>
           </div>
 
-          <hr style={{ borderTop: "1px solid rgba(255,255,255,0.1)", margin: "1.5rem 0" }} />
+          <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
 
           <div>
             <h3 style={{ fontSize: "1rem", color: "var(--text-main)", marginBottom: "0.5rem" }}>Force Pick (Failsafe)</h3>

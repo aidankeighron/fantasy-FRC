@@ -102,9 +102,9 @@ export default function SettingsPage() {
           padding: "1rem", 
           borderRadius: "8px", 
           marginBottom: "1.5rem",
-          background: statusMsg.type === "error" ? "rgba(225,29,72,0.1)" : "rgba(16,185,129,0.1)",
-          color: statusMsg.type === "error" ? "#f87171" : "#34d399",
-          border: `1px solid ${statusMsg.type === "error" ? "rgba(225,29,72,0.2)" : "rgba(16,185,129,0.2)"}`
+          background: statusMsg.type === "error" ? "var(--error-bg)" : "var(--success-bg)",
+          color: statusMsg.type === "error" ? "var(--error)" : "var(--success)",
+          border: `1px solid ${statusMsg.type === "error" ? "var(--error-border)" : "var(--success-border)"}`
         }}>
           {statusMsg.text}
         </div>

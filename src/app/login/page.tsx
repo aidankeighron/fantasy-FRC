@@ -62,7 +62,7 @@ export default function LoginPage() {
         </p>
 
         {error && (
-          <div style={{ background: "rgba(225,29,72,0.1)", color: "#f87171", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem" }}>
+          <div style={{ background: "var(--error-bg)", color: "var(--error)", padding: "0.75rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem" }}>
             {error}
           </div>
         )}
