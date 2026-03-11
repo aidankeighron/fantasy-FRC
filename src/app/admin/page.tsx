@@ -21,10 +21,9 @@ export default function AdminPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [draftYear, setDraftYear] = useState(new Date().getFullYear().toString());
   const [activeYear, setActiveYear] = useState("");
+  const [pickingLocked, setPickingLocked] = useState(false);
   
   const [actionLoading, setActionLoading] = useState(false);
-  const [forcePickUser, setForcePickUser] = useState("");
-  const [forcePickTeam, setForcePickTeam] = useState("");
 
   useEffect(() => {
     if (!loading && (!user || !user.isAdmin)) {
@@ -47,6 +46,7 @@ export default function AdminPage() {
       const dsSnap = await getDoc(draftStateRef);
       if (dsSnap.exists()) {
         setActiveYear(dsSnap.data().active_year || "");
+        setPickingLocked(dsSnap.data().team_picking_locked || false);
       }
     } 
     catch (err) {
@@ -90,17 +90,18 @@ export default function AdminPage() {
     }
   };
 
-  const startDraft = async () => {
-    if (!confirm("This will CLEAR all previous draft results and start a new draft. Proceed?")) return;
+  const toggleLock = async () => {
     setActionLoading(true);
     try {
-      const startDraftFn = httpsCallable(functions, "startNewDraft");
-      await startDraftFn();
-      alert("Draft started!");
+      const lockFn = httpsCallable(functions, "toggleTeamPickingLock");
+      const res = await lockFn();
+      const data = res.data as { locked: boolean };
+      setPickingLocked(data.locked);
+      alert(data.locked ? "Team picking is now LOCKED." : "Team picking is now UNLOCKED.");
     } 
     catch (err) {
       console.error(err);
-      alert("Failed to start draft. Make sure function is deployed.");
+      alert("Failed to toggle picking lock.");
     } 
     finally {
       setActionLoading(false);
@@ -118,24 +119,6 @@ export default function AdminPage() {
     catch (err) {
       console.error(err);
       alert("Failed to update year and sync teams.");
-    } 
-    finally {
-      setActionLoading(false);
-    }
-  };
-
-  const forcePick = async () => {
-    if (!forcePickUser || !forcePickTeam) return alert("Select user and enter team.");
-    setActionLoading(true);
-    try {
-      const forcePickFn = httpsCallable(functions, "processDraftPick");
-      await forcePickFn({ userId: forcePickUser, teamNumber: forcePickTeam, force: true });
-      alert("Force pick successful!");
-      setForcePickTeam("");
-    } 
-    catch (err) {
-      console.error(err);
-      alert("Failed to force pick.");
     } 
     finally {
       setActionLoading(false);
@@ -206,28 +189,14 @@ export default function AdminPage() {
           <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
           
           <div style={{ marginBottom: "1.5rem" }}>
-            <button onClick={startDraft} disabled={actionLoading} className="btn-primary" style={{ width: "100%" }}>
-              Start New Draft
+            <button onClick={toggleLock} disabled={actionLoading} className="btn-primary" style={{ width: "100%", backgroundColor: pickingLocked ? "var(--success)" : "var(--error)", color: "#050505", border: "none" }}>
+              {pickingLocked ? "Unlock Team Picking" : "Lock Team Picking"}
             </button>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
-              Warning: This clears drafted teams for all users!
+              {pickingLocked 
+                ? "Team picking is currently restricted. Users cannot create or edit their teams." 
+                : "Team picking is open! Users can freely create and edit their teams."}
             </p>
-          </div>
-
-          <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
-
-          <div>
-            <h3 style={{ fontSize: "1rem", color: "var(--text-main)", marginBottom: "0.5rem" }}>Force Pick (Failsafe)</h3>
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-              <select value={forcePickUser} onChange={e => setForcePickUser(e.target.value)} 
-                className="input-field" style={{ flex: 1 }} >
-                <option value="">Select User...</option>
-                {users.map(u => <option key={u.id} value={u.id}>{u.username || u.email?.split("@")[0] || "Unknown"}</option>)}
-              </select>
-              <input type="text" placeholder="Team #" value={forcePickTeam} style={{ width: "80px" }}
-                onChange={e => setForcePickTeam(e.target.value)} className="input-field" />
-              <button onClick={forcePick} disabled={actionLoading} className="btn-secondary">Pick</button>
-            </div>
           </div>
         </div>
       </div>
