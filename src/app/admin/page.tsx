@@ -110,7 +110,7 @@ export default function AdminPage() {
   const updateYear = async () => {
     setActionLoading(true);
     try {
-      const syncTeamsFn = httpsCallable(functions, "syncTeamData");
+      const syncTeamsFn = httpsCallable(functions, "syncTeamData", { timeout: 600_000 });
       await syncTeamsFn({ year: draftYear });
       alert("Team synchronization initiated for year: " + draftYear);
       fetchAdminData();
@@ -199,7 +199,7 @@ export default function AdminPage() {
               <button onClick={updateYear} disabled={actionLoading} className="btn-secondary">Pull Data & Sync All</button>
             </div>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
-              Sets the active draft year, retrieves team statistics from The Blue Alliance, and calculates user points across the entire database. This may take a few seconds.
+              Sets the active draft year, retrieves team statistics from The Blue Alliance, and calculates user points across the entire database. This may take a couple minutes.
             </p>
           </div>
 
