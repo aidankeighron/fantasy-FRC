@@ -108,6 +108,21 @@ export default function AdminPage() {
     }
   };
 
+  const recalcScores = async () => {
+    setActionLoading(true);
+    try {
+      const recalcFn = httpsCallable(functions, "recalcUserScores");
+      const res = await recalcFn();
+      const data = res.data as { updated: number; year: string };
+      toast.success(`Updated scores & ranks for ${data.updated} users (year ${data.year}).`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to recalculate scores.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const updateYear = async () => {
     setActionLoading(true);
     try {
@@ -187,7 +202,18 @@ export default function AdminPage() {
           </div>
 
           <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
-          
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <button onClick={recalcScores} disabled={actionLoading} className="btn-secondary" style={{ width: "100%" }}>
+              Update All Scores &amp; Rankings
+            </button>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
+              Recalculates every user's score and rank from existing team data. Does not fetch new data from TBA.
+            </p>
+          </div>
+
+          <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
+
           <div style={{ marginBottom: "1.5rem" }}>
             <button onClick={toggleLock} disabled={actionLoading} className="btn-primary" style={{ width: "100%", backgroundColor: pickingLocked ? "var(--success)" : "var(--error)", color: "#050505", border: "none" }}>
               {pickingLocked ? "Unlock Team Picking" : "Lock Team Picking"}
