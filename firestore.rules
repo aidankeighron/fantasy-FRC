@@ -34,15 +34,6 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     
-    // `trades`: Users can read their own trades and create ones involving their team.
-    match /trades/{tradeId} {
-      allow read: if isAuthed() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
-      allow create: if isAuthed() && request.auth.uid == request.resource.data.senderId;
-      allow update: if isAuthed()
-        && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
-      allow delete: if isAdmin() || (isAuthed() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId));
-    }
-    
+
   }
 }
