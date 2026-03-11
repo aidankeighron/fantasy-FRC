@@ -9,7 +9,7 @@ import Link from "next/link";
 
 export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false);
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,12 +22,13 @@ export default function LoginPage() {
 
     try {
       if (isSignup) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const loginEmail = username.trim() + "@gmail.com";
+        const userCredential = await createUserWithEmailAndPassword(auth, loginEmail, password);
         const user = userCredential.user;
 
         await setDoc(doc(db, "users", user.uid), {
           email: user.email,
-          username: "Player" + Math.floor(Math.random() * 100000),
+          username: username.trim(),
           isAdmin: false,
           teams: [],
           score: 0,
@@ -38,13 +39,14 @@ export default function LoginPage() {
         router.push("/team");
       } 
       else {
-        await signInWithEmailAndPassword(auth, email, password);
+        const loginEmail = username.trim() + "@gmail.com";
+        await signInWithEmailAndPassword(auth, loginEmail, password);
         router.push("/");
       }
     } 
     catch (err: unknown) {
       console.error("Auth error:", err);
-      setError(isSignup ? "Failed to create account. Email may be in use." : "Invalid email or password.");
+      setError(isSignup ? "Failed to create account. Username may be in use." : "Invalid username or password.");
     }  
     finally {
       setLoading(false);
@@ -69,11 +71,11 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>
-            <label htmlFor="email" style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.875rem", color: "var(--text-muted)" }}>
-              Email Address
+            <label htmlFor="username" style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.875rem", color: "var(--text-muted)" }}>
+              Username
             </label>
-            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              className="input-field" placeholder="you@example.com" required />
+            <input id="username" type="text" value={username} onChange={(e) => setUsername(e.target.value)}
+              className="input-field" placeholder="your_username" required />
           </div>
 
           <div>
