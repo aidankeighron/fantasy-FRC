@@ -10,7 +10,7 @@ interface Team {
   number: string;
   name: string;
   opr: number;
-  average: number;
+  ccwm: number;
   score: number;
   winPercent: number;
 }
@@ -61,9 +61,9 @@ export default function TeamManagementPage() {
               number: teamDoc.id,
               name: tData.name || "",
               opr: yrStats.opr || 0,
-              average: yrStats.average || 0,
+              ccwm: yrStats.ccwm || 0,
               score: yrStats.score || 0,
-              winPercent: yrStats.winPercent || 0,
+              winPercent: yrStats.winRate || 0,
             };
           });
           
@@ -154,8 +154,8 @@ export default function TeamManagementPage() {
               <th onClick={() => handleSort("number")}>Team {sortConfig.key === 'number' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
               <th onClick={() => handleSort("name")}>Name {sortConfig.key === 'name' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
               <th onClick={() => handleSort("score")}>Score {sortConfig.key === 'score' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
-              <th onClick={() => handleSort("average")}>Avg {sortConfig.key === 'average' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
               <th onClick={() => handleSort("opr")}>OPR {sortConfig.key === 'opr' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+              <th onClick={() => handleSort("ccwm")}>CCWM {sortConfig.key === 'ccwm' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
               <th onClick={() => handleSort("winPercent")}>Win % {sortConfig.key === 'winPercent' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
             </tr>
           </thead>
@@ -166,8 +166,8 @@ export default function TeamManagementPage() {
                   <td style={{ fontWeight: "bold", color: "white" }}>{t.number}</td>
                   <td>{t.name}</td>
                   <td style={{ color: "var(--accent)", fontWeight: "bold" }}>{t.score.toFixed(2)}</td>
-                  <td>{t.average.toFixed(2)}</td>
                   <td>{t.opr.toFixed(2)}</td>
+                  <td>{t.ccwm.toFixed(2)}</td>
                   <td>{(t.winPercent * 100).toFixed(1)}%</td>
                 </tr>
               ))

@@ -12,7 +12,7 @@ interface Team {
   state: string;
   country: string;
   opr: number;
-  average: number;
+  ccwm: number;
   score: number;
   winPercent: number;
   activeYears?: string[];
@@ -76,9 +76,9 @@ export default function Home() {
               state: tData.state || "",
               country: tData.country || "",
               opr: yrStats.opr || 0,
-              average: yrStats.average || 0,
+              ccwm: yrStats.ccwm || 0,
               score: yrStats.score || 0,
-              winPercent: yrStats.winPercent || 0,
+              winPercent: yrStats.winRate || 0,
               activeYears: tData.activeYears || []
             };
           })
@@ -256,7 +256,7 @@ export default function Home() {
                   <th onClick={() => handleTeamSort("number")}>Team {teamSortConfig.key === 'number' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                   <th onClick={() => handleTeamSort("name")}>Name {teamSortConfig.key === 'name' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                   <th onClick={() => handleTeamSort("score")}>Score {teamSortConfig.key === 'score' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
-                  <th onClick={() => handleTeamSort("average")}>Avg {teamSortConfig.key === 'average' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+                  <th onClick={() => handleTeamSort("ccwm")}>CCWM {teamSortConfig.key === 'ccwm' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                   <th onClick={() => handleTeamSort("winPercent")}>Win % {teamSortConfig.key === 'winPercent' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                 </tr>
               </thead>
@@ -269,7 +269,7 @@ export default function Home() {
                       <td>{team.number}</td>
                       <td>{team.name}</td>
                       <td>{team.score.toFixed(2)}</td>
-                      <td>{team.average.toFixed(2)}</td>
+                      <td>{team.ccwm.toFixed(2)}</td>
                       <td>{(team.winPercent * 100).toFixed(1)}%</td>
                     </tr>
                   );

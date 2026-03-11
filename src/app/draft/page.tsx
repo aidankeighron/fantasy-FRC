@@ -13,7 +13,7 @@ interface Team {
   state: string;
   country: string;
   opr: number;
-  average: number;
+  ccwm: number;
   score: number;
   winPercent: number;
   activeYears?: string[];
@@ -72,9 +72,9 @@ export default function DraftPage() {
             state: tData.state || "",
             country: tData.country || "",
             opr: pStats.opr || 0,
-            average: pStats.average || 0,
+            ccwm: pStats.ccwm || 0,
             score: pStats.score || 0,
-            winPercent: pStats.winPercent || 0,
+            winPercent: pStats.winRate || 0,
           });
         });
         setTeams(teamsMap);

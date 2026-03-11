@@ -35,68 +35,167 @@ async function tbaRequest(endpoint: string): Promise<any> {
   return res.data;
 }
 
+interface TeamAccumulator {
+  oprSum: number;
+  dprSum: number;
+  ccwmSum: number;
+  qualWins: number;
+  qualMatches: number;
+  elimWins: number;
+  elimMatches: number;
+  eventCount: number;
+  maxPlayoffDepth: number;
+}
+
+function getPlayoffDepth(status: any): number {
+  if (!status?.playoff) {
+    return 0;
+  }
+
+  const level = status.playoff.level;
+  const playoffStatus = status.playoff.status;
+
+  if (playoffStatus === "won") {
+    return 1;
+  }
+
+  switch (level) {
+    case "f":
+      return 0.75;
+    case "sf":
+      return 0.5;
+    case "qf":
+      return 0.25;
+    default:
+      return 0;
+  }
+}
+
 async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise<Map<string, any>> {
   const events = await tbaRequest(`/events/${year}/keys`);
-  const teamStats = new Map<string, {
-    teamAvg: number, teamQualWins: number, teamQualMatches: number, teamElimWins: number, teamElimMatches: number, playedQuals: number, playedElims: number
-  }>();
+  const teamStats = new Map<string, TeamAccumulator>();
 
-  // Process events in chunks to avoid TBA rate limits while still being fast
   const chunkSize = 10;
   for (let i = 0; i < events.length; i += chunkSize) {
     const chunk = events.slice(i, i + chunkSize);
     await Promise.all(chunk.map(async (event: string) => {
-      if (event.includes("week0")) return;
-      
-      let statuses: any = null;
-      try {
-        statuses = await tbaRequest(`/event/${event}/teams/statuses`);
-      } catch (e) {
+      if (event.includes("week0")) {
         return;
       }
-      
-      if (!statuses) return;
+
+      let statuses: any = null;
+      let oprs: any = null;
+
+      try {
+        [statuses, oprs] = await Promise.all([
+          tbaRequest(`/event/${event}/teams/statuses`),
+          tbaRequest(`/event/${event}/oprs`)
+        ]);
+      }
+      catch (e) {
+        console.warn(`Skipping event ${event}: failed to fetch data`, e);
+        return;
+      }
+
+      if (!statuses) {
+        return;
+      }
 
       for (const [teamKey, status] of Object.entries(statuses)) {
         const teamNum = teamKey.replace("frc", "");
-        if (teamFilter && !teamFilter.has(teamNum)) continue;
+        if (teamFilter && !teamFilter.has(teamNum)) {
+          continue;
+        }
 
         if (!teamStats.has(teamNum)) {
-          teamStats.set(teamNum, { teamAvg: 0, teamQualWins: 0, teamQualMatches: 0, teamElimWins: 0, teamElimMatches: 0, playedQuals: 0, playedElims: 0 });
+          teamStats.set(teamNum, {
+            oprSum: 0, dprSum: 0, ccwmSum: 0,
+            qualWins: 0, qualMatches: 0,
+            elimWins: 0, elimMatches: 0,
+            eventCount: 0, maxPlayoffDepth: 0
+          });
         }
-        const stats = teamStats.get(teamNum)!;
+        const acc = teamStats.get(teamNum)!;
         const s = status as any;
 
-        if (s && s.qual && s.qual.ranking) {
-          stats.teamAvg += s.qual.ranking.sort_orders?.[2] || 0;
-          stats.teamQualWins += s.qual.ranking.record?.wins || 0;
-          stats.teamQualMatches += s.qual.ranking.matches_played || 0;
-          stats.playedQuals++;
+        if (oprs) {
+          const teamOpr = oprs.oprs?.[teamKey] ?? null;
+          const teamDpr = oprs.dprs?.[teamKey] ?? null;
+          const teamCcwm = oprs.ccwms?.[teamKey] ?? null;
+
+          if (teamOpr !== null) {
+            acc.oprSum += teamOpr;
+            acc.dprSum += teamDpr || 0;
+            acc.ccwmSum += teamCcwm || 0;
+            acc.eventCount++;
+          }
         }
 
-        if (s && s.playoff && s.playoff.record) {
-          stats.teamElimWins += s.playoff.record.wins || 0;
-          stats.teamElimMatches += (s.playoff.record.wins + s.playoff.record.losses + s.playoff.record.ties) || 0;
-          stats.playedElims++;
+        if (s?.qual?.ranking) {
+          acc.qualWins += s.qual.ranking.record?.wins || 0;
+          acc.qualMatches += s.qual.ranking.matches_played || 0;
+        }
+
+        if (s?.playoff?.record) {
+          acc.elimWins += s.playoff.record.wins || 0;
+          acc.elimMatches += (s.playoff.record.wins + s.playoff.record.losses + (s.playoff.record.ties || 0)) || 0;
+        }
+
+        const depth = getPlayoffDepth(s);
+        if (depth > acc.maxPlayoffDepth) {
+          acc.maxPlayoffDepth = depth;
         }
       }
     }));
   }
 
-  const finalStats = new Map<string, any>();
-  for (const [teamNum, stats] of teamStats.entries()) {
-    if (stats.playedQuals === 0) continue;
-    
-    const avg = stats.teamAvg / stats.playedQuals;
-    const qualWinPercent = stats.teamQualMatches > 0 ? (stats.teamQualWins / stats.teamQualMatches) : 0;
-    
-    let finalWinPercent = qualWinPercent;
-    if (stats.playedElims > 0) {
-      finalWinPercent = (stats.teamQualWins + stats.teamElimWins) / (stats.teamQualMatches + stats.teamElimMatches);
+  const rawStats = new Map<string, { opr: number, dpr: number, ccwm: number, winRate: number, playoffDepth: number }>();
+  let minOpr = Infinity, maxOpr = -Infinity;
+  let minCcwm = Infinity, maxCcwm = -Infinity;
+
+  for (const [teamNum, acc] of teamStats.entries()) {
+    if (acc.eventCount === 0) {
+      continue;
     }
-    
-    const score = finalWinPercent * avg;
-    finalStats.set(teamNum, { average: avg, score: score, winPercent: finalWinPercent });
+
+    const opr = acc.oprSum / acc.eventCount;
+    const dpr = acc.dprSum / acc.eventCount;
+    const ccwm = acc.ccwmSum / acc.eventCount;
+    const totalWins = acc.qualWins + acc.elimWins;
+    const totalMatches = acc.qualMatches + acc.elimMatches;
+    const winRate = totalMatches > 0 ? totalWins / totalMatches : 0;
+
+    rawStats.set(teamNum, { opr, dpr, ccwm, winRate, playoffDepth: acc.maxPlayoffDepth });
+
+    if (opr < minOpr) minOpr = opr;
+    if (opr > maxOpr) maxOpr = opr;
+    if (ccwm < minCcwm) minCcwm = ccwm;
+    if (ccwm > maxCcwm) maxCcwm = ccwm;
+  }
+
+  const oprRange = maxOpr - minOpr || 1;
+  const ccwmRange = maxCcwm - minCcwm || 1;
+
+  const finalStats = new Map<string, any>();
+  for (const [teamNum, raw] of rawStats.entries()) {
+    const normOpr = (raw.opr - minOpr) / oprRange;
+    const normCcwm = (raw.ccwm - minCcwm) / ccwmRange;
+
+    const score = (
+      (0.35 * normOpr) +
+      (0.3 * normCcwm) +
+      (0.25 * raw.winRate) +
+      (0.1 * raw.playoffDepth)
+    ) * 100;
+
+    finalStats.set(teamNum, {
+      opr: Number.parseFloat(raw.opr.toFixed(2)),
+      dpr: Number.parseFloat(raw.dpr.toFixed(2)),
+      ccwm: Number.parseFloat(raw.ccwm.toFixed(2)),
+      winRate: Number.parseFloat(raw.winRate.toFixed(4)),
+      playoffDepth: raw.playoffDepth,
+      score: Number.parseFloat(score.toFixed(2))
+    });
   }
 
   return finalStats;
@@ -149,7 +248,7 @@ async function performTeamDataSync(year: string): Promise<{ success: boolean, to
         }
       }
       pageNum++;
-    } 
+    }
     catch (e) {
       console.error("Error fetching TBA page", pageNum, e);
       fetching = false;
