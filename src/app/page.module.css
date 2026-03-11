@@ -19,7 +19,6 @@
 .heroTitle {
   font-size: 2rem;
   margin-bottom: 0.5rem;
-  color: white;
 }
 
 .heroSubtitle {
@@ -46,7 +45,7 @@
 
 .closeButton:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: white;
+  color: var(--text-heading);
 }
 
 .grid {
@@ -75,7 +74,6 @@
 
 .sectionTitle {
   font-size: 1.5rem;
-  color: white;
 }
 
 .tableContainer {
@@ -93,7 +91,7 @@
   background: var(--surface);
 }
 .tableContainer::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.2);
+  background: rgba(16, 185, 129, 0.25);
   border-radius: 4px;
 }
 
@@ -104,9 +102,9 @@
 }
 
 .searchInput {
-  background: rgba(0,0,0,0.3);
+  background: rgba(8, 15, 13, 0.6);
   border: 1px solid var(--surface-border);
-  color: white;
+  color: var(--text-main);
   padding: 0.5rem 1rem;
   border-radius: var(--radius-sm);
   width: 100%;
@@ -126,9 +124,11 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--surface);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--text-muted);
   font-weight: 700;
   font-size: 0.85rem;
+  border: 1px solid var(--surface-border);
 }
 
 .rank1 {
@@ -153,5 +153,5 @@
 }
 
 .userRow:hover td {
-  color: white;
+  color: var(--text-heading);
 }

@@ -15,7 +15,7 @@
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.025em;
-  color: white;
+  color: var(--text-heading);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -45,12 +45,12 @@
 }
 
 .navLink:hover {
-  color: white;
+  color: var(--accent);
 }
 
 .navLinkActive {
-  color: white;
-  text-shadow: 0 0 10px rgba(255,255,255,0.3);
+  color: var(--accent);
+  text-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
 }
 
 .actions {
@@ -68,7 +68,7 @@
 .mobileToggle {
   display: flex;
   align-items: center;
-  color: white;
+  color: var(--text-heading);
   padding: 0.5rem;
 }
 
@@ -98,7 +98,7 @@
 
 .divider {
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(16, 185, 129, 0.12);
   margin: 0.5rem 0;
 }
 
