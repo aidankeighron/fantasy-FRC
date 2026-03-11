@@ -4,12 +4,12 @@
   --bg-color: #050505;
   --bg-card: #121212;
   --surface: rgba(187, 247, 208, 0.05);
-  --surface-hover: rgba(187, 247, 208, 0.1);
-  --surface-border: rgba(255, 255, 255, 0.1);
+  --surface-hover: rgba(187, 247, 208, 0.15);
+  --surface-border: rgba(255, 255, 255, 0.2);
   --accent: #bbf7d0;
   --accent-hover: #86efac;
-  --accent-glow: rgba(187, 247, 208, 0.25);
-  --accent-soft: rgba(187, 247, 208, 0.15);
+  --accent-glow: rgba(187, 247, 208, 0.35);
+  --accent-soft: rgba(187, 247, 208, 0.2);
   --secondary: #a7f3d0;
   --text-main: #ffffff;
   --text-muted: #a3a3a3;
@@ -89,20 +89,20 @@ h1, h2, h3, h4, h5, h6 {
 
 /* GLASSMORPHISM UTILITIES */
 .glass {
-  background: linear-gradient(160deg, rgba(187, 247, 208, 0.05) 0%, rgba(5, 5, 5, 0.8) 100%);
+  background: linear-gradient(160deg, rgba(187, 247, 208, 0.08) 0%, rgba(18, 18, 18, 0.9) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--surface-border);
+  border: 2px solid var(--surface-border);
   border-radius: var(--radius-lg);
 }
 
 .glass-panel {
-  background: linear-gradient(145deg, rgba(187, 247, 208, 0.06) 0%, rgba(5, 5, 5, 0.9) 100%);
+  background: linear-gradient(145deg, rgba(187, 247, 208, 0.1) 0%, rgba(18, 18, 18, 0.95) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--surface-border);
+  border: 2px solid var(--surface-border);
   border-radius: var(--radius-xl);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 60px -12px rgba(187, 247, 208, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), 0 0 60px -12px rgba(187, 247, 208, 0.1);
 }
 
 /* BUTTONS */
@@ -138,8 +138,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* INPUTS */
 .input-field {
-  background: rgba(10, 10, 10, 0.6);
-  border: 1px solid var(--surface-border);
+  background: rgba(18, 18, 18, 0.8);
+  border: 2px solid var(--surface-border);
   color: var(--text-main);
   padding: 12px 16px;
   border-radius: var(--radius-sm);
@@ -165,19 +165,19 @@ h1, h2, h3, h4, h5, h6 {
 
 .data-table th {
   padding: 14px 16px;
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.8rem;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 0.85rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  border-bottom: 2px solid rgba(187, 247, 208, 0.2);
+  border-bottom: 3px solid var(--accent);
   cursor: pointer;
   transition: var(--transition);
   white-space: nowrap;
   position: sticky;
   top: 0;
   z-index: 10;
-  background: rgba(10, 10, 10, 0.8);
+  background: #1a1a1a;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -188,7 +188,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .data-table td {
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(187, 247, 208, 0.06);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
   font-size: 0.95rem;
 }
 
@@ -207,20 +207,20 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Alternating row colors */
 .data-table tbody tr:nth-child(even) {
-  background: rgba(187, 247, 208, 0.03);
+  background: rgba(187, 247, 208, 0.12);
 }
 
 .data-table tbody tr:nth-child(odd) {
-  background: transparent;
+  background: rgba(25, 25, 25, 0.6);
 }
 
 .data-table tbody tr {
   transition: var(--transition);
-  border-left: 3px solid transparent;
+  border-left: 4px solid transparent;
 }
 
 .data-table tbody tr:hover {
-  background: rgba(187, 247, 208, 0.08);
+  background: rgba(187, 247, 208, 0.25);
   border-left-color: var(--accent);
 }
 
