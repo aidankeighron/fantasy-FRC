@@ -154,31 +154,45 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .data-table th {
-  padding: 16px;
+  padding: 14px 16px;
   color: var(--text-muted);
-  font-weight: 500;
-  font-size: 0.875rem;
-  border-bottom: 1px solid var(--surface-border);
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 2px solid var(--surface-border);
   cursor: pointer;
   transition: var(--transition);
+  white-space: nowrap;
 }
 
 .data-table th:hover {
-  color: var(--text-main);
+  color: var(--accent);
 }
 
 .data-table td {
-  padding: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   font-size: 0.95rem;
+}
+
+/* Alternating row colors */
+.data-table tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.data-table tbody tr:nth-child(odd) {
+  background: transparent;
 }
 
 .data-table tbody tr {
   transition: var(--transition);
+  border-left: 3px solid transparent;
 }
 
 .data-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(5, 150, 105, 0.06);
+  border-left-color: var(--accent);
 }
 
 /* Virtualized table alignment fix */
@@ -192,6 +206,15 @@ h1, h2, h3, h4, h5, h6 {
 .data-table-virtual tbody td {
   flex: 1;
   min-width: 0;
+}
+
+/* Column width modifiers for virtualized tables */
+.col-narrow {
+  flex: 0.6 !important;
+}
+
+.col-wide {
+  flex: 1.6 !important;
 }
 
 /* CONTAINER */

@@ -316,8 +316,8 @@ export default function DraftPage() {
                 <table className="data-table data-table-virtual" style={{ width: "100%", position: "relative" }}>
                   <thead style={{ position: "sticky", top: 0, background: "var(--surface)", zIndex: 10, backdropFilter: "blur(4px)" }}>
                     <tr>
-                      <th onClick={() => handleSort("number")}>Team {sortConfig.key === 'number' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
-                      <th onClick={() => handleSort("name")}>Name {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
+                      <th className="col-narrow" onClick={() => handleSort("number")}>Team {sortConfig.key === 'number' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
+                      <th className="col-wide" onClick={() => handleSort("name")}>Name {sortConfig.key === 'name' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
                       <th onClick={() => handleSort("state")}>Region {sortConfig.key === 'state' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
                       <th onClick={() => handleSort("score")} style={{ textAlign: "right" }}>Score (Last Yr) {sortConfig.key === 'score' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
                       <th style={{ textAlign: "right", width: "100px" }}>Action</th>
@@ -337,8 +337,8 @@ export default function DraftPage() {
                           display: "flex",
                           alignItems: "center",
                         }}>
-                          <td style={{ fontWeight: "bold" }}>{team.number}</td>
-                          <td style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>{team.name}</td>
+                          <td className="col-narrow" style={{ fontWeight: "bold" }}>{team.number}</td>
+                          <td className="col-wide" style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>{team.name}</td>
                           <td className="text-muted">{team.country === "USA" || team.country === "United States" ? team.state : team.country}</td>
                           <td style={{ textAlign: "right", color: "var(--accent)", fontWeight: "bold" }}>{team.score.toFixed(1)}</td>
                           <td style={{ textAlign: "right" }}>

@@ -253,8 +253,8 @@ export default function Home() {
             <table className="data-table data-table-virtual" style={{ position: "relative" }}>
               <thead style={{ position: "sticky", top: 0, background: "var(--surface)", zIndex: 5, backdropFilter: "blur(4px)" }}>
                 <tr>
-                  <th onClick={() => handleTeamSort("number")}>Team {teamSortConfig.key === 'number' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
-                  <th onClick={() => handleTeamSort("name")}>Name {teamSortConfig.key === 'name' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+                  <th className="col-narrow" onClick={() => handleTeamSort("number")}>Team {teamSortConfig.key === 'number' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+                  <th className="col-wide" onClick={() => handleTeamSort("name")}>Name {teamSortConfig.key === 'name' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                   <th onClick={() => handleTeamSort("score")}>Score {teamSortConfig.key === 'score' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                   <th onClick={() => handleTeamSort("ccwm")}>CCWM {teamSortConfig.key === 'ccwm' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
                   <th onClick={() => handleTeamSort("winPercent")}>Win % {teamSortConfig.key === 'winPercent' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
@@ -266,8 +266,8 @@ export default function Home() {
                   return (
                     <tr key={team.number} style={{position: "absolute", top: 0, left: 0, width: "100%",
                         height: `${virtualRow.size}px`, transform: `translateY(${virtualRow.start}px)`, display: "flex", alignItems: "center"}}>
-                      <td>{team.number}</td>
-                      <td>{team.name}</td>
+                      <td className="col-narrow">{team.number}</td>
+                      <td className="col-wide">{team.name}</td>
                       <td>{team.score.toFixed(2)}</td>
                       <td>{team.ccwm.toFixed(2)}</td>
                       <td>{(team.winPercent * 100).toFixed(1)}%</td>
