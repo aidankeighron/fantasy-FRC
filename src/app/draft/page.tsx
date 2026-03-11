@@ -231,7 +231,7 @@ export default function DraftPage() {
       <div className="glass-panel" style={{ padding: "1.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", borderLeft: isMyTurn ? "4px solid var(--accent)" : "none" }}>
         <div>
           <h2 style={{ fontSize: "1.25rem", color: "white", marginBottom: "0.25rem" }}>
-            {isMyTurn ? "🎉 It's your turn to pick!" : "Waiting for next pick..."}
+            {isMyTurn ? "It's your turn to pick!" : "Waiting for next pick..."}
           </h2>
           <p className="text-muted">
             Current Player Turn: {" "}
