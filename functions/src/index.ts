@@ -50,7 +50,7 @@ async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise
       
       let statuses: any = null;
       try {
-        statuses = await tbaRequest(`/event/${event}/statuses`);
+        statuses = await tbaRequest(`/event/${event}/teams/statuses`);
       } catch (e) {
         return;
       }
