@@ -124,40 +124,6 @@ export default function AdminPage() {
     }
   };
 
-  const updatePoints = async () => {
-    setActionLoading(true);
-    try {
-      const triggerFn = httpsCallable(functions, "triggerTeamPointsUpdate");
-      await triggerFn();
-      alert("Team points update successful!");
-      fetchAdminData();
-    } 
-    catch (err) {
-      console.error(err);
-      alert("Failed to update team points.");
-    } 
-    finally {
-      setActionLoading(false);
-    }
-  };
-
-  const syncTeamDataNow = async () => {
-    setActionLoading(true);
-    try {
-      const triggerFn = httpsCallable(functions, "triggerTeamDataSync");
-      await triggerFn();
-      alert("Team data sync successful!");
-      fetchAdminData();
-    } 
-    catch (err) {
-      console.error(err);
-      alert("Failed to sync team data.");
-    } 
-    finally {
-      setActionLoading(false);
-    }
-  };
-
   const forcePick = async () => {
     if (!forcePickUser || !forcePickTeam) return alert("Select user and enter team.");
     setActionLoading(true);
@@ -230,32 +196,10 @@ export default function AdminPage() {
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <input type="text" value={draftYear} onChange={e => setDraftYear(e.target.value)} 
                 className="input-field" style={{ width: "100px" }} />
-              <button onClick={updateYear} disabled={actionLoading} className="btn-secondary">Pull Data & Set Year</button>
+              <button onClick={updateYear} disabled={actionLoading} className="btn-secondary">Pull Data & Sync All</button>
             </div>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
-              Updates the drafting year and triggers TBA sync for all teams.
-            </p>
-          </div>
-          
-          <hr style={{ borderTop: "1px solid rgba(255,255,255,0.1)", margin: "1.5rem 0" }} />
-
-          <div style={{ marginBottom: "1.5rem" }}>
-            <button onClick={syncTeamDataNow} disabled={actionLoading} className="btn-secondary" style={{ width: "100%" }}>
-              Sync Team Data Now
-            </button>
-            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
-              Manually triggers the team data synchronization for the active year.
-            </p>
-          </div>
-
-          <hr style={{ borderTop: "1px solid rgba(255,255,255,0.1)", margin: "1.5rem 0" }} />
-
-          <div style={{ marginBottom: "1.5rem" }}>
-            <button onClick={updatePoints} disabled={actionLoading} className="btn-secondary" style={{ width: "100%" }}>
-              Update Team Points Now
-            </button>
-            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
-              Manually triggers the daily team points calculation logic.
+              Sets the active draft year, retrieves team statistics from The Blue Alliance, and calculates user points across the entire database. This may take a few seconds.
             </p>
           </div>
 

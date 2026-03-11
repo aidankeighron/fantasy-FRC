@@ -170,17 +170,7 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
     ? data.year
     : new Date().getFullYear().toString();
 
-  return await performTeamDataSync(year);
-});
-
-export const triggerTeamDataSync = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
-  await requireAdmin(context);
-  const ds = await db.collection("draft_state").doc("global").get();
-  const activeYear = ds.data()?.active_year;
-  if (!activeYear) {
-    throw new functions.https.HttpsError("failed-precondition", "No active year.");
-  }
-  const result = await performTeamDataSync(activeYear);
+  const result = await performTeamDataSync(year);
   await performTeamPointsUpdate();
   return result;
 });
@@ -570,10 +560,4 @@ export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] })
     await performTeamDataSync(activeYear);
   }
   await performTeamPointsUpdate();
-});
-
-export const triggerTeamPointsUpdate = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
-  await requireAdmin(context);
-  await performTeamPointsUpdate();
-  return { success: true };
 });
