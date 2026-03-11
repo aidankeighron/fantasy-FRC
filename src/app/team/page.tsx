@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, documentId, where, doc, getDoc } from "firebase/firestore";
+import { getCachedRawTeams } from "@/lib/teamsCache";
 import { useRouter } from "next/navigation";
 
 interface Team {
@@ -51,14 +52,13 @@ export default function TeamManagementPage() {
           const dsSnap = await getDoc(dsRef);
           const activeYear = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
 
-          const teamsQuery = query(collection(db, "teams"), where(documentId(), "in", user.teams));
-          const teamsSnap = await getDocs(teamsQuery);
+          const rawTeams = await getCachedRawTeams(db);
+          const userTeamsRaw = rawTeams.filter(t => user.teams.includes(t.id));
           
-          const fetchedTeams: Team[] = teamsSnap.docs.map(teamDoc => {
-            const tData = teamDoc.data();
+          const fetchedTeams: Team[] = userTeamsRaw.map(tData => {
             const yrStats = tData.stats?.[activeYear] || {};
             return {
-              number: teamDoc.id,
+              number: tData.id,
               name: tData.name || "",
               opr: yrStats.opr || 0,
               ccwm: yrStats.ccwm || 0,

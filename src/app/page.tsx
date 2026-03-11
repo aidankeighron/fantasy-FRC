@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { collection, getDocs, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { getCachedRawTeams } from "@/lib/teamsCache";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import styles from "./page.module.css";
 
@@ -65,13 +66,12 @@ export default function Home() {
           teams: doc.data().teams || [],
         }));
         
-        const teamsSnapshot = await getDocs(query(collection(db, "teams")));
-        const teamsData: Team[] = teamsSnapshot.docs
-          .map(doc => {
-            const tData = doc.data();
+        const rawTeams = await getCachedRawTeams(db);
+        const teamsData: Team[] = rawTeams
+          .map(tData => {
             const yrStats = tData.stats?.[activeYear] || {};
             return {
-              number: doc.id,
+              number: tData.id,
               name: tData.name || "",
               state: tData.state || "",
               country: tData.country || "",
