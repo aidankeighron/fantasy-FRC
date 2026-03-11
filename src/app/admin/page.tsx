@@ -7,7 +7,6 @@ import { collection, getDocs, getDoc, doc } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/Toast";
-import { useConfirm } from "@/components/ConfirmDialog";
 
 interface UserData {
   id: string;
@@ -20,7 +19,6 @@ export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const toast = useToast();
-  const confirm = useConfirm();
   
   const [users, setUsers] = useState<UserData[]>([]);
   const [draftYear, setDraftYear] = useState(new Date().getFullYear().toString());
@@ -77,8 +75,7 @@ export default function AdminPage() {
   };
 
   const deleteUser = async (userId: string) => {
-    const ok = await confirm("Are you sure? This will delete the user's data and they won't be able to log in. You must also delete them from Authentication tab manually unless a cloud function is set up.");
-    if (!ok) return;
+    if (!window.confirm("Are you sure? This will delete the user's data and they won't be able to log in. You must also delete them from Authentication tab manually unless a cloud function is set up.")) return;
     setActionLoading(true);
     try {
       // Deletes their user document. Complete deletion requires Admin SDK via Callable Function.
@@ -96,20 +93,16 @@ export default function AdminPage() {
   };
 
   const toggleLock = async () => {
-    console.log("[Admin] toggleLock called, toast:", toast);
     setActionLoading(true);
     try {
       const lockFn = httpsCallable(functions, "toggleTeamPickingLock");
       const res = await lockFn();
       const data = res.data as { locked: boolean };
       setPickingLocked(data.locked);
-      console.log("[Admin] about to call toast.success");
       toast.success(data.locked ? "Team picking is now LOCKED." : "Team picking is now UNLOCKED.");
-      console.log("[Admin] toast.success returned");
     }
     catch (err) {
       console.error(err);
-      console.log("[Admin] about to call toast.error");
       toast.error("Failed to toggle picking lock.");
     } 
     finally {
