@@ -313,7 +313,7 @@ export default function DraftPage() {
 
             <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
               <div ref={parentRef} style={{ height: "100%", overflow: "auto" }}>
-                <table className="data-table" style={{ width: "100%", position: "relative" }}>
+                <table className="data-table data-table-virtual" style={{ width: "100%", position: "relative" }}>
                   <thead style={{ position: "sticky", top: 0, background: "var(--surface)", zIndex: 10, backdropFilter: "blur(4px)" }}>
                     <tr>
                       <th onClick={() => handleSort("number")}>Team {sortConfig.key === 'number' ? (sortConfig.direction === 'asc' ? '↑' : '↓') : ''}</th>
@@ -334,6 +334,8 @@ export default function DraftPage() {
                           width: "100%",
                           height: `${virtualRow.size}px`,
                           transform: `translateY(${virtualRow.start}px)`,
+                          display: "flex",
+                          alignItems: "center",
                         }}>
                           <td style={{ fontWeight: "bold" }}>{team.number}</td>
                           <td style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>{team.name}</td>

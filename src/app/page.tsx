@@ -250,7 +250,7 @@ export default function Home() {
           </div>
           
           <div className={`glass ${styles.tableContainer} ${styles.virtualScroll}`} ref={parentRef}>
-            <table className="data-table" style={{ position: "relative" }}>
+            <table className="data-table data-table-virtual" style={{ position: "relative" }}>
               <thead style={{ position: "sticky", top: 0, background: "var(--surface)", zIndex: 5, backdropFilter: "blur(4px)" }}>
                 <tr>
                   <th onClick={() => handleTeamSort("number")}>Team {teamSortConfig.key === 'number' && (teamSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
@@ -265,7 +265,7 @@ export default function Home() {
                   const team = filteredAndSortedTeams[virtualRow.index];
                   return (
                     <tr key={team.number} style={{position: "absolute", top: 0, left: 0, width: "100%",
-                        height: `${virtualRow.size}px`, transform: `translateY(${virtualRow.start}px)`}}>
+                        height: `${virtualRow.size}px`, transform: `translateY(${virtualRow.start}px)`, display: "flex", alignItems: "center"}}>
                       <td>{team.number}</td>
                       <td>{team.name}</td>
                       <td>{team.score.toFixed(2)}</td>

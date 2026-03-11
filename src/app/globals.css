@@ -181,6 +181,19 @@ h1, h2, h3, h4, h5, h6 {
   background: rgba(255, 255, 255, 0.02);
 }
 
+/* Virtualized table alignment fix */
+.data-table-virtual thead tr,
+.data-table-virtual tbody tr {
+  display: flex;
+  width: 100%;
+}
+
+.data-table-virtual thead th,
+.data-table-virtual tbody td {
+  flex: 1;
+  min-width: 0;
+}
+
 /* CONTAINER */
 .container {
   max-width: 1200px;
