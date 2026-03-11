@@ -28,7 +28,6 @@ export default function Navbar() {
   const navLinks = user ? [
     { name: "Rankings", path: "/" },
     { name: "Team Management", path: "/team" },
-    { name: "Drafting", path: "/draft" },
     { name: "Settings", path: "/settings" },
     ...(user.isAdmin ? [{ name: "Admin", path: "/admin" }] : [])] : [{ name: "Rankings", path: "/" }];
   
