@@ -59,13 +59,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             className={`${styles.toast} ${styles[toast.type]} ${toast.exiting ? styles.exit : ""}`}
           >
             <span className={styles.icon}>
-              {toast.type === "success" && "\u2713"}
-              {toast.type === "error" && "\u2715"}
+              {toast.type === "success" && "✓"}
+              {toast.type === "error" && "✕"}
               {toast.type === "info" && "i"}
             </span>
             <span className={styles.message}>{toast.message}</span>
             <button className={styles.close} onClick={() => removeToast(toast.id)}>
-              \u2715
+              ✕
             </button>
           </div>
         ))}
