@@ -262,7 +262,7 @@ async function performTeamDataSync(year: string): Promise<{ success: boolean, to
   return { success: true, total: count, year };
 }
 
-export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
+export const syncTeamData = functions.runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" }).https.onCall(async (data, context) => {
   await requireAdmin(context);
   
   const year = typeof data.year === "string" && /^\d{4}$/.test(data.year) ? data.year : new Date().getFullYear().toString();
@@ -487,7 +487,7 @@ async function performTeamPointsUpdate(): Promise<void> {
   console.log("Daily point updates completed.");
 }
 
-export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async () => {
+export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async () => {
   const ds = await db.collection("draft_state").doc("global").get();
   const activeYear = ds.data()?.active_year;
   if (activeYear) {
