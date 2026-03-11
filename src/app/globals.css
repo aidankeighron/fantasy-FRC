@@ -1,27 +1,27 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-color: #080f0d;
-  --bg-card: #0d1714;
-  --surface: rgba(16, 185, 129, 0.05);
-  --surface-hover: rgba(16, 185, 129, 0.1);
-  --surface-border: rgba(16, 185, 129, 0.12);
-  --accent: #10b981;
-  --accent-hover: #059669;
-  --accent-glow: rgba(16, 185, 129, 0.35);
-  --accent-soft: rgba(16, 185, 129, 0.15);
-  --secondary: #14b8a6;
-  --text-main: #e8f5f0;
-  --text-muted: #7fb8a4;
-  --text-heading: #d1fae5;
+  --bg-color: #050505;
+  --bg-card: #121212;
+  --surface: rgba(187, 247, 208, 0.05);
+  --surface-hover: rgba(187, 247, 208, 0.1);
+  --surface-border: rgba(255, 255, 255, 0.1);
+  --accent: #bbf7d0;
+  --accent-hover: #86efac;
+  --accent-glow: rgba(187, 247, 208, 0.25);
+  --accent-soft: rgba(187, 247, 208, 0.15);
+  --secondary: #a7f3d0;
+  --text-main: #ffffff;
+  --text-muted: #a3a3a3;
+  --text-heading: #ffffff;
   
   /* Semantic Colors */
   --error: #fb7185;
   --error-bg: rgba(225, 29, 72, 0.12);
   --error-border: rgba(225, 29, 72, 0.25);
-  --success: #34d399;
-  --success-bg: rgba(16, 185, 129, 0.12);
-  --success-border: rgba(16, 185, 129, 0.25);
+  --success: #bbf7d0;
+  --success-bg: rgba(187, 247, 208, 0.12);
+  --success-border: rgba(187, 247, 208, 0.25);
   --info-glow: rgba(59, 130, 246, 0.2);
   --surface-dark: rgba(0, 0, 0, 0.4);
   
@@ -59,9 +59,9 @@ body::before {
   width: 100vw;
   height: 100vh;
   background-image: 
-    radial-gradient(ellipse at 10% 10%, rgba(16, 185, 129, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 90% 90%, rgba(20, 184, 166, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(5, 150, 105, 0.04) 0%, transparent 70%);
+    radial-gradient(ellipse at 10% 10%, rgba(187, 247, 208, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 90%, rgba(167, 243, 208, 0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
   z-index: -1;
   pointer-events: none;
 }
@@ -89,7 +89,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* GLASSMORPHISM UTILITIES */
 .glass {
-  background: linear-gradient(160deg, rgba(16, 185, 129, 0.06) 0%, rgba(13, 23, 20, 0.8) 100%);
+  background: linear-gradient(160deg, rgba(187, 247, 208, 0.05) 0%, rgba(5, 5, 5, 0.8) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--surface-border);
@@ -97,27 +97,27 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .glass-panel {
-  background: linear-gradient(145deg, rgba(16, 185, 129, 0.08) 0%, rgba(13, 23, 20, 0.9) 100%);
+  background: linear-gradient(145deg, rgba(187, 247, 208, 0.06) 0%, rgba(5, 5, 5, 0.9) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--surface-border);
   border-radius: var(--radius-xl);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3), 0 0 60px -12px rgba(16, 185, 129, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5), 0 0 60px -12px rgba(187, 247, 208, 0.05);
 }
 
 /* BUTTONS */
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
-  color: white;
+  background: var(--accent);
+  color: #050505;
   padding: 10px 24px;
   border-radius: var(--radius-sm);
-  font-weight: 500;
+  font-weight: 600;
   box-shadow: 0 4px 14px 0 var(--accent-glow);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border: 1px solid var(--accent);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, var(--accent-hover), #047857);
+  background: var(--accent-hover);
   transform: translateY(-1px);
   box-shadow: 0 6px 20px 0 var(--accent-glow);
 }
@@ -138,7 +138,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* INPUTS */
 .input-field {
-  background: rgba(8, 15, 13, 0.6);
+  background: rgba(10, 10, 10, 0.6);
   border: 1px solid var(--surface-border);
   color: var(--text-main);
   padding: 12px 16px;
@@ -151,7 +151,7 @@ h1, h2, h3, h4, h5, h6 {
 .input-field:focus {
   outline: none;
   border-color: var(--accent);
-  background: rgba(8, 15, 13, 0.8);
+  background: rgba(10, 10, 10, 0.8);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
@@ -170,10 +170,16 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.8rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  border-bottom: 2px solid rgba(16, 185, 129, 0.2);
+  border-bottom: 2px solid rgba(187, 247, 208, 0.2);
   cursor: pointer;
   transition: var(--transition);
   white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .data-table th:hover {
@@ -182,13 +188,26 @@ h1, h2, h3, h4, h5, h6 {
 
 .data-table td {
   padding: 14px 16px;
-  border-bottom: 1px solid rgba(16, 185, 129, 0.06);
+  border-bottom: 1px solid rgba(187, 247, 208, 0.06);
   font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .data-table td {
+    padding: 10px 8px;
+    font-size: 0.75rem;
+    white-space: normal;
+    word-break: break-word;
+  }
+  .data-table th {
+    padding: 10px 8px;
+    font-size: 0.7rem;
+  }
 }
 
 /* Alternating row colors */
 .data-table tbody tr:nth-child(even) {
-  background: rgba(16, 185, 129, 0.03);
+  background: rgba(187, 247, 208, 0.03);
 }
 
 .data-table tbody tr:nth-child(odd) {
@@ -201,7 +220,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .data-table tbody tr:hover {
-  background: rgba(16, 185, 129, 0.08);
+  background: rgba(187, 247, 208, 0.08);
   border-left-color: var(--accent);
 }
 
