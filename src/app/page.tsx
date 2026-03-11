@@ -122,8 +122,14 @@ export default function Home() {
 
   const sortedUsers = useMemo(() => {
     const sorted = [...users].sort((a, b) => {
-      const aVal = a[userSortConfig.key];
-      const bVal = b[userSortConfig.key];
+      let aVal = a[userSortConfig.key];
+      let bVal = b[userSortConfig.key];
+
+      if (userSortConfig.key === "rank") {
+        aVal = aVal === 0 ? 999999 : aVal;
+        bVal = bVal === 0 ? 999999 : bVal;
+      }
+
       if (aVal < bVal) return userSortConfig.direction === "asc" ? -1 : 1;
       if (aVal > bVal) return userSortConfig.direction === "asc" ? 1 : -1;
       return 0;
@@ -216,8 +222,8 @@ export default function Home() {
                 {sortedUsers.map((user, idx) => (
                   <tr key={user.id} className={styles.userRow}>
                     <td>
-                      <span className={`${styles.rankBadge} ${idx === 0 ? styles.rank1 : idx === 1 ? styles.rank2 : idx === 2 ? styles.rank3 : ""}`}>
-                        {idx + 1}
+                      <span className={`${styles.rankBadge} ${user.rank === 1 ? styles.rank1 : user.rank === 2 ? styles.rank2 : user.rank === 3 ? styles.rank3 : ""}`}>
+                        {user.rank === 0 ? "-" : user.rank}
                       </span>
                     </td>
                     <td>{user.name}</td>

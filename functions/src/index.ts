@@ -281,7 +281,7 @@ export const startNewDraft = functions.https.onCall(async (data, context) => {
   
   usersSnap.docs.forEach(doc => {
     userIds.push(doc.id);
-    batch.update(doc.ref, { teams: [], score: 0 });
+    batch.update(doc.ref, { teams: [], score: 0, rank: 0 });
   });
   
   const shuffled = userIds.sort(() => 0.5 - Math.random());
