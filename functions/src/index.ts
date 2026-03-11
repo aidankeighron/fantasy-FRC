@@ -272,114 +272,24 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey], timeoutSecond
   return result;
 });
 
-export const startNewDraft = functions.https.onCall(async (data, context) => {
+export const toggleTeamPickingLock = functions.https.onCall(async (data, context) => {
   await requireAdmin(context);
   
-  const usersSnap = await db.collection("users").get();
-  const batch = db.batch();
-  const userIds: string[] = [];
+  const dsRef = db.collection("draft_state").doc("global");
+  const dsSnap = await dsRef.get();
   
-  usersSnap.docs.forEach(doc => {
-    userIds.push(doc.id);
-    batch.update(doc.ref, { teams: [], score: 0, rank: 0 });
-  });
+  let currentLock = false;
+  if (dsSnap.exists) {
+    currentLock = dsSnap.data()?.team_picking_locked || false;
+  }
   
-  const shuffled = userIds.sort(() => 0.5 - Math.random());
+  const newLockStatus = !currentLock;
   
-  const draftStateRef = db.collection("draft_state").doc("global");
-  batch.set(draftStateRef, {
-    status: "active",
-    draft_order: shuffled,
-    current_turn_userId: shuffled[0] || null,
-    pick_count: 0
+  await dsRef.set({
+    team_picking_locked: newLockStatus
   }, { merge: true });
   
-  await batch.commit();
-  return { success: true };
-});
-
-export const processDraftPick = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new functions.https.HttpsError("unauthenticated", "Login required.");
-  }
-  
-  const teamNumber = data.teamNumber;
-  if (typeof teamNumber !== "string" || !/^\d+$/.test(teamNumber)) {
-    throw new functions.https.HttpsError("invalid-argument", "Invalid team number.");
-  }
-  
-  const force = !!data.force;
-  const targetUser = (typeof data.userId === "string" && data.userId) || context.auth.uid;
-  
-  if (force) {
-    await requireAdmin(context);
-  }
-  
-  await db.runTransaction(async (transaction) => {
-    const dsRef = db.collection("draft_state").doc("global");
-    const dsSnap = await transaction.get(dsRef);
-    const draftState = dsSnap.data();
-    
-    if (!draftState || draftState.status !== "active") {
-      throw new functions.https.HttpsError("failed-precondition", "Draft is not active.");
-    }
-    
-    if (!force && draftState.current_turn_userId !== context.auth!.uid) {
-      throw new functions.https.HttpsError("permission-denied", "It is not your turn.");
-    }
-    
-    const teamSnap = await transaction.get(db.collection("teams").doc(teamNumber));
-    if (!teamSnap.exists) {
-      throw new functions.https.HttpsError("not-found", "Team not found.");
-    }
-    
-    if (!force) {
-      const allUsersSnap = await transaction.get(db.collection("users"));
-      for (const u of allUsersSnap.docs) {
-        if ((u.data().teams || []).includes(teamNumber)) {
-          throw new functions.https.HttpsError("already-exists", "Team already drafted.");
-        }
-      }
-    }
-    
-    const userRef = db.collection("users").doc(targetUser);
-    const userSnap = await transaction.get(userRef);
-    const draftedTeams = userSnap.data()?.teams || [];
-    if (draftedTeams.length >= 8) {
-      throw new functions.https.HttpsError("out-of-range", "User already has 8 teams.");
-    }
-    
-    const newTeamsList = [...draftedTeams, teamNumber];
-    transaction.update(userRef, { teams: newTeamsList });
-    
-    if (!force) {
-      const order: string[] = draftState.draft_order;
-      const nextPickCount = (draftState.pick_count || 0) + 1;
-      const currentIndex = order.indexOf(draftState.current_turn_userId);
-      let nextIndex = currentIndex + 1;
-      let status = "active";
-      let nextUser: string | null = draftState.current_turn_userId;
-      
-      if (nextIndex >= order.length) {
-        nextIndex = 0;
-        const nextRoundNum = Math.floor(nextPickCount / order.length);
-        if (nextRoundNum >= 8) {
-          status = "completed";
-          nextUser = null;
-        }
-        else {
-          nextUser = order[nextIndex];
-        }
-      }
-      else {
-        nextUser = order[nextIndex];
-      }
-      
-      transaction.update(dsRef, { current_turn_userId: nextUser, pick_count: nextPickCount, status });
-    }
-  });
-  
-  return { success: true };
+  return { success: true, locked: newLockStatus };
 });
 
 
