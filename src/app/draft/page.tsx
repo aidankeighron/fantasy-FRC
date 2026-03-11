@@ -312,7 +312,7 @@ export default function DraftPage() {
             </div>
 
             <div style={{ flex: 1, overflow: "hidden", position: "relative" }}>
-              <div ref={parentRef} style={{ height: "100%", overflow: "auto" }}>
+              <div ref={parentRef} className="hidden-scrollbar" style={{ height: "100%", overflow: "auto" }}>
                 <table className="data-table data-table-virtual" style={{ width: "100%", position: "relative" }}>
                   <thead style={{ position: "sticky", top: 0, background: "var(--surface)", zIndex: 10, backdropFilter: "blur(4px)" }}>
                     <tr>

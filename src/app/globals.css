@@ -227,6 +227,16 @@ h1, h2, h3, h4, h5, h6 {
   flex: 1.6 !important;
 }
 
+/* HIDDEN SCROLLBAR */
+.hidden-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hidden-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* CONTAINER */
 .container {
   max-width: 1200px;
