@@ -102,13 +102,7 @@ async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise
   return finalStats;
 }
 
-export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
-  await requireAdmin(context);
-
-  const year = typeof data.year === "string" && /^\d{4}$/.test(data.year)
-    ? data.year
-    : new Date().getFullYear().toString();
-
+async function performTeamDataSync(year: string): Promise<{ success: boolean, total: number, year: string }> {
   await db.collection("draft_state").doc("global").set({ active_year: year }, { merge: true });
   
   const allTeamStats = await fetchYearlyStats(year);
@@ -167,6 +161,28 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCal
   }
 
   return { success: true, total: count, year };
+}
+
+export const syncTeamData = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
+  await requireAdmin(context);
+
+  const year = typeof data.year === "string" && /^\d{4}$/.test(data.year)
+    ? data.year
+    : new Date().getFullYear().toString();
+
+  return await performTeamDataSync(year);
+});
+
+export const triggerTeamDataSync = functions.runWith({ secrets: [tbaKey] }).https.onCall(async (data, context) => {
+  await requireAdmin(context);
+  const ds = await db.collection("draft_state").doc("global").get();
+  const activeYear = ds.data()?.active_year;
+  if (!activeYear) {
+    throw new functions.https.HttpsError("failed-precondition", "No active year.");
+  }
+  const result = await performTeamDataSync(activeYear);
+  await performTeamPointsUpdate();
+  return result;
 });
 
 export const startNewDraft = functions.https.onCall(async (data, context) => {
@@ -548,6 +564,11 @@ async function performTeamPointsUpdate(): Promise<void> {
 }
 
 export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey] }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async () => {
+  const ds = await db.collection("draft_state").doc("global").get();
+  const activeYear = ds.data()?.active_year;
+  if (activeYear) {
+    await performTeamDataSync(activeYear);
+  }
   await performTeamPointsUpdate();
 });
 

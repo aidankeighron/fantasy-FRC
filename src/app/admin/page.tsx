@@ -141,6 +141,23 @@ export default function AdminPage() {
     }
   };
 
+  const syncTeamDataNow = async () => {
+    setActionLoading(true);
+    try {
+      const triggerFn = httpsCallable(functions, "triggerTeamDataSync");
+      await triggerFn();
+      alert("Team data sync successful!");
+      fetchAdminData();
+    } 
+    catch (err) {
+      console.error(err);
+      alert("Failed to sync team data.");
+    } 
+    finally {
+      setActionLoading(false);
+    }
+  };
+
   const forcePick = async () => {
     if (!forcePickUser || !forcePickTeam) return alert("Select user and enter team.");
     setActionLoading(true);
@@ -220,6 +237,17 @@ export default function AdminPage() {
             </p>
           </div>
           
+          <hr style={{ borderTop: "1px solid rgba(255,255,255,0.1)", margin: "1.5rem 0" }} />
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <button onClick={syncTeamDataNow} disabled={actionLoading} className="btn-secondary" style={{ width: "100%" }}>
+              Sync Team Data Now
+            </button>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
+              Manually triggers the team data synchronization for the active year.
+            </p>
+          </div>
+
           <hr style={{ borderTop: "1px solid rgba(255,255,255,0.1)", margin: "1.5rem 0" }} />
 
           <div style={{ marginBottom: "1.5rem" }}>
