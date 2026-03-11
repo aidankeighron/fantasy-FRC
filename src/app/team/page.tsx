@@ -23,6 +23,7 @@ export default function TeamManagementPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [userRank, setUserRank] = useState<number>(0);
   const [dataLoading, setDataLoading] = useState(true);
+  const [pickingLocked, setPickingLocked] = useState(false);
 
   const [sortConfig, setSortConfig] = useState<{ key: keyof Team; direction: "asc" | "desc" }>({
     key: "score",
@@ -47,11 +48,14 @@ export default function TeamManagementPage() {
         const rankIndex = allUsers.findIndex(u => u.id === user.uid);
         setUserRank(rankIndex !== -1 ? rankIndex + 1 : 0);
 
-        if (user.teams && user.teams.length > 0) {
-          const dsRef = doc(db, "draft_state", "global");
-          const dsSnap = await getDoc(dsRef);
-          const activeYear = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
+        const dsRef = doc(db, "draft_state", "global");
+        const dsSnap = await getDoc(dsRef);
+        const activeYear = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
+        if (dsSnap.exists() && dsSnap.data().team_picking_locked !== undefined) {
+          setPickingLocked(dsSnap.data().team_picking_locked);
+        }
 
+        if (user.teams && user.teams.length > 0) {
           const rawTeams = await getCachedRawTeams(db);
           const userTeamsRaw = rawTeams.filter(t => user.teams.includes(t.id));
           
@@ -121,7 +125,17 @@ export default function TeamManagementPage() {
     <div style={{ padding: "2rem 0", display: "flex", flexDirection: "column", gap: "2rem" }}>
       
       {/* Header & Stats Dashboard */}
-      <h1 style={{ fontSize: "2rem", color: "white" }}>Team Management</h1>
+      <div className="flex-between">
+        <h1 style={{ fontSize: "2rem", color: "white" }}>Team Management</h1>
+        <button 
+          className="btn-primary" 
+          onClick={() => router.push("/draft")}
+          disabled={pickingLocked}
+          style={{ padding: "10px 24px", opacity: pickingLocked ? 0.5 : 1, cursor: pickingLocked ? "not-allowed" : "pointer" }}
+        >
+          {pickingLocked ? "Picking Locked" : (user.teams?.length ? "Edit Team" : "Create Team")}
+        </button>
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" }}>
         <div className="glass" style={{ padding: "1.5rem", textAlign: "center" }}>
