@@ -1,0 +1,256 @@
+.draftContainer {
+  padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  color: var(--text-heading);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.backLink:hover {
+  color: var(--accent);
+}
+
+.columnsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .columnsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.rulesCard {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.rulesCard h3 {
+  font-size: 1.1rem;
+  color: var(--text-heading);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rulesList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.rulesList li {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding-left: 1rem;
+  position: relative;
+}
+
+.rulesList li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+.pickedSection {
+  padding: 1.25rem;
+}
+
+.pickedSection h4 {
+  font-size: 0.95rem;
+  color: var(--text-heading);
+  margin-bottom: 0.75rem;
+}
+
+.pickedList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pickedTeam {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface-hover);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.pickedTeamInfo {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.pickedTeamNumber {
+  color: white;
+  font-weight: bold;
+}
+
+.pickedTeamRegion {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.removeButton {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error);
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.removeButton:hover {
+  background: rgba(225, 29, 72, 0.25);
+}
+
+.emptyPicks {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.tableContainer {
+  display: flex;
+  flex-direction: column;
+  height: 500px;
+}
+
+.tableHeader {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--surface-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tableHeader h3 {
+  font-size: 1rem;
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+
+.searchInput {
+  width: 180px;
+  padding: 8px 12px;
+}
+
+.tableBody {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.draftButton {
+  padding: 5px 12px;
+  font-size: 0.75rem;
+}
+
+.draftButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.confirmSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.confirmButton {
+  padding: 14px 48px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 400px;
+}
+
+.confirmButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.confirmHint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.lockedBanner {
+  padding: 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lockedBanner h2 {
+  font-size: 1.5rem;
+  color: var(--error);
+}
+
+.lockedBanner p {
+  color: var(--text-muted);
+  max-width: 500px;
+}
+
+.slotCounter {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.slotCounterFull {
+  color: var(--accent);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+}
