@@ -50,7 +50,6 @@
 
 .navLinkActive {
   color: var(--accent);
-  text-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
 }
 
 .actions {

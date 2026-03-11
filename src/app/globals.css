@@ -102,7 +102,7 @@ h1, h2, h3, h4, h5, h6 {
   -webkit-backdrop-filter: blur(16px);
   border: 2px solid var(--surface-border);
   border-radius: var(--radius-xl);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), 0 0 60px -12px rgba(187, 247, 208, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
 }
 
 /* BUTTONS */
@@ -112,14 +112,14 @@ h1, h2, h3, h4, h5, h6 {
   padding: 10px 24px;
   border-radius: var(--radius-sm);
   font-weight: 600;
-  box-shadow: 0 4px 14px 0 var(--accent-glow);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.2);
   border: 1px solid var(--accent);
 }
 
 .btn-primary:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px 0 var(--accent-glow);
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.3);
 }
 
 .btn-secondary {
@@ -152,7 +152,6 @@ h1, h2, h3, h4, h5, h6 {
   outline: none;
   border-color: var(--accent);
   background: rgba(10, 10, 10, 0.8);
-  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 /* TABLES */
