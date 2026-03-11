@@ -15,8 +15,6 @@
   gap: 12px;
   padding: 14px 18px;
   border-radius: var(--radius-md);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 2px solid var(--surface-border);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   font-family: inherit;
@@ -33,17 +31,17 @@
 }
 
 .success {
-  background: linear-gradient(160deg, rgba(187, 247, 208, 0.15) 0%, rgba(18, 18, 18, 0.92) 100%);
+  background: linear-gradient(160deg, #1a2e1f 0%, #121212 100%);
   border-color: var(--success-border);
 }
 
 .error {
-  background: linear-gradient(160deg, rgba(225, 29, 72, 0.15) 0%, rgba(18, 18, 18, 0.92) 100%);
+  background: linear-gradient(160deg, #2a1419 0%, #121212 100%);
   border-color: var(--error-border);
 }
 
 .info {
-  background: linear-gradient(160deg, rgba(59, 130, 246, 0.12) 0%, rgba(18, 18, 18, 0.92) 100%);
+  background: linear-gradient(160deg, #161d2e 0%, #121212 100%);
   border-color: rgba(59, 130, 246, 0.25);
 }
 
