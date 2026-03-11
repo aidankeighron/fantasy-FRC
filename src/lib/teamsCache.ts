@@ -5,22 +5,24 @@ const CACHE_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
 
 interface CachedData {
   timestamp: number;
+  activeYear: string;
   data: any[];
 }
 
-export async function getCachedRawTeams(db: Firestore): Promise<any[]> {
+export async function getCachedRawTeams(db: Firestore, activeYear?: string): Promise<any[]> {
   if (typeof window !== "undefined") {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
         const parsedCache: CachedData = JSON.parse(cached);
         const now = Date.now();
-        if (now - parsedCache.timestamp < CACHE_DURATION_MS) {
+        const yearMatch = !activeYear || !parsedCache.activeYear || parsedCache.activeYear === activeYear;
+        if (now - parsedCache.timestamp < CACHE_DURATION_MS && yearMatch) {
           console.log("Using cached teams data.");
           return parsedCache.data;
         }
       }
-    } 
+    }
     catch (e) {
       console.warn("Failed to read teams cache from localStorage", e);
     }
@@ -40,10 +42,11 @@ export async function getCachedRawTeams(db: Firestore): Promise<any[]> {
     try {
       const cacheEntry: CachedData = {
         timestamp: Date.now(),
+        activeYear: activeYear || "",
         data: rawData
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheEntry));
-    } 
+    }
     catch (e) {
       console.warn("Failed to save teams cache to localStorage", e);
     }

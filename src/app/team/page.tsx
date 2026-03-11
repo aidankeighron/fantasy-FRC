@@ -250,7 +250,7 @@ export default function TeamManagementPage() {
             ) : (
               <tr>
                 <td colSpan={6} style={{ textAlign: "center", padding: "3rem", color: "var(--text-muted)" }}>
-                  You haven&apos;t drafted any teams yet. Wait for the draft to begin!
+                  You haven&apos;t created a team yet. Click &quot;Create Team&quot; to get started!
                 </td>
               </tr>
             )}

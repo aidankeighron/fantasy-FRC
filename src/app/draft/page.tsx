@@ -229,7 +229,7 @@ function TeamPickerColumn({label, rules, pickedTeams, availableTeams, maxSlots, 
 }
 
 export default function DraftPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
 
   const [allTeams, setAllTeams] = useState<Map<string, Team>>(new Map());
@@ -264,7 +264,7 @@ export default function DraftPage() {
         const activeYearStr = dsSnap.exists() ? dsSnap.data().active_year : new Date().getFullYear().toString();
         const previousYear = (parseInt(activeYearStr) - 1).toString();
 
-        const rawTeams = await getCachedRawTeams(db);
+        const rawTeams = await getCachedRawTeams(db, activeYearStr);
         const teamsMap = new Map<string, Team>();
 
         rawTeams.forEach((teamData) => {
@@ -423,6 +423,7 @@ export default function DraftPage() {
     try {
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, { teams: allPicks });
+      await refreshUser();
       alert("Your team has been saved!");
       router.push("/team");
     }

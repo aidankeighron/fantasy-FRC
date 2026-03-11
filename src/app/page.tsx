@@ -91,8 +91,9 @@ export default function Home() {
         });
         setAvailableYears(Array.from(allYearsSet).sort((a, b) => b.localeCompare(a)));
         
-        const rawTeams = await getCachedRawTeams(db);
+        const rawTeams = await getCachedRawTeams(db, activeYearStr);
         const teamsData: Team[] = rawTeams
+          .filter(tData => (tData.activeYears || []).includes(yearToFetch))
           .map(tData => {
             const yrStats = tData.stats?.[yearToFetch] || {};
             return {
@@ -106,8 +107,7 @@ export default function Home() {
               winPercent: yrStats.winRate || 0,
               activeYears: tData.activeYears || []
             };
-          })
-          .filter(t => t.activeYears.includes(yearToFetch));
+          });
         
         setUsers(usersData);
         setTeams(teamsData);
