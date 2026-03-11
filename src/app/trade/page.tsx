@@ -9,6 +9,7 @@ import { httpsCallable } from "firebase/functions";
 interface UserData {
   id: string;
   email: string;
+  username: string;
   teams: string[];
 }
 
@@ -191,7 +192,7 @@ export default function TradePage() {
               onChange={e => { setSelectedUserId(e.target.value); setTheirSelectedTeams([]); }}>
               <option value="">-- Choose User --</option>
               {users.filter(u => u.id !== user?.uid).map(u => (
-                <option key={u.id} value={u.id}>{u.email}</option>
+                <option key={u.id} value={u.id}>{u.username || u.email?.split("@")[0] || "Unknown"}</option>
               ))}
             </select>
           </div>
@@ -271,13 +272,13 @@ export default function TradePage() {
               {trades.filter(t => t.status === "pending").map(trade => {
                 const isReceiver = trade.receiverId === user?.uid;
                 const partnerId = isReceiver ? trade.senderId : trade.receiverId;
-                const partnerEmail = users.find(u => u.id === partnerId)?.email?.split("@")[0] || "Unknown";
+                const partnerName = users.find(u => u.id === partnerId)?.username || users.find(u => u.id === partnerId)?.email?.split("@")[0] || "Unknown";
 
                 return (
                   <div key={trade.id} style={{ padding: "1rem", borderRadius: "8px", background: "rgba(255,255,255,0.03)", border: "1px solid var(--surface-border)" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
                       <p style={{ fontWeight: "bold", color: "white" }}>
-                        {isReceiver ? `Received from ${partnerEmail}` : `Proposed to ${partnerEmail}`}
+                        {isReceiver ? `Received from ${partnerName}` : `Proposed to ${partnerName}`}
                       </p>
                       <span className="text-muted" style={{ fontSize: "0.75rem" }}>Status: Pending</span>
                     </div>

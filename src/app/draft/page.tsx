@@ -22,6 +22,7 @@ interface Team {
 interface UserData {
   id: string;
   email: string;
+  username: string;
   teams: string[];
 }
 
@@ -91,6 +92,7 @@ export default function DraftPage() {
       const usersData = snap.docs.map(d => ({
         id: d.id,
         email: d.data().email || "",
+        username: d.data().username || d.data().email?.split("@")[0] || "Unknown",
         teams: d.data().teams || [],
       }));
       setUsers(usersData);
@@ -234,7 +236,7 @@ export default function DraftPage() {
           <p className="text-muted">
             Current Player Turn: {" "}
             <span style={{ color: "white", fontWeight: "bold" }}>
-              {users.find(u => u.id === draftState.current_turn_userId)?.email?.split("@")[0] || "Unknown"}
+              {users.find(u => u.id === draftState.current_turn_userId)?.username || "Unknown"}
             </span>
           </p>
         </div>
@@ -282,7 +284,7 @@ export default function DraftPage() {
                   return (
                     <div key={userId} style={{ padding: "0.75rem", borderRadius: "8px", background: isCurrent ? "rgba(225,29,72,0.1)" : "rgba(255,255,255,0.02)", border: isCurrent ? "1px solid var(--accent)" : "1px solid transparent" }}>
                       <p style={{ color: "white", fontSize: "0.875rem", fontWeight: "bold", marginBottom: "0.25rem" }}>
-                        {idx + 1}. {u.email.split("@")[0]}
+                        {idx + 1}. {u.username}
                       </p>
                       <p className="text-muted" style={{ fontSize: "0.75rem" }}>
                         Picks: {u.teams.length > 0 ? u.teams.join(", ") : "None"}

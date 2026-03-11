@@ -8,6 +8,7 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 interface AppUser {
   uid: string;
   email: string | null;
+  username: string;
   isAdmin: boolean;
   teams: string[];
 }
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // Create user document if it doesn't exist (e.g., manually created in console)
             userData = {
               email: firebaseUser.email,
+              username: "Player" + Math.floor(Math.random() * 100000),
               isAdmin: false,
               teams: [],
               score: 0,
@@ -51,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
+            username: userData?.username || firebaseUser.email?.split("@")[0] || "Unknown",
             isAdmin: userData?.isAdmin || false,
             teams: userData?.teams || [],
           });
@@ -60,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser({
             uid: firebaseUser.uid,
             email: firebaseUser.email,
+            username: firebaseUser.email?.split("@")[0] || "Unknown",
             isAdmin: false,
             teams: [],
           });

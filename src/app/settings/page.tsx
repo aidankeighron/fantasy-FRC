@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { updatePassword } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
 
 export default function SettingsPage() {
   const { user, loading } = useAuth();
@@ -11,6 +12,39 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [statusMsg, setStatusMsg] = useState({ text: "", type: "" });
   const [actionLoading, setActionLoading] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
+  const [isUsernameLoading, setIsUsernameLoading] = useState(false);
+
+  useEffect(() => {
+    if (user?.username) {
+      setNewUsername(user.username);
+    }
+  }, [user]);
+
+  const handleUsernameChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatusMsg({ text: "", type: "" });
+
+    if (!newUsername.trim()) {
+      setStatusMsg({ text: "Username cannot be empty.", type: "error" });
+      return;
+    }
+
+    if (!user?.uid) return;
+
+    setIsUsernameLoading(true);
+    try {
+      await updateDoc(doc(db, "users", user.uid), {
+        username: newUsername.trim()
+      });
+      setStatusMsg({ text: "Username updated successfully! Refresh the page to see changes globally.", type: "success" });
+    } catch (err: any) {
+      console.error(err);
+      setStatusMsg({ text: err.message || "Failed to update username.", type: "error" });
+    } finally {
+      setIsUsernameLoading(false);
+    }
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,21 +97,38 @@ export default function SettingsPage() {
     <div style={{ padding: "2rem 0", maxWidth: "600px", margin: "0 auto" }}>
       <h1 style={{ fontSize: "2rem", color: "white", marginBottom: "2rem" }}>Account Settings</h1>
       
+      {statusMsg.text && (
+        <div style={{
+          padding: "1rem", 
+          borderRadius: "8px", 
+          marginBottom: "1.5rem",
+          background: statusMsg.type === "error" ? "rgba(225,29,72,0.1)" : "rgba(16,185,129,0.1)",
+          color: statusMsg.type === "error" ? "#f87171" : "#34d399",
+          border: `1px solid ${statusMsg.type === "error" ? "rgba(225,29,72,0.2)" : "rgba(16,185,129,0.2)"}`
+        }}>
+          {statusMsg.text}
+        </div>
+      )}
+
+      <div className="glass" style={{ padding: "2rem", marginBottom: "2rem" }}>
+        <h2 style={{ fontSize: "1.25rem", color: "white", marginBottom: "1.5rem" }}>Change Username</h2>
+        
+        <form onSubmit={handleUsernameChange} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div>
+            <label style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.875rem", color: "var(--text-muted)" }}>
+              Username
+            </label>
+            <input type="text" value={newUsername} onChange={(e) => setNewUsername(e.target.value)}
+              className="input-field" required />
+          </div>
+          <button type="submit" className="btn-primary" disabled={isUsernameLoading} style={{ marginTop: "1rem" }}>
+            {isUsernameLoading ? "Updating..." : "Update Username"}
+          </button>
+        </form>
+      </div>
+
       <div className="glass" style={{ padding: "2rem" }}>
         <h2 style={{ fontSize: "1.25rem", color: "white", marginBottom: "1.5rem" }}>Change Password</h2>
-        
-        {statusMsg.text && (
-          <div style={{
-            padding: "1rem", 
-            borderRadius: "8px", 
-            marginBottom: "1.5rem",
-            background: statusMsg.type === "error" ? "rgba(225,29,72,0.1)" : "rgba(16,185,129,0.1)",
-            color: statusMsg.type === "error" ? "#f87171" : "#34d399",
-            border: `1px solid ${statusMsg.type === "error" ? "rgba(225,29,72,0.2)" : "rgba(16,185,129,0.2)"}`
-          }}>
-            {statusMsg.text}
-          </div>
-        )}
 
         <form onSubmit={handlePasswordChange} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
           <div>

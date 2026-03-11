@@ -59,7 +59,7 @@ export default function Home() {
         const usersSnapshot = await getDocs(query(collection(db, "users")));
         const usersData = usersSnapshot.docs.map(doc => ({
           id: doc.id,
-          name: doc.data().email?.split("@")[0] || "Unknown",
+          name: doc.data().username || doc.data().email?.split("@")[0] || "Unknown",
           score: doc.data().score || 0,
           rank: doc.data().rank || 0,
           teams: doc.data().teams || [],

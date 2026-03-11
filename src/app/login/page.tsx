@@ -27,6 +27,7 @@ export default function LoginPage() {
 
         await setDoc(doc(db, "users", user.uid), {
           email: user.email,
+          username: "Player" + Math.floor(Math.random() * 100000),
           isAdmin: false,
           teams: [],
           score: 0,

@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 interface UserData {
   id: string;
   email: string;
+  username: string;
   isAdmin: boolean;
 }
 
@@ -175,7 +176,7 @@ export default function AdminPage() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Email</th>
+                  <th>Username</th>
                   <th>Admin</th>
                   <th>Actions</th>
                 </tr>
@@ -183,7 +184,7 @@ export default function AdminPage() {
               <tbody>
                 {users.map(u => (
                   <tr key={u.id}>
-                    <td>{u.email}</td>
+                    <td>{u.username || u.email?.split("@")[0] || "Unknown"}</td>
                     <td>{u.isAdmin ? "Yes" : "No"}</td>
                     <td>
                       <button onClick={() => toggleAdmin(u.id)} className="btn-secondary" disabled={actionLoading || u.id === user.uid}
@@ -249,7 +250,7 @@ export default function AdminPage() {
               <select value={forcePickUser} onChange={e => setForcePickUser(e.target.value)} 
                 className="input-field" style={{ flex: 1 }} >
                 <option value="">Select User...</option>
-                {users.map(u => <option key={u.id} value={u.id}>{u.email}</option>)}
+                {users.map(u => <option key={u.id} value={u.id}>{u.username || u.email?.split("@")[0] || "Unknown"}</option>)}
               </select>
               <input type="text" placeholder="Team #" value={forcePickTeam} style={{ width: "80px" }}
                 onChange={e => setForcePickTeam(e.target.value)} className="input-field" />
