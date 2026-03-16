@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
+import { db, functions } from "@/lib/firebase";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import { getCachedRawTeams } from "@/lib/teamsCache";
 import { DRAFT_CONFIG } from "@/lib/draftConfig";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -431,15 +432,16 @@ export default function DraftPage() {
 
     setSaving(true);
     try {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { teams: allPicks });
+      const submitDraft = httpsCallable(functions, "submitDraft");
+      await submitDraft({ teams: allPicks });
       await refreshUser();
       toast.success("Your team has been saved!");
       router.push("/team");
     }
-    catch (error) {
+    catch (error: any) {
       console.error("Failed to save team:", error);
-      toast.error("Failed to save your team. Please try again.");
+      const message = error?.message || "Failed to save your team. Please try again.";
+      toast.error(message);
     }
     finally {
       setSaving(false);
