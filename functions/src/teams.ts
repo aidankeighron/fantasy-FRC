@@ -377,11 +377,14 @@ export const recalcUserScores = functions.https.onCall(async (_data: any, contex
 
   userScores.sort((a, b) => b.score - a.score);
 
-  const batch = db.batch();
+  const batches: FirebaseFirestore.WriteBatch[] = [];
+  let currentBatch = db.batch();
+  let bCount = 0;
+
   userScores.forEach((ms, idx) => {
     const userDoc = usersSnap.docs.find(d => d.id === ms.uid);
     const userTeams = userDoc?.data().teams || [];
-    batch.set(db.collection("users").doc(ms.uid), {
+    currentBatch.set(db.collection("users").doc(ms.uid), {
       score: ms.score,
       rank: idx + 1,
       seasons: {
@@ -392,8 +395,18 @@ export const recalcUserScores = functions.https.onCall(async (_data: any, contex
         }
       }
     }, { merge: true });
+    bCount++;
+    if (bCount >= 400) {
+      batches.push(currentBatch);
+      currentBatch = db.batch();
+      bCount = 0;
+    }
   });
-  await batch.commit();
+  if (bCount > 0) {
+    batches.push(currentBatch);
+  }
+
+  await Promise.all(batches.map(b => b.commit()));
 
   return { updated: userScores.length, year };
 });
