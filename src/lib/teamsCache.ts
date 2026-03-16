@@ -10,15 +10,16 @@ interface CachedData {
 }
 
 export async function getCachedRawTeams(db: Firestore, activeYear?: string): Promise<any[]> {
+  const cacheKey = activeYear ? `${CACHE_KEY}_${activeYear}` : CACHE_KEY;
+  
   if (typeof window !== "undefined") {
     try {
-      const cached = localStorage.getItem(CACHE_KEY);
+      const cached = localStorage.getItem(cacheKey);
       if (cached) {
         const parsedCache: CachedData = JSON.parse(cached);
         const now = Date.now();
-        const yearMatch = !activeYear || !parsedCache.activeYear || parsedCache.activeYear === activeYear;
-        if (now - parsedCache.timestamp < CACHE_DURATION_MS && yearMatch) {
-          console.log("Using cached teams data.");
+        if (now - parsedCache.timestamp < CACHE_DURATION_MS) {
+          console.log(`Using cached teams data for year: ${activeYear || "unknown"}`);
           return parsedCache.data;
         }
       }
@@ -45,7 +46,7 @@ export async function getCachedRawTeams(db: Firestore, activeYear?: string): Pro
         activeYear: activeYear || "",
         data: rawData
       };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheEntry));
+      localStorage.setItem(cacheKey, JSON.stringify(cacheEntry));
     }
     catch (e) {
       console.warn("Failed to save teams cache to localStorage", e);
