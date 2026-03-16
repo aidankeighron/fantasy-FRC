@@ -50,23 +50,31 @@ type TeamPickerColumnProps = {
 
 function TeamPickerColumn({label, rules, pickedTeams, availableTeams, maxSlots, onPick, onRemove, isLocked}: TeamPickerColumnProps) {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "score",
     direction: "desc",
   });
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   const isFull = pickedTeams.length >= maxSlots;
 
   const filteredTeams = useMemo(() => {
     let result = [...availableTeams];
 
-    if (search) {
-      const isNumericSearch = !isNaN(Number(search));
+    if (debouncedSearch) {
+      const isNumericSearch = !isNaN(Number(debouncedSearch));
       result = result.filter((team) => {
         if (isNumericSearch) {
-          return team.number.includes(search);
+          return team.number.includes(debouncedSearch);
         }
-        return team.name.toLowerCase().includes(search.toLowerCase());
+        return team.name.toLowerCase().includes(debouncedSearch.toLowerCase());
       });
     }
 
@@ -89,7 +97,7 @@ function TeamPickerColumn({label, rules, pickedTeams, availableTeams, maxSlots, 
     });
 
     return result;
-  }, [availableTeams, search, sortConfig]);
+  }, [availableTeams, debouncedSearch, sortConfig]);
 
   const handleSort = (key: SortKey): void => {
     setSortConfig((previous) => ({
