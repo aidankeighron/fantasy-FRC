@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(xargs wc -l)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(npx next build)"
     ]
   }
 }

@@ -16,20 +16,26 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
-    
+
     // `teams`: Everyone can read. Only backend or admins can write.
     match /teams/{teamNumber} {
       allow read: if true;
       allow write: if isAdmin();
     }
-    
+
     // `users`: Everyone can read basic ranking info.
     // Users can update their own document but CANNOT modify protected fields.
+    // Draft submissions go through the submitDraft Cloud Function (uses admin SDK).
     match /users/{userId} {
       allow read: if true;
-      allow create: if isAuthed() && request.auth.uid == userId && request.resource.data.isAdmin == false;
+      allow create: if isAuthed()
+        && request.auth.uid == userId
+        && request.resource.data.isAdmin == false
+        && (!request.resource.data.keys().hasAny(['score']) || request.resource.data.score == 0)
+        && (!request.resource.data.keys().hasAny(['rank']) || request.resource.data.rank == 0)
+        && !request.resource.data.keys().hasAny(['seasons']);
       allow update: if (request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score', 'seasons']))
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score', 'seasons', 'teams']))
         || isAdmin();
       allow delete: if isAdmin();
     }

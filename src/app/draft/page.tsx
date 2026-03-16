@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, onSnapshot } from "firebase/firestore";
+import { db, functions } from "@/lib/firebase";
+import { doc, getDoc, onSnapshot } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import { getCachedRawTeams } from "@/lib/teamsCache";
 import { DRAFT_CONFIG } from "@/lib/draftConfig";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -50,23 +51,31 @@ type TeamPickerColumnProps = {
 
 function TeamPickerColumn({label, rules, pickedTeams, availableTeams, maxSlots, onPick, onRemove, isLocked}: TeamPickerColumnProps) {
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortConfig, setSortConfig] = useState<SortConfig>({
     key: "score",
     direction: "desc",
   });
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   const isFull = pickedTeams.length >= maxSlots;
 
   const filteredTeams = useMemo(() => {
     let result = [...availableTeams];
 
-    if (search) {
-      const isNumericSearch = !isNaN(Number(search));
+    if (debouncedSearch) {
+      const isNumericSearch = !isNaN(Number(debouncedSearch));
       result = result.filter((team) => {
         if (isNumericSearch) {
-          return team.number.includes(search);
+          return team.number.includes(debouncedSearch);
         }
-        return team.name.toLowerCase().includes(search.toLowerCase());
+        return team.name.toLowerCase().includes(debouncedSearch.toLowerCase());
       });
     }
 
@@ -89,7 +98,7 @@ function TeamPickerColumn({label, rules, pickedTeams, availableTeams, maxSlots, 
     });
 
     return result;
-  }, [availableTeams, search, sortConfig]);
+  }, [availableTeams, debouncedSearch, sortConfig]);
 
   const handleSort = (key: SortKey): void => {
     setSortConfig((previous) => ({
@@ -423,15 +432,16 @@ export default function DraftPage() {
 
     setSaving(true);
     try {
-      const userRef = doc(db, "users", user.uid);
-      await updateDoc(userRef, { teams: allPicks });
+      const submitDraft = httpsCallable(functions, "submitDraft");
+      await submitDraft({ teams: allPicks });
       await refreshUser();
       toast.success("Your team has been saved!");
       router.push("/team");
     }
-    catch (error) {
+    catch (error: any) {
       console.error("Failed to save team:", error);
-      toast.error("Failed to save your team. Please try again.");
+      const message = error?.message || "Failed to save your team. Please try again.";
+      toast.error(message);
     }
     finally {
       setSaving(false);
