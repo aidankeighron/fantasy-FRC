@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { db, tbaKey } from "./config";
-import { requireAdmin, tbaRequest, TeamAccumulator } from "./utils";
+import { requireAdmin, tbaRequest, TeamAccumulator, rateLimit } from "./utils";
 
 function getPlayoffDepth(status: any): number {
   if (!status?.playoff) {
@@ -28,28 +28,40 @@ function getPlayoffDepth(status: any): number {
 }
 
 async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise<Map<string, any>> {
-  const events = await tbaRequest(`/events/${year}/keys`);
+  const events = await tbaRequest(`/events/${year}`, { useCache: true });
+  if (!Array.isArray(events)) {
+    return new Map();
+  }
+
   const teamStats = new Map<string, TeamAccumulator>();
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   
+  const filteredEvents = events.filter((event: any) => {
+    if (event.event_type === 100) return false; // Skip preseason/week 0
+    const eventDate = new Date(event.end_date || event.start_date);
+    return eventDate >= oneWeekAgo;
+  });
+
+  const eventsToSync = filteredEvents.length > 0 ? filteredEvents : events.slice(0, 10); // Fallback to a few if none recent
+
   const chunkSize = 10;
-  for (let i = 0; i < events.length; i += chunkSize) {
-    const chunk = events.slice(i, i + chunkSize);
-    await Promise.all(chunk.map(async (event: string) => {
-      if (event.includes("week0")) {
-        return;
-      }
+  for (let i = 0; i < eventsToSync.length; i += chunkSize) {
+    const chunk = eventsToSync.slice(i, i + chunkSize);
+    await Promise.all(chunk.map(async (eventObj: any) => {
+      const eventKey = eventObj.key;
       
       let statuses: any = null;
       let oprs: any = null;
       
       try {
         [statuses, oprs] = await Promise.all([
-          tbaRequest(`/event/${event}/teams/statuses`),
-          tbaRequest(`/event/${event}/oprs`)
+          tbaRequest(`/event/${eventKey}/teams/statuses`, { useCache: true }),
+          tbaRequest(`/event/${eventKey}/oprs`, { useCache: true })
         ]);
       }
       catch (e) {
-        console.warn(`Skipping event ${event}: failed to fetch data`, e);
+        console.warn(`Skipping event ${eventKey}: failed to fetch data`, e);
         return;
       }
       
@@ -157,15 +169,17 @@ async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise
   return finalStats;
 }
 
-async function performTeamPointsUpdate(year: string): Promise<void> {
+async function performTeamPointsUpdate(year: string, teamFilter?: Set<string>): Promise<void> {
   console.log("Running Daily Point Updates");
   
-  const yearlyStats = await fetchYearlyStats(year);
+  const yearlyStats = await fetchYearlyStats(year, teamFilter);
   
-  let teamBatch = db.batch();
+  const batches: FirebaseFirestore.WriteBatch[] = [];
+  let currentBatch = db.batch();
   let bCount = 0;
+  
   for (const [teamNum, stats] of yearlyStats.entries()) {
-    teamBatch.set(db.collection("teams").doc(teamNum), {
+    currentBatch.set(db.collection("teams").doc(teamNum), {
       activeYears: admin.firestore.FieldValue.arrayUnion(year),
       stats: {
         [year]: stats
@@ -173,14 +187,16 @@ async function performTeamPointsUpdate(year: string): Promise<void> {
     }, { merge: true });
     bCount++;
     if (bCount >= 400) {
-      await teamBatch.commit();
-      teamBatch = db.batch();
+      batches.push(currentBatch);
+      currentBatch = db.batch();
       bCount = 0;
     }
   }
   if (bCount > 0) {
-    await teamBatch.commit();
+    batches.push(currentBatch);
   }
+  
+  await Promise.all(batches.map(b => b.commit()));
   
   const updatedUsersSnap = await db.collection("users").get();
   const userScores: { uid: string, score: number }[] = [];
@@ -203,12 +219,16 @@ async function performTeamPointsUpdate(year: string): Promise<void> {
   
   userScores.sort((a, b) => b.score - a.score);
   
-  const userBatch = db.batch();
+  const userBatches: FirebaseFirestore.WriteBatch[] = [];
+  let currentUserBatch = db.batch();
+  let ubCount = 0;
+  
   userScores.forEach((ms, idx) => {
+    const docRef = db.collection("users").doc(ms.uid);
     const userDoc = updatedUsersSnap.docs.find(d => d.id === ms.uid);
     const userTeams = userDoc?.data().teams || [];
 
-    userBatch.set(db.collection("users").doc(ms.uid), {
+    currentUserBatch.set(docRef, {
       score: ms.score,
       rank: idx + 1,
       seasons: {
@@ -219,8 +239,20 @@ async function performTeamPointsUpdate(year: string): Promise<void> {
         }
       }
     }, { merge: true });
+    
+    ubCount++;
+    if (ubCount >= 400) {
+      userBatches.push(currentUserBatch);
+      currentUserBatch = db.batch();
+      ubCount = 0;
+    }
   });
-  await userBatch.commit();
+  
+  if (ubCount > 0) {
+    userBatches.push(currentUserBatch);
+  }
+  
+  await Promise.all(userBatches.map(b => b.commit()));
   
   console.log("Daily point updates completed.");
 }
@@ -288,6 +320,7 @@ async function performTeamDataSync(year: string): Promise<{ success: boolean, to
 
 export const syncTeamData = functions.runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" }).https.onCall(async (data: any, context: functions.https.CallableContext) => {
   await requireAdmin(context);
+  await rateLimit(context.auth!.uid, "syncTeamData", 5, 60 * 60 * 1000); // 5 times per hour
   
   const year = typeof data.year === "string" && /^\d{4}$/.test(data.year) ? data.year : new Date().getFullYear().toString();
   
@@ -299,14 +332,24 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey], timeoutSecond
 export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async () => {
   const ds = await db.collection("draft_state").doc("global").get();
   const activeYear = ds.data()?.active_year;
-  if (activeYear) {
-    await performTeamDataSync(activeYear);
-    await performTeamPointsUpdate(activeYear);
+  if (!activeYear) return;
+
+  const userSnap = await db.collection("users").get();
+  const draftedTeams = new Set<string>();
+  userSnap.docs.forEach(u => {
+    const teams = u.data().teams || [];
+    teams.forEach((t: string) => draftedTeams.add(t));
+  });
+
+  if (draftedTeams.size > 0) {
+    console.log(`Syncing points for ${draftedTeams.size} drafted teams.`);
+    await performTeamPointsUpdate(activeYear, draftedTeams);
   }
 });
 
 export const recalcUserScores = functions.https.onCall(async (_data: any, context: functions.https.CallableContext) => {
   await requireAdmin(context);
+  await rateLimit(context.auth!.uid, "recalcUserScores", 10, 60 * 60 * 1000); // 10 times per hour
 
   const ds = await db.collection("draft_state").doc("global").get();
   const year = ds.data()?.active_year;
