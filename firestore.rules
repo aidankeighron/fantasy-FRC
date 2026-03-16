@@ -13,23 +13,27 @@ service cloud.firestore {
 
     // `draft_state`: Everyone can read. Only admins can write.
     match /draft_state/{document=**} {
-      allow read: if true;
+      allow read: if isAuthed();
       allow write: if isAdmin();
     }
     
     // `teams`: Everyone can read. Only backend or admins can write.
     match /teams/{teamNumber} {
-      allow read: if true;
+      allow read: if isAuthed();
       allow write: if isAdmin();
     }
     
     // `users`: Everyone can read basic ranking info.
     // Users can update their own document but CANNOT modify protected fields.
     match /users/{userId} {
-      allow read: if true;
+      allow read: if isAuthed();
       allow create: if isAuthed() && request.auth.uid == userId && request.resource.data.isAdmin == false;
       allow update: if (request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score', 'seasons']))
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score', 'seasons'])
+        && (
+          !request.resource.data.diff(resource.data).affectedKeys().hasAny(['teams']) ||
+          get(/databases/$(database)/documents/draft_state/global).data.team_picking_locked == false
+        ))
         || isAdmin();
       allow delete: if isAdmin();
     }
