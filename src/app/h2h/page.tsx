@@ -287,6 +287,16 @@ export default function H2HPage() {
         <div className={styles.weekTabs}>
           {sortedWeekIds.map((id) => {
             const w = weeks.get(id)!;
+            const badgeLabel =
+              w.status === "drafting" ? "Draft Open" :
+              w.status === "active" ? "Live" :
+              w.status === "completed" ? "Done" :
+              "Upcoming";
+            const badgeClass =
+              w.status === "drafting" ? styles.weekStatusDrafting :
+              w.status === "active" ? styles.weekStatusActive :
+              w.status === "completed" ? styles.weekStatusCompleted :
+              styles.weekStatusScoring;
             return (
               <button
                 key={id}
@@ -294,6 +304,7 @@ export default function H2HPage() {
                 onClick={() => setSelectedWeekId(id)}
               >
                 Week {w.weekNumber}
+                <span className={`${styles.weekStatusBadge} ${badgeClass}`}>{badgeLabel}</span>
               </button>
             );
           })}

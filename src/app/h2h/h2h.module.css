@@ -34,6 +34,9 @@
   color: var(--text-muted);
   cursor: pointer;
   transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .weekTab:hover {
@@ -46,6 +49,61 @@
   color: #050505;
   border-color: var(--accent);
   font-weight: 600;
+}
+
+.weekStatusBadge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.weekStatusDrafting {
+  background: var(--accent);
+  color: #050505;
+}
+
+.weekTabActive .weekStatusDrafting {
+  background: #050505;
+  color: var(--accent);
+}
+
+.weekStatusActive {
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}
+
+.weekTabActive .weekStatusActive {
+  background: rgba(0, 0, 0, 0.2);
+  color: #050505;
+  border-color: transparent;
+}
+
+.weekStatusScoring {
+  background: var(--warning-bg, rgba(255, 193, 7, 0.15));
+  color: var(--warning, #ffc107);
+  border: 1px solid var(--warning-border, rgba(255, 193, 7, 0.3));
+}
+
+.weekTabActive .weekStatusScoring {
+  background: rgba(0, 0, 0, 0.2);
+  color: #050505;
+  border-color: transparent;
+}
+
+.weekStatusCompleted {
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--surface-border);
+}
+
+.weekTabActive .weekStatusCompleted {
+  background: rgba(0, 0, 0, 0.15);
+  color: #050505;
+  border-color: transparent;
 }
 
 /* Timer bar */
