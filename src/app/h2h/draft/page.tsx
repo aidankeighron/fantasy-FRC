@@ -335,7 +335,7 @@ export default function H2HDraftPage() {
             There is no 1v1 draft currently open. Check back when a new competition week begins.
           </p>
           <button className="btn-secondary" style={{ marginTop: "1rem" }} onClick={() => router.push("/h2h")}>
-            &larr; Back to H2H
+            &larr; Back to 1v1 Draft
           </button>
         </div>
       </div>
@@ -351,7 +351,7 @@ export default function H2HDraftPage() {
             You don&apos;t have a matchup this week. Make sure you have a main season team drafted first.
           </p>
           <button className="btn-secondary" style={{ marginTop: "1rem" }} onClick={() => router.push("/h2h")}>
-            &larr; Back to H2H
+            &larr; Back to 1v1 Draft
           </button>
         </div>
       </div>
@@ -367,7 +367,7 @@ export default function H2HDraftPage() {
             You have a bye this week and automatically receive +{H2H_CONFIG.WIN_POINTS} points. No draft needed!
           </p>
           <button className="btn-secondary" style={{ marginTop: "1rem" }} onClick={() => router.push("/h2h")}>
-            &larr; Back to H2H
+            &larr; Back to 1v1 Draft
           </button>
         </div>
       </div>

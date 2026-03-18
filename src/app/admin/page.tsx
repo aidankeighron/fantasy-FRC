@@ -125,6 +125,21 @@ export default function AdminPage() {
     }
   };
 
+  const kickstartH2H = async () => {
+    setActionLoading("kickstartH2H");
+    try {
+      const initFn = httpsCallable(functions, "h2hInitialize", { timeout: 540_000 });
+      const res = await initFn();
+      const data = res.data as { weeksCreated: number; matchupsCreated: number; draftsRun: number; year: string };
+      toast.success(`1v1 Draft initialized for ${data.year}: ${data.weeksCreated} weeks synced, ${data.matchupsCreated} matchups created, ${data.draftsRun} drafts run.`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to initialize 1v1 Draft.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const updateYear = async () => {
     setActionLoading("updateYear");
     try {
@@ -223,9 +238,23 @@ export default function AdminPage() {
               {actionLoading === "toggleLock" ? "Processing..." : pickingLocked ? "Unlock Team Picking" : "Lock Team Picking"}
             </button>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
-              {pickingLocked 
-                ? "Team picking is currently restricted. Users cannot create or edit their teams." 
+              {pickingLocked
+                ? "Team picking is currently restricted. Users cannot create or edit their teams."
                 : "Team picking is open! Users can freely create and edit their teams."}
+            </p>
+          </div>
+        </div>
+
+        {/* 1v1 Draft Controls */}
+        <div className="glass" style={{ padding: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.25rem", color: "white", marginBottom: "1rem" }}>1v1 Draft</h2>
+
+          <div style={{ marginBottom: "1.5rem" }}>
+            <button onClick={kickstartH2H} disabled={!!actionLoading} className="btn-primary" style={{ width: "100%", opacity: actionLoading ? 0.5 : undefined }}>
+              {actionLoading === "kickstartH2H" ? "Processing..." : "Initialize 1v1 Draft"}
+            </button>
+            <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
+              Syncs weekly events from TBA, creates matchups for any open draft weeks, and runs drafts for weeks past their deadline. Safe to press at any time — completed weeks and existing matchups are never modified.
             </p>
           </div>
         </div>

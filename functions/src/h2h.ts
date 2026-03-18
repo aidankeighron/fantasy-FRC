@@ -103,7 +103,7 @@ export const h2hSyncWeeklyEvents = functions
     const ds = await db.collection("draft_state").doc("global").get();
     const year = ds.data()?.active_year;
     if (!year) {
-      console.log("No active year set, skipping 1v1 sync.");
+      console.log("No active year set, skipping H2H sync.");
       return;
     }
 
@@ -213,7 +213,7 @@ export const h2hSyncWeeklyEvents = functions
         { merge: true }
       );
 
-      console.log(`1v1 week ${weekId}: ${status}, ${allTeamNumbers.size} teams, ${eventData.length} events`);
+      console.log(`H2H week ${weekId}: ${status}, ${allTeamNumbers.size} teams, ${eventData.length} events`);
     }
   });
 
@@ -745,6 +745,339 @@ async function recalcAllUserScores(year: string): Promise<void> {
   if (bCount > 0) batches.push(currentBatch);
   await Promise.all(batches.map((b) => b.commit()));
 }
+
+// Admin-callable function to kickstart the H2H pipeline on demand.
+// Runs sync -> matchups -> drafts sequentially. All steps have built-in
+// guards (skip completed weeks, skip existing matchups/results) so calling
+// this multiple times or while a draft is in progress is safe.
+export const h2hInitialize = functions
+  .runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" })
+  .https.onCall(
+    async (_data: any, context: functions.https.CallableContext) => {
+      await requireAdmin(context);
+      await rateLimit(context.auth!.uid, "h2hInitialize", 5, 60 * 60 * 1000);
+
+      const ds = await db.collection("draft_state").doc("global").get();
+      const year = ds.data()?.active_year;
+      if (!year) {
+        throw new functions.https.HttpsError("failed-precondition", "No active year set.");
+      }
+
+      const log: string[] = [];
+
+      // ── Step 1: Sync weekly events from TBA ──
+      const events = await tbaRequest(`/events/${year}`, { useCache: true });
+      if (!Array.isArray(events)) {
+        throw new functions.https.HttpsError("unavailable", "Failed to fetch events from TBA.");
+      }
+
+      const weekMap = new Map<number, any[]>();
+      for (const evt of events) {
+        if (!H2H_CONFIG.VALID_EVENT_TYPES.includes(evt.event_type)) continue;
+        const week = evt.week;
+        if (week == null) continue;
+        if (!weekMap.has(week)) weekMap.set(week, []);
+        weekMap.get(week)!.push(evt);
+      }
+
+      const now = new Date();
+      let weeksCreated = 0;
+      let matchupsCreated = 0;
+      let draftsRun = 0;
+
+      for (const [weekNum, weekEvents] of weekMap.entries()) {
+        const weekId = `${year}_week${weekNum}`;
+
+        // Compute date boundaries
+        let earliest = new Date("2099-01-01");
+        let latest = new Date("2000-01-01");
+        for (const evt of weekEvents) {
+          const start = new Date(evt.start_date);
+          const end = new Date(evt.end_date || evt.start_date);
+          if (start < earliest) earliest = start;
+          if (end > latest) latest = end;
+        }
+
+        const draftOpensAt = new Date(earliest.getTime() - H2H_CONFIG.DRAFT_OPEN_HOURS_BEFORE * 3600000);
+        const draftClosesAt = new Date(earliest.getTime() - H2H_CONFIG.DRAFT_CLOSE_HOURS_BEFORE * 3600000);
+        const scoringAt = new Date(latest.getTime() + H2H_CONFIG.SCORING_BUFFER_DAYS * 24 * 3600000);
+
+        let status: string;
+        if (now < draftOpensAt) {
+          status = "upcoming";
+        } else if (now < draftClosesAt) {
+          status = "drafting";
+        } else if (now < scoringAt) {
+          status = "active";
+        } else {
+          status = "completed";
+        }
+
+        // Skip completed weeks
+        const existingDoc = await db.collection("h2h_weeks").doc(weekId).get();
+        if (existingDoc.exists && existingDoc.data()?.status === "completed") {
+          continue;
+        }
+
+        // Fetch teams for each event
+        const eventData: any[] = [];
+        const allTeamNumbers = new Set<string>();
+
+        const chunkSize = 5;
+        for (let i = 0; i < weekEvents.length; i += chunkSize) {
+          const chunk = weekEvents.slice(i, i + chunkSize);
+          await Promise.all(
+            chunk.map(async (evt: any) => {
+              try {
+                const teams = await tbaRequest(`/event/${evt.key}/teams`, { useCache: true });
+                const teamNums: string[] = [];
+                if (Array.isArray(teams)) {
+                  for (const t of teams) {
+                    const num = t.team_number.toString();
+                    teamNums.push(num);
+                    allTeamNumbers.add(num);
+                  }
+                }
+
+                const webcastUrl = evt.webcasts?.length > 0 ? getWebcastUrl(evt.webcasts[0]) : "";
+
+                eventData.push({
+                  key: evt.key,
+                  name: evt.name,
+                  startDate: evt.start_date,
+                  endDate: evt.end_date || evt.start_date,
+                  webcastUrl,
+                  teamCount: teamNums.length,
+                  teams: teamNums,
+                });
+              } catch (e) {
+                console.warn(`Failed to fetch teams for event ${evt.key}`, e);
+              }
+            })
+          );
+        }
+
+        await db.collection("h2h_weeks").doc(weekId).set(
+          {
+            year,
+            weekNumber: weekNum,
+            status,
+            eventsStartDate: admin.firestore.Timestamp.fromDate(earliest),
+            eventsEndDate: admin.firestore.Timestamp.fromDate(latest),
+            draftOpensAt: admin.firestore.Timestamp.fromDate(draftOpensAt),
+            draftClosesAt: admin.firestore.Timestamp.fromDate(draftClosesAt),
+            scoringAt: admin.firestore.Timestamp.fromDate(scoringAt),
+            events: eventData,
+            competingTeams: Array.from(allTeamNumbers),
+            matchups: existingDoc.exists ? (existingDoc.data()?.matchups || []) : [],
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+
+        weeksCreated++;
+        log.push(`H2H week ${weekId}: ${status}, ${allTeamNumbers.size} teams`);
+      }
+
+      // ── Step 2: Create matchups for drafting weeks ──
+      const weeksSnap = await db
+        .collection("h2h_weeks")
+        .where("status", "==", "drafting")
+        .get();
+
+      for (const weekDoc of weeksSnap.docs) {
+        const weekData = weekDoc.data();
+        if (weekData.matchups && weekData.matchups.length > 0) continue;
+
+        const usersSnap = await db.collection("users").get();
+        const eligibleUsers: { uid: string; username: string }[] = [];
+        for (const u of usersSnap.docs) {
+          const data = u.data();
+          if (data.teams && data.teams.length > 0) {
+            eligibleUsers.push({ uid: u.id, username: data.username || "Unknown" });
+          }
+        }
+
+        if (eligibleUsers.length < 2) {
+          if (eligibleUsers.length === 1) {
+            const byeUser = eligibleUsers[0];
+            const matchups = [{
+              id: "matchup_0",
+              userA: byeUser.uid,
+              userB: "bye",
+              usernameA: byeUser.username,
+              usernameB: "BYE",
+            }];
+            await weekDoc.ref.update({ matchups });
+            await weekDoc.ref.collection("results").doc("matchup_0").set({
+              matchupId: "matchup_0",
+              userA: byeUser.uid,
+              userB: "bye",
+              userATeams: [],
+              userBTeams: [],
+              draftOrder: [],
+              userAScore: 0,
+              userBScore: 0,
+              winner: byeUser.uid,
+              pointsAwarded: H2H_CONFIG.WIN_POINTS,
+              scoredAt: null,
+            });
+          }
+          continue;
+        }
+
+        let prevOpponents = new Map<string, string>();
+        const prevWeekNum = weekData.weekNumber - 1;
+        if (prevWeekNum >= 0) {
+          const prevDoc = await db.collection("h2h_weeks").doc(`${weekData.year}_week${prevWeekNum}`).get();
+          if (prevDoc.exists) {
+            const prevMatchups = prevDoc.data()?.matchups || [];
+            for (const m of prevMatchups) {
+              if (m.userB !== "bye") {
+                prevOpponents.set(m.userA, m.userB);
+                prevOpponents.set(m.userB, m.userA);
+              }
+            }
+          }
+        }
+
+        const shuffled = seededShuffle(eligibleUsers, weekDoc.id);
+        const matchups: any[] = [];
+
+        for (let i = 0; i < shuffled.length - 1; i += 2) {
+          let a = shuffled[i];
+          let b = shuffled[i + 1];
+
+          if (prevOpponents.get(a.uid) === b.uid && i + 3 < shuffled.length) {
+            const c = shuffled[i + 2];
+            const d = shuffled[i + 3];
+            if (prevOpponents.get(a.uid) !== c.uid && prevOpponents.get(b.uid) !== d.uid) {
+              shuffled[i + 1] = c;
+              shuffled[i + 2] = b;
+              b = c;
+            }
+          }
+
+          matchups.push({
+            id: `matchup_${matchups.length}`,
+            userA: a.uid,
+            userB: b.uid,
+            usernameA: a.username,
+            usernameB: b.username,
+          });
+        }
+
+        if (shuffled.length % 2 === 1) {
+          const byeUser = shuffled[shuffled.length - 1];
+          const matchupId = `matchup_${matchups.length}`;
+          matchups.push({
+            id: matchupId,
+            userA: byeUser.uid,
+            userB: "bye",
+            usernameA: byeUser.username,
+            usernameB: "BYE",
+          });
+
+          await weekDoc.ref.collection("results").doc(matchupId).set({
+            matchupId,
+            userA: byeUser.uid,
+            userB: "bye",
+            userATeams: [],
+            userBTeams: [],
+            draftOrder: [],
+            userAScore: 0,
+            userBScore: 0,
+            winner: byeUser.uid,
+            pointsAwarded: H2H_CONFIG.WIN_POINTS,
+            scoredAt: null,
+          });
+        }
+
+        await weekDoc.ref.update({ matchups });
+        matchupsCreated += matchups.length;
+        log.push(`Created ${matchups.length} matchups for ${weekDoc.id}`);
+      }
+
+      // ── Step 3: Run drafts for weeks past deadline ──
+      const nowTs = admin.firestore.Timestamp.now();
+      const draftWeeksSnap = await db
+        .collection("h2h_weeks")
+        .where("status", "==", "drafting")
+        .get();
+
+      for (const weekDoc of draftWeeksSnap.docs) {
+        const weekData = weekDoc.data();
+        if (nowTs.toMillis() < weekData.draftClosesAt.toMillis()) continue;
+
+        const competingTeams: string[] = weekData.competingTeams || [];
+        const matchups: any[] = weekData.matchups || [];
+
+        const teamScores = new Map<string, number>();
+        const wy = weekData.year;
+        const chunkSize2 = 30;
+        for (let i = 0; i < competingTeams.length; i += chunkSize2) {
+          const chunk = competingTeams.slice(i, i + chunkSize2);
+          const docs = await Promise.all(
+            chunk.map((t) => db.collection("teams").doc(t).get())
+          );
+          for (const d of docs) {
+            if (d.exists) {
+              teamScores.set(d.id, d.data()?.stats?.[wy]?.score || 0);
+            }
+          }
+        }
+
+        for (const matchup of matchups) {
+          if (matchup.userB === "bye") continue;
+
+          const existingResult = await weekDoc.ref.collection("results").doc(matchup.id).get();
+          if (existingResult.exists) continue;
+
+          const picksASnap = await weekDoc.ref.collection("picks").doc(matchup.userA).get();
+          const picksBSnap = await weekDoc.ref.collection("picks").doc(matchup.userB).get();
+
+          const topTeams = [...competingTeams]
+            .sort((a, b) => (teamScores.get(b) || 0) - (teamScores.get(a) || 0))
+            .slice(0, H2H_CONFIG.PICKS_PER_USER);
+
+          const prefsA: string[] = picksASnap.exists ? picksASnap.data()!.preferences : topTeams;
+          const prefsB: string[] = picksBSnap.exists ? picksBSnap.data()!.preferences : topTeams;
+
+          const { teamsA, teamsB, draftOrder } = runAlternatingDraft(
+            prefsA, prefsB, matchup.userA, matchup.userB,
+            weekData.weekNumber, competingTeams, teamScores
+          );
+
+          await weekDoc.ref.collection("results").doc(matchup.id).set({
+            matchupId: matchup.id,
+            userA: matchup.userA,
+            userB: matchup.userB,
+            userATeams: teamsA,
+            userBTeams: teamsB,
+            draftOrder,
+            userAScore: null,
+            userBScore: null,
+            winner: null,
+            pointsAwarded: null,
+            scoredAt: null,
+          });
+        }
+
+        await weekDoc.ref.update({ status: "active" });
+        draftsRun++;
+        log.push(`Drafts completed for ${weekDoc.id}`);
+      }
+
+      return {
+        success: true,
+        year,
+        weeksCreated,
+        matchupsCreated,
+        draftsRun,
+        log,
+      };
+    }
+  );
 
 export const h2hRecalcScores = functions.https.onCall(
   async (_data: any, context: functions.https.CallableContext) => {
