@@ -25,7 +25,7 @@ export default function AdminPage() {
   const [activeYear, setActiveYear] = useState("");
   const [pickingLocked, setPickingLocked] = useState(false);
   
-  const [actionLoading, setActionLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && (!user || !user.isAdmin)) {
@@ -59,41 +59,41 @@ export default function AdminPage() {
 
 
   const toggleAdmin = async (userId: string) => {
-    setActionLoading(true);
+    setActionLoading(`toggleAdmin_${userId}`);
     try {
       const toggleFn = httpsCallable(functions, "toggleUserAdmin");
       await toggleFn({ userId });
       fetchAdminData();
-    } 
+    }
     catch (err) {
       console.error(err);
       toast.error("Failed to update user.");
-    } 
+    }
     finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
   const deleteUser = async (userId: string) => {
     if (!window.confirm("Are you sure? This will delete the user's data and they won't be able to log in. You must also delete them from Authentication tab manually unless a cloud function is set up.")) return;
-    setActionLoading(true);
+    setActionLoading(`delete_${userId}`);
     try {
       // Deletes their user document. Complete deletion requires Admin SDK via Callable Function.
       const deleteUserFn = httpsCallable(functions, "deleteUserAccount");
       await deleteUserFn({ uid: userId });
       fetchAdminData();
-    } 
+    }
     catch (err) {
       console.error(err);
       toast.error("Failed to delete user. Make sure the Firebase function is deployed.");
-    } 
+    }
     finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
   const toggleLock = async () => {
-    setActionLoading(true);
+    setActionLoading("toggleLock");
     try {
       const lockFn = httpsCallable(functions, "toggleTeamPickingLock");
       const res = await lockFn();
@@ -104,14 +104,14 @@ export default function AdminPage() {
     catch (err) {
       console.error(err);
       toast.error("Failed to toggle picking lock.");
-    } 
+    }
     finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
   const recalcScores = async () => {
-    setActionLoading(true);
+    setActionLoading("recalcScores");
     try {
       const recalcFn = httpsCallable(functions, "recalcUserScores");
       const res = await recalcFn();
@@ -121,24 +121,24 @@ export default function AdminPage() {
       console.error(err);
       toast.error("Failed to recalculate scores.");
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
   const updateYear = async () => {
-    setActionLoading(true);
+    setActionLoading("updateYear");
     try {
       const syncTeamsFn = httpsCallable(functions, "syncTeamData", { timeout: 600_000 });
       await syncTeamsFn({ year: draftYear });
       toast.success("Team synchronization initiated for year: " + draftYear);
       fetchAdminData();
-    } 
+    }
     catch (err) {
       console.error(err);
       toast.error("Failed to update year and sync teams.");
-    } 
+    }
     finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
@@ -170,13 +170,13 @@ export default function AdminPage() {
                     <td>{u.username || u.email?.split("@")[0] || "Unknown"}</td>
                     <td>{u.isAdmin ? "Yes" : "No"}</td>
                     <td>
-                      <button onClick={() => toggleAdmin(u.id)} className="btn-secondary" disabled={actionLoading || u.id === user.uid}
-                        style={{ padding: "4px 8px", fontSize: "0.75rem", marginRight: "8px" }}>
-                        Toggle Admin
+                      <button onClick={() => toggleAdmin(u.id)} className="btn-secondary" disabled={!!actionLoading || u.id === user.uid}
+                        style={{ padding: "4px 8px", fontSize: "0.75rem", marginRight: "8px", opacity: actionLoading ? 0.5 : undefined }}>
+                        {actionLoading === `toggleAdmin_${u.id}` ? "Processing..." : "Toggle Admin"}
                       </button>
-                      <button onClick={() => deleteUser(u.id)} className="btn-secondary" disabled={actionLoading || u.id === user.uid}
-                        style={{ padding: "4px 8px", fontSize: "0.75rem", color: "var(--accent)", borderColor: "var(--accent)" }}>
-                        Delete
+                      <button onClick={() => deleteUser(u.id)} className="btn-secondary" disabled={!!actionLoading || u.id === user.uid}
+                        style={{ padding: "4px 8px", fontSize: "0.75rem", color: "var(--accent)", borderColor: "var(--accent)", opacity: actionLoading ? 0.5 : undefined }}>
+                        {actionLoading === `delete_${u.id}` ? "Processing..." : "Delete"}
                       </button>
                     </td>
                   </tr>
@@ -196,7 +196,9 @@ export default function AdminPage() {
             <div style={{ display: "flex", gap: "0.5rem" }}>
               <input type="text" value={draftYear} onChange={e => setDraftYear(e.target.value)} 
                 className="input-field" style={{ width: "100px" }} />
-              <button onClick={updateYear} disabled={actionLoading} className="btn-secondary">Pull Data & Sync All</button>
+              <button onClick={updateYear} disabled={!!actionLoading} className="btn-secondary" style={{ opacity: actionLoading ? 0.5 : undefined }}>
+                {actionLoading === "updateYear" ? "Processing..." : "Pull Data & Sync All"}
+              </button>
             </div>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
               Sets the active draft year, retrieves team statistics from The Blue Alliance, and calculates user points across the entire database. This may take a couple minutes.
@@ -206,8 +208,8 @@ export default function AdminPage() {
           <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
 
           <div style={{ marginBottom: "1.5rem" }}>
-            <button onClick={recalcScores} disabled={actionLoading} className="btn-secondary" style={{ width: "100%" }}>
-              Update All Scores &amp; Rankings
+            <button onClick={recalcScores} disabled={!!actionLoading} className="btn-secondary" style={{ width: "100%", opacity: actionLoading ? 0.5 : undefined }}>
+              {actionLoading === "recalcScores" ? "Processing..." : "Update All Scores & Rankings"}
             </button>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
               Recalculates every user's score and rank from existing team data. Does not fetch new data from TBA.
@@ -217,8 +219,8 @@ export default function AdminPage() {
           <hr style={{ borderTop: "1px solid var(--surface-border)", margin: "1.5rem 0" }} />
 
           <div style={{ marginBottom: "1.5rem" }}>
-            <button onClick={toggleLock} disabled={actionLoading} className="btn-primary" style={{ width: "100%", backgroundColor: pickingLocked ? "var(--success)" : "var(--error)", color: "#050505", border: "none" }}>
-              {pickingLocked ? "Unlock Team Picking" : "Lock Team Picking"}
+            <button onClick={toggleLock} disabled={!!actionLoading} className="btn-primary" style={{ width: "100%", backgroundColor: pickingLocked ? "var(--success)" : "var(--error)", color: "#050505", border: "none", opacity: actionLoading ? 0.5 : undefined }}>
+              {actionLoading === "toggleLock" ? "Processing..." : pickingLocked ? "Unlock Team Picking" : "Lock Team Picking"}
             </button>
             <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem", textAlign: "center" }}>
               {pickingLocked 
