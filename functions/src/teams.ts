@@ -210,15 +210,18 @@ async function performTeamPointsUpdate(year: string, teamFilter?: Set<string>): 
   
   for (const u of updatedUsersSnap.docs) {
     let uScore = 0;
-    const uTeams = u.data().teams || [];
+    const uData = u.data();
+    const uTeams = uData.teams || [];
     uTeams.forEach((t: string) => {
       uScore += teamsCache.get(t) || 0;
     });
+    // Include H2H bonus points
+    uScore += uData.h2h?.[year]?.totalBonusPoints || 0;
     userScores.push({ uid: u.id, score: uScore });
   }
-  
+
   userScores.sort((a, b) => b.score - a.score);
-  
+
   const userBatches: FirebaseFirestore.WriteBatch[] = [];
   let currentUserBatch = db.batch();
   let ubCount = 0;
@@ -368,10 +371,13 @@ export const recalcUserScores = functions.https.onCall(async (_data: any, contex
 
   for (const u of usersSnap.docs) {
     let uScore = 0;
-    const uTeams = u.data().teams || [];
+    const uData = u.data();
+    const uTeams = uData.teams || [];
     uTeams.forEach((t: string) => {
       uScore += teamsCache.get(t) || 0;
     });
+    // Include H2H bonus points
+    uScore += uData.h2h?.[year]?.totalBonusPoints || 0;
     userScores.push({ uid: u.id, score: uScore });
   }
 

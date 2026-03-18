@@ -11,6 +11,14 @@ interface SeasonData {
   rank: number;
 }
 
+interface H2HYearData {
+  totalWins: number;
+  totalLosses: number;
+  totalTies: number;
+  totalBonusPoints: number;
+  weeks: Record<string, any>;
+}
+
 interface AppUser {
   uid: string;
   email: string | null;
@@ -18,6 +26,7 @@ interface AppUser {
   isAdmin: boolean;
   teams: string[];
   seasons?: Record<string, SeasonData>;
+  h2h?: Record<string, H2HYearData>;
 }
 
 interface AuthContextType {
@@ -66,8 +75,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             isAdmin: userData?.isAdmin || false,
             teams: userData?.teams || [],
             seasons: userData?.seasons || {},
+            h2h: userData?.h2h || {},
           });
-        } 
+        }
         catch (error) {
           console.error("Error fetching user data:", error);
           setUser({
@@ -103,6 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           isAdmin: userData.isAdmin || false,
           teams: userData.teams || [],
           seasons: userData.seasons || {},
+          h2h: userData.h2h || {},
         });
       }
     } catch (error) {

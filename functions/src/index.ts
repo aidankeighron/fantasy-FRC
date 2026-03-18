@@ -6,3 +6,4 @@
 export * from "./admin";
 export * from "./draft";
 export * from "./teams";
+export * from "./h2h";
