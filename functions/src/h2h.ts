@@ -33,7 +33,7 @@ interface DraftPick {
   team: string;
 }
 
-function runSnakeDraft(
+function runAlternatingDraft(
   prefsA: string[],
   prefsB: string[],
   userAId: string,
@@ -42,11 +42,14 @@ function runSnakeDraft(
   competingTeams: string[],
   teamScores: Map<string, number>
 ): { teamsA: string[]; teamsB: string[]; draftOrder: DraftPick[] } {
+  const totalPicks = H2H_CONFIG.PICKS_PER_USER;
   const firstPicker = weekNumber % 2 === 0 ? "A" : "B";
-  // Snake: round 1 [first, second], round 2 [second, first], round 3 [first, second]
-  const sequence = firstPicker === "A"
-    ? ["A", "B", "B", "A", "A", "B"]
-    : ["B", "A", "A", "B", "B", "A"];
+
+  // Build alternating sequence: A, B, A, B, ... (or B, A, B, A, ...)
+  const sequence: string[] = [];
+  for (let i = 0; i < totalPicks; i++) {
+    sequence.push(i % 2 === 0 ? firstPicker : (firstPicker === "A" ? "B" : "A"));
+  }
 
   const drafted = new Set<string>();
   const teamsA: string[] = [];
@@ -134,7 +137,7 @@ export const h2hSyncWeeklyEvents = functions
 
       const draftOpensAt = new Date(earliest.getTime() - H2H_CONFIG.DRAFT_OPEN_HOURS_BEFORE * 3600000);
       const draftClosesAt = new Date(earliest.getTime() - H2H_CONFIG.DRAFT_CLOSE_HOURS_BEFORE * 3600000);
-      const scoringAt = new Date(latest.getTime() + H2H_CONFIG.SCORING_DELAY_HOURS * 3600000);
+      const scoringAt = new Date(latest.getTime() + H2H_CONFIG.SCORING_BUFFER_DAYS * 24 * 3600000);
 
       // Determine status
       let status: string;
@@ -496,7 +499,7 @@ export const h2hRunDrafts = functions
           ? picksBSnap.data()!.preferences
           : topTeams;
 
-        const { teamsA, teamsB, draftOrder } = runSnakeDraft(
+        const { teamsA, teamsB, draftOrder } = runAlternatingDraft(
           prefsA,
           prefsB,
           matchup.userA,

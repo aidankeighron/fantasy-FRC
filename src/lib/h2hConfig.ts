@@ -6,7 +6,7 @@ export interface H2HConfiguration {
   LOSS_POINTS: number;
   DRAFT_OPEN_HOURS_BEFORE: number;
   DRAFT_CLOSE_HOURS_BEFORE: number;
-  SCORING_DELAY_HOURS: number;
+  SCORING_BUFFER_DAYS: number;
   LABEL: string;
   DESCRIPTION: string;
 }
@@ -19,7 +19,7 @@ export const H2H_CONFIG: H2HConfiguration = {
   LOSS_POINTS: 0,
   DRAFT_OPEN_HOURS_BEFORE: 72,
   DRAFT_CLOSE_HOURS_BEFORE: 24,
-  SCORING_DELAY_HOURS: 6,
+  SCORING_BUFFER_DAYS: 1,
   LABEL: "Head-to-Head",
-  DESCRIPTION: "Pick 6 teams in order of preference. A snake draft determines your final 3.",
+  DESCRIPTION: "Pick 6 teams in order of preference. An alternating draft determines your final 3.",
 };

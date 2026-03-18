@@ -415,7 +415,7 @@ export default function H2HDraftPage() {
         <ul className={styles.rulesList}>
           <li>{H2H_CONFIG.DESCRIPTION}</li>
           <li>Pick {H2H_CONFIG.PICKS_PER_USER} teams from this week&apos;s events, ordered by preference (1 = most wanted).</li>
-          <li>A snake draft will assign {H2H_CONFIG.TEAMS_PER_USER} teams to each player after the deadline.</li>
+          <li>An alternating draft will assign {H2H_CONFIG.TEAMS_PER_USER} teams to each player after the deadline.</li>
           <li>The player whose {H2H_CONFIG.TEAMS_PER_USER} teams score more points wins +{H2H_CONFIG.WIN_POINTS} bonus points.</li>
         </ul>
       </div>
