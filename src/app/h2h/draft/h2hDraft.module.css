@@ -1,0 +1,381 @@
+.container {
+  padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header h1 {
+  font-size: 2rem;
+  color: var(--text-heading);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  transition: var(--transition);
+}
+
+.backLink:hover {
+  color: var(--accent);
+}
+
+/* Timer bar */
+.timerBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+}
+
+.timerPhase {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.timerCountdown {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.phaseDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* Instructions */
+.instructions {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.instructions h3 {
+  font-size: 1.1rem;
+  color: var(--text-heading);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rulesList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.rulesList li {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding-left: 1rem;
+  position: relative;
+}
+
+.rulesList li::before {
+  content: "\2022";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: bold;
+}
+
+/* Main layout */
+.mainGrid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .mainGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Preference list (left column) */
+.prefsPanel {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: sticky;
+  top: 80px;
+}
+
+.prefsTitle {
+  font-size: 1rem;
+  color: var(--text-heading);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.slotCounter {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  padding: 3px 10px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.slotCounterFull {
+  color: var(--accent);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+}
+
+.prefSlots {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.prefSlot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--surface-hover);
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  min-height: 44px;
+}
+
+.prefSlotNumber {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 20px;
+}
+
+.prefSlotTeam {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.prefSlotTeamNum {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+}
+
+.prefSlotTeamName {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.prefSlotEmpty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.prefSlotEvent {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removeButton {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.removeButton:hover {
+  background: rgba(225, 29, 72, 0.25);
+}
+
+.moveButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.moveBtn {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: var(--transition);
+}
+
+.moveBtn:hover {
+  color: var(--accent);
+  background: var(--surface);
+}
+
+/* Teams table (right column) */
+.tablePanel {
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+}
+
+.tableHeader {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--surface-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.tableHeader h3 {
+  font-size: 1rem;
+  color: var(--text-heading);
+  white-space: nowrap;
+}
+
+.searchInput {
+  width: 180px;
+  padding: 8px 12px;
+}
+
+.tableBody {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.pickButton {
+  padding: 5px 12px;
+  font-size: 0.75rem;
+}
+
+.pickButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Stream icon */
+.streamIcon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  transition: var(--transition);
+}
+
+.streamIcon:hover {
+  color: var(--accent-hover);
+}
+
+/* Confirm section */
+.confirmSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+}
+
+.confirmButton {
+  padding: 14px 48px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 400px;
+}
+
+.confirmButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.confirmHint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Opponent info */
+.opponentBar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+}
+
+.opponentLabel {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.opponentName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* Event filter tabs */
+.eventFilters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0 1.25rem 1rem;
+}
+
+.eventFilter {
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--surface);
+  border: 1px solid var(--surface-border);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.eventFilter:hover {
+  background: var(--surface-hover);
+  color: white;
+}
+
+.eventFilterActive {
+  background: var(--accent);
+  color: #050505;
+  border-color: var(--accent);
+  font-weight: 600;
+}

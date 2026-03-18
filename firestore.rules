@@ -35,11 +35,26 @@ service cloud.firestore {
         && (!request.resource.data.keys().hasAny(['rank']) || request.resource.data.rank == 0)
         && !request.resource.data.keys().hasAny(['seasons']);
       allow update: if (request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score', 'seasons', 'teams']))
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score', 'seasons', 'teams', 'h2h']))
         || isAdmin();
       allow delete: if isAdmin();
     }
-    
+
+    // H2H weeks: everyone can read, only backend/admin writes
+    match /h2h_weeks/{weekId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /picks/{userId} {
+        allow read: if true;
+        allow write: if false;
+      }
+
+      match /results/{matchupId} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
 
   }
 }
