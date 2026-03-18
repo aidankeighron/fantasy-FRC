@@ -295,10 +295,10 @@ export default function H2HDraftPage() {
     try {
       const submitPicks = httpsCallable(functions, "submitH2HPicks");
       await submitPicks({ weekId, preferences });
-      toast.success("Your H2H picks have been submitted!");
+      toast.success("Your 1v1 picks have been submitted!");
       router.push("/h2h");
     } catch (error: any) {
-      console.error("Failed to submit H2H picks:", error);
+      console.error("Failed to submit 1v1 picks:", error);
       toast.error(error?.message || "Failed to submit picks. Please try again.");
     } finally {
       setSaving(false);
@@ -319,7 +319,7 @@ export default function H2HDraftPage() {
   if (authLoading || dataLoading) {
     return (
       <div className="flex-center" style={{ minHeight: "60vh" }}>
-        Loading H2H Draft...
+        Loading 1v1 Draft...
       </div>
     );
   }
@@ -332,7 +332,7 @@ export default function H2HDraftPage() {
         <div className="glass-panel" style={{ padding: "2rem", textAlign: "center", maxWidth: "500px" }}>
           <h2 style={{ color: "var(--text-heading)", marginBottom: "0.5rem" }}>No Active Draft</h2>
           <p style={{ color: "var(--text-muted)" }}>
-            There is no H2H draft currently open. Check back when a new competition week begins.
+            There is no 1v1 draft currently open. Check back when a new competition week begins.
           </p>
           <button className="btn-secondary" style={{ marginTop: "1rem" }} onClick={() => router.push("/h2h")}>
             &larr; Back to H2H
@@ -380,9 +380,9 @@ export default function H2HDraftPage() {
       <div className={styles.header}>
         <div>
           <button className={styles.backLink} onClick={() => router.push("/h2h")}>
-            &larr; Back to Head-to-Head
+            &larr; Back to 1v1 Draft
           </button>
-          <h1>H2H Draft &mdash; Week {weekData.weekNumber}</h1>
+          <h1>1v1 Draft &mdash; Week {weekData.weekNumber}</h1>
         </div>
         <span className={`${styles.slotCounter} ${isFull ? styles.slotCounterFull : ""}`}>
           {preferences.length} / {H2H_CONFIG.PICKS_PER_USER} Picks

@@ -20,6 +20,6 @@ export const H2H_CONFIG: H2HConfiguration = {
   DRAFT_OPEN_HOURS_BEFORE: 72,
   DRAFT_CLOSE_HOURS_BEFORE: 24,
   SCORING_BUFFER_DAYS: 1,
-  LABEL: "Head-to-Head",
+  LABEL: "1v1 Draft",
   DESCRIPTION: "Pick 6 teams in order of preference. An alternating draft determines your final 3.",
 };

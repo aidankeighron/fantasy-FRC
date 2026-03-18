@@ -103,7 +103,7 @@ export const h2hSyncWeeklyEvents = functions
     const ds = await db.collection("draft_state").doc("global").get();
     const year = ds.data()?.active_year;
     if (!year) {
-      console.log("No active year set, skipping H2H sync.");
+      console.log("No active year set, skipping 1v1 sync.");
       return;
     }
 
@@ -213,7 +213,7 @@ export const h2hSyncWeeklyEvents = functions
         { merge: true }
       );
 
-      console.log(`H2H week ${weekId}: ${status}, ${allTeamNumbers.size} teams, ${eventData.length} events`);
+      console.log(`1v1 week ${weekId}: ${status}, ${allTeamNumbers.size} teams, ${eventData.length} events`);
     }
   });
 

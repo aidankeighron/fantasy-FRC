@@ -126,7 +126,7 @@ export default function H2HPage() {
         });
         setAllUsers(usersMap);
       } catch (e) {
-        console.error("Failed to fetch H2H weeks:", e);
+        console.error("Failed to fetch 1v1 weeks:", e);
       } finally {
         setDataLoading(false);
       }
@@ -247,7 +247,7 @@ export default function H2HPage() {
   if (authLoading || dataLoading) {
     return (
       <div className="flex-center" style={{ minHeight: "60vh" }}>
-        Loading Head-to-Head...
+        Loading 1v1 Draft...
       </div>
     );
   }
@@ -257,9 +257,9 @@ export default function H2HPage() {
   if (weeks.size === 0) {
     return (
       <div className={styles.container}>
-        <h1 style={{ fontSize: "2rem", color: "white" }}>Head-to-Head</h1>
+        <h1 style={{ fontSize: "2rem", color: "white" }}>1v1 Draft</h1>
         <div className="glass-panel" style={{ padding: "2rem", textAlign: "center" }}>
-          <h2 style={{ color: "var(--text-muted)", fontSize: "1.25rem" }}>No H2H Weeks Available</h2>
+          <h2 style={{ color: "var(--text-muted)", fontSize: "1.25rem" }}>No 1v1 Draft Weeks Available</h2>
           <p style={{ color: "var(--text-muted)", marginTop: "0.5rem" }}>
             Weekly matchups will appear here once the competition season begins and events are synced.
           </p>
@@ -283,7 +283,7 @@ export default function H2HPage() {
     <div className={styles.container}>
       {/* Header */}
       <div className={styles.header}>
-        <h1>Head-to-Head</h1>
+        <h1>1v1 Draft</h1>
         <div className={styles.weekTabs}>
           {sortedWeekIds.map((id) => {
             const w = weeks.get(id)!;
@@ -456,15 +456,15 @@ export default function H2HPage() {
         return (
           <div className={styles.statsGrid}>
             <div className={`glass ${styles.statCard}`}>
-              <p className={styles.statLabel}>H2H Wins</p>
+              <p className={styles.statLabel}>1v1 Wins</p>
               <p className={`${styles.statValue} ${styles.statValueAccent}`}>{h2hYear.totalWins || 0}</p>
             </div>
             <div className={`glass ${styles.statCard}`}>
-              <p className={styles.statLabel}>H2H Losses</p>
+              <p className={styles.statLabel}>1v1 Losses</p>
               <p className={styles.statValue}>{h2hYear.totalLosses || 0}</p>
             </div>
             <div className={`glass ${styles.statCard}`}>
-              <p className={styles.statLabel}>H2H Ties</p>
+              <p className={styles.statLabel}>1v1 Ties</p>
               <p className={styles.statValue}>{h2hYear.totalTies || 0}</p>
             </div>
             <div className={`glass ${styles.statCard}`}>
@@ -567,7 +567,7 @@ export default function H2HPage() {
       {/* H2H Standings */}
       {standings.length > 0 && (
         <div className={`glass ${styles.standingsSection}`}>
-          <h3 className={styles.sectionTitle}>H2H Standings</h3>
+          <h3 className={styles.sectionTitle}>1v1 Draft Standings</h3>
           <table className="data-table">
             <thead>
               <tr>
