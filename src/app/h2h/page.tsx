@@ -88,34 +88,34 @@ export default function H2HPage() {
 
         const weeksSnap = await getDocs(collection(db, "h2h_weeks"));
         const weeksMap = new Map<string, WeekData>();
-        let latestActiveWeek = "";
 
         weeksSnap.forEach((d) => {
           const data = d.data() as WeekData;
           if (data.year === year) {
             weeksMap.set(d.id, data);
-            if (
-              !latestActiveWeek ||
-              (data.status !== "completed" && data.weekNumber >= (weeksMap.get(latestActiveWeek)?.weekNumber || 0))
-            ) {
-              latestActiveWeek = d.id;
-            }
           }
         });
 
-        // If no active week, pick latest completed
-        if (!latestActiveWeek && weeksMap.size > 0) {
-          let maxWeek = -1;
-          for (const [id, data] of weeksMap) {
-            if (data.weekNumber > maxWeek) {
-              maxWeek = data.weekNumber;
-              latestActiveWeek = id;
-            }
-          }
+        let defaultWeekId = "";
+        const weeksArray = Array.from(weeksMap.entries()).map(([id, data]) => ({ id, ...data }));
+        
+        const activeWeeks = weeksArray.filter(w => w.status === "active");
+        const draftingWeeks = weeksArray.filter(w => w.status === "drafting");
+        const completedWeeks = weeksArray.filter(w => w.status === "completed");
+        const upcomingWeeks = weeksArray.filter(w => w.status !== "active" && w.status !== "drafting" && w.status !== "completed");
+
+        if (activeWeeks.length > 0) {
+          defaultWeekId = activeWeeks.sort((a, b) => b.weekNumber - a.weekNumber)[0].id;
+        } else if (draftingWeeks.length > 0) {
+          defaultWeekId = draftingWeeks.sort((a, b) => a.weekNumber - b.weekNumber)[0].id;
+        } else if (completedWeeks.length > 0) {
+          defaultWeekId = completedWeeks.sort((a, b) => b.weekNumber - a.weekNumber)[0].id;
+        } else if (upcomingWeeks.length > 0) {
+          defaultWeekId = upcomingWeeks.sort((a, b) => a.weekNumber - b.weekNumber)[0].id;
         }
 
         setWeeks(weeksMap);
-        if (latestActiveWeek) setSelectedWeekId(latestActiveWeek);
+        if (defaultWeekId) setSelectedWeekId(defaultWeekId);
 
         // Fetch users for standings
         const usersSnap = await getDocs(collection(db, "users"));
