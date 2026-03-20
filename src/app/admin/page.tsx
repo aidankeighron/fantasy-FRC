@@ -184,9 +184,9 @@ export default function AdminPage() {
                   <tr key={u.id}>
                     <td>{u.username || u.email?.split("@")[0] || "Unknown"}</td>
                     <td>{u.isAdmin ? "Yes" : "No"}</td>
-                    <td>
+                    <td style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                       <button onClick={() => toggleAdmin(u.id)} className="btn-secondary" disabled={!!actionLoading || u.id === user.uid}
-                        style={{ padding: "4px 8px", fontSize: "0.75rem", marginRight: "8px", opacity: actionLoading ? 0.5 : undefined }}>
+                        style={{ padding: "4px 8px", fontSize: "0.75rem", opacity: actionLoading ? 0.5 : undefined }}>
                         {actionLoading === `toggleAdmin_${u.id}` ? "Processing..." : "Toggle Admin"}
                       </button>
                       <button onClick={() => deleteUser(u.id)} className="btn-secondary" disabled={!!actionLoading || u.id === user.uid}
