@@ -3,6 +3,7 @@ import * as admin from "firebase-admin";
 import { db, tbaKey } from "./config";
 import { requireAdmin, tbaRequest, rateLimit } from "./utils";
 import { H2H_CONFIG } from "./h2hConfig";
+import { performTeamPointsUpdate } from "./teams";
 
 function seededShuffle<T>(arr: T[], seed: string): T[] {
   const out = [...arr];
@@ -802,6 +803,7 @@ export const h2hInitialize = functions
         const draftClosesAt = new Date(earliest.getTime() - H2H_CONFIG.DRAFT_CLOSE_HOURS_BEFORE * 3600000);
         const scoringAt = new Date(latest.getTime() + H2H_CONFIG.SCORING_BUFFER_DAYS * 24 * 3600000);
 
+        // Determine status
         let status: string;
         if (now < draftOpensAt) {
           status = "upcoming";
@@ -813,7 +815,7 @@ export const h2hInitialize = functions
           status = "completed";
         }
 
-        // Skip completed weeks
+        // Check if already completed — don't overwrite
         const existingDoc = await db.collection("h2h_weeks").doc(weekId).get();
         if (existingDoc.exists && existingDoc.data()?.status === "completed") {
           continue;
@@ -874,12 +876,11 @@ export const h2hInitialize = functions
           },
           { merge: true }
         );
-
         weeksCreated++;
-        log.push(`H2H week ${weekId}: ${status}, ${allTeamNumbers.size} teams`);
       }
+      log.push(`Synced weekly events for year ${year}. Created/updated ${weeksCreated} weeks.`);
 
-      // ── Step 2: Create matchups for drafting weeks ──
+      // ── Step 2: Create Matchups for 'drafting' weeks ──
       const weeksSnap = await db
         .collection("h2h_weeks")
         .where("status", "==", "drafting")
@@ -901,14 +902,16 @@ export const h2hInitialize = functions
         if (eligibleUsers.length < 2) {
           if (eligibleUsers.length === 1) {
             const byeUser = eligibleUsers[0];
-            const matchups = [{
-              id: "matchup_0",
-              userA: byeUser.uid,
-              userB: "bye",
-              usernameA: byeUser.username,
-              usernameB: "BYE",
-            }];
-            await weekDoc.ref.update({ matchups });
+            const autoMatchups = [
+              {
+                id: "matchup_0",
+                userA: byeUser.uid,
+                userB: "bye",
+                usernameA: byeUser.username,
+                usernameB: "BYE",
+              },
+            ];
+            await weekDoc.ref.update({ matchups: autoMatchups });
             await weekDoc.ref.collection("results").doc("matchup_0").set({
               matchupId: "matchup_0",
               userA: byeUser.uid,
@@ -922,6 +925,7 @@ export const h2hInitialize = functions
               pointsAwarded: H2H_CONFIG.WIN_POINTS,
               scoredAt: null,
             });
+            matchupsCreated++;
           }
           continue;
         }
@@ -942,8 +946,8 @@ export const h2hInitialize = functions
         }
 
         const shuffled = seededShuffle(eligibleUsers, weekDoc.id);
-        const matchups: any[] = [];
-
+        const matchupList: any[] = [];
+        
         for (let i = 0; i < shuffled.length - 1; i += 2) {
           let a = shuffled[i];
           let b = shuffled[i + 1];
@@ -958,8 +962,8 @@ export const h2hInitialize = functions
             }
           }
 
-          matchups.push({
-            id: `matchup_${matchups.length}`,
+          matchupList.push({
+            id: `matchup_${matchupList.length}`,
             userA: a.uid,
             userB: b.uid,
             usernameA: a.username,
@@ -969,8 +973,8 @@ export const h2hInitialize = functions
 
         if (shuffled.length % 2 === 1) {
           const byeUser = shuffled[shuffled.length - 1];
-          const matchupId = `matchup_${matchups.length}`;
-          matchups.push({
+          const matchupId = `matchup_${matchupList.length}`;
+          matchupList.push({
             id: matchupId,
             userA: byeUser.uid,
             userB: "bye",
@@ -993,33 +997,30 @@ export const h2hInitialize = functions
           });
         }
 
-        await weekDoc.ref.update({ matchups });
-        matchupsCreated += matchups.length;
-        log.push(`Created ${matchups.length} matchups for ${weekDoc.id}`);
+        await weekDoc.ref.update({ matchups: matchupList });
+        matchupsCreated += matchupList.length;
       }
+      log.push(`Created a total of ${matchupsCreated} matchups.`);
 
-      // ── Step 3: Run drafts for weeks past deadline ──
-      const nowTs = admin.firestore.Timestamp.now();
-      const draftWeeksSnap = await db
+      // ── Step 3: Run Drafts for closed 'drafting' weeks ──
+      const draftsSnap = await db
         .collection("h2h_weeks")
         .where("status", "==", "drafting")
         .get();
 
-      for (const weekDoc of draftWeeksSnap.docs) {
+      for (const weekDoc of draftsSnap.docs) {
         const weekData = weekDoc.data();
-        if (nowTs.toMillis() < weekData.draftClosesAt.toMillis()) continue;
+        if (admin.firestore.Timestamp.now().toMillis() < weekData.draftClosesAt.toMillis()) continue;
 
         const competingTeams: string[] = weekData.competingTeams || [];
         const matchups: any[] = weekData.matchups || [];
 
         const teamScores = new Map<string, number>();
         const wy = weekData.year;
-        const chunkSize2 = 30;
-        for (let i = 0; i < competingTeams.length; i += chunkSize2) {
-          const chunk = competingTeams.slice(i, i + chunkSize2);
-          const docs = await Promise.all(
-            chunk.map((t) => db.collection("teams").doc(t).get())
-          );
+        const chunkSize = 30;
+        for (let i = 0; i < competingTeams.length; i += chunkSize) {
+          const chunk = competingTeams.slice(i, i + chunkSize);
+          const docs = await Promise.all(chunk.map((t) => db.collection("teams").doc(t).get()));
           for (const d of docs) {
             if (d.exists) {
               teamScores.set(d.id, d.data()?.stats?.[wy]?.score || 0);
@@ -1044,8 +1045,13 @@ export const h2hInitialize = functions
           const prefsB: string[] = picksBSnap.exists ? picksBSnap.data()!.preferences : topTeams;
 
           const { teamsA, teamsB, draftOrder } = runAlternatingDraft(
-            prefsA, prefsB, matchup.userA, matchup.userB,
-            weekData.weekNumber, competingTeams, teamScores
+            prefsA,
+            prefsB,
+            matchup.userA,
+            matchup.userB,
+            weekData.weekNumber,
+            competingTeams,
+            teamScores
           );
 
           await weekDoc.ref.collection("results").doc(matchup.id).set({
@@ -1262,3 +1268,29 @@ export const h2hRecalcScores = functions.https.onCall(
     return { success: true, weeksProcessed: weeksSnap.size, year };
   }
 );
+
+export const updateH2HTeamsPoints = functions
+  .runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" })
+  .pubsub.schedule("0 */3 * * *")
+  .timeZone("America/New_York")
+  .onRun(async () => {
+    const ds = await db.collection("draft_state").doc("global").get();
+    const activeYear = ds.data()?.active_year;
+    if (!activeYear) return;
+
+    const weeksSnap = await db
+      .collection("h2h_weeks")
+      .where("status", "==", "active")
+      .get();
+
+    const competingTeams = new Set<string>();
+    weeksSnap.docs.forEach((d) => {
+      const teams = d.data()?.competingTeams || [];
+      teams.forEach((t: string) => competingTeams.add(t));
+    });
+
+    if (competingTeams.size > 0) {
+      console.log(`Syncing points for ${competingTeams.size} H2H competing teams.`);
+      await performTeamPointsUpdate(activeYear, competingTeams);
+    }
+  });

@@ -169,7 +169,7 @@ async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise
   return finalStats;
 }
 
-async function performTeamPointsUpdate(year: string, teamFilter?: Set<string>): Promise<void> {
+export async function performTeamPointsUpdate(year: string, teamFilter?: Set<string>): Promise<void> {
   console.log("Running Daily Point Updates");
   
   const yearlyStats = await fetchYearlyStats(year, teamFilter);
@@ -332,7 +332,7 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey], timeoutSecond
   return result;
 });
 
-export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" }).pubsub.schedule("0 2 * * *").timeZone("America/New_York").onRun(async () => {
+export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" }).pubsub.schedule("0 * * * *").timeZone("America/New_York").onRun(async () => {
   const ds = await db.collection("draft_state").doc("global").get();
   const activeYear = ds.data()?.active_year;
   if (!activeYear) return;
