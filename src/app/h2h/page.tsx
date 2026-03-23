@@ -3,10 +3,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, where, doc, getDoc, onSnapshot } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useH2HTimers, formatCountdown, type H2HWeekTimestamps } from "@/lib/useH2HTimers";
-import { H2H_CONFIG } from "@/lib/h2hConfig";
 import styles from "./h2h.module.css";
 
 interface H2HEvent {
@@ -323,7 +322,7 @@ export default function H2HPage() {
       )}
 
       {/* Submit Picks CTA */}
-      {currentWeek?.status === "drafting" && !userPicks && userMatchup && userMatchup.userB !== "bye" && (
+      {timer?.phase === "drafting" && !userPicks && userMatchup && userMatchup.userB !== "bye" && (
         <div className={`glass ${styles.ctaBar}`}>
           <span className={styles.ctaText}>Draft is open! Submit your team preferences.</span>
           <button className="btn-primary" onClick={() => router.push("/h2h/draft")}>
@@ -332,7 +331,7 @@ export default function H2HPage() {
         </div>
       )}
 
-      {currentWeek?.status === "drafting" && userPicks && (
+      {timer?.phase === "drafting" && userPicks && (
         <div className={`glass ${styles.ctaBar}`}>
           <span className={styles.ctaText}>Picks submitted! You can update them before the deadline.</span>
           <button className="btn-secondary" onClick={() => router.push("/h2h/draft")}>

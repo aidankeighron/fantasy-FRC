@@ -220,16 +220,27 @@ export const h2hSyncWeeklyEvents = functions
 
 export const h2hCreateMatchups = functions
   .runWith({ timeoutSeconds: 120, memory: "256MB" })
-  .pubsub.schedule("30 3 * * *")
+  .pubsub.schedule("0 * * * *")
   .timeZone("America/New_York")
   .onRun(async () => {
+    const now = admin.firestore.Timestamp.now();
     const weeksSnap = await db
       .collection("h2h_weeks")
-      .where("status", "==", "drafting")
+      .where("draftOpensAt", "<=", now)
       .get();
 
     for (const weekDoc of weeksSnap.docs) {
       const weekData = weekDoc.data();
+
+      // Skip if draft window has already closed or week is completed
+      if (weekData.status === "completed" || weekData.status === "active") continue;
+      if (now.toMillis() >= weekData.draftClosesAt.toMillis()) continue;
+
+      // Update status to "drafting" if it's still "upcoming" (sync hasn't caught up)
+      if (weekData.status === "upcoming") {
+        await weekDoc.ref.update({ status: "drafting" });
+      }
+
       if (weekData.matchups && weekData.matchups.length > 0) continue;
 
       // Get users with main draft
@@ -392,13 +403,19 @@ export const submitH2HPicks = functions.https.onCall(
     }
 
     const weekData = weekSnap.data()!;
-    if (weekData.status !== "drafting") {
+    const now = admin.firestore.Timestamp.now();
+    const nowMs = now.toMillis();
+
+    const isInDraftWindow = nowMs >= weekData.draftOpensAt.toMillis() && nowMs < weekData.draftClosesAt.toMillis();
+    if (weekData.status !== "drafting" && !isInDraftWindow) {
+      throw new functions.https.HttpsError("failed-precondition", "Draft is not open for this week.");
+    }
+    if (weekData.status === "completed" || weekData.status === "active") {
       throw new functions.https.HttpsError("failed-precondition", "Draft is not open for this week.");
     }
 
     // Check draft deadline
-    const now = admin.firestore.Timestamp.now();
-    if (now.toMillis() >= weekData.draftClosesAt.toMillis()) {
+    if (nowMs >= weekData.draftClosesAt.toMillis()) {
       throw new functions.https.HttpsError("failed-precondition", "Draft period has ended.");
     }
 

@@ -96,9 +96,14 @@ export default function H2HDraftPage() {
         let bestId = "";
         let bestData: WeekData | null = null;
 
+        const now = Date.now();
         weeksSnap.forEach((d) => {
           const data = d.data() as WeekData;
-          if (data.status === "drafting") {
+          const isDrafting = data.status === "drafting" ||
+            (data.draftOpensAt && data.draftClosesAt &&
+             now >= data.draftOpensAt.toMillis() && now < data.draftClosesAt.toMillis() &&
+             data.status !== "completed" && data.status !== "active");
+          if (isDrafting) {
             if (!bestData || data.weekNumber > bestData.weekNumber) {
               bestId = d.id;
               bestData = data;
