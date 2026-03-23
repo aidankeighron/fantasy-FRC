@@ -5,6 +5,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, documentId, where, doc, getDoc } from "firebase/firestore";
 import { getCachedRawTeams } from "@/lib/teamsCache";
+import { H2H_CONFIG } from "@/lib/h2hConfig";
 import { useRouter } from "next/navigation";
 
 interface Team {
@@ -223,7 +224,7 @@ export default function TeamManagementPage() {
         <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--surface-border)" }}>
           <h2 style={{ fontSize: "1.25rem", color: "white" }}>Your Drafted Roster</h2>
         </div>
-        
+
         <table className="data-table">
           <thead>
             <tr>
@@ -257,6 +258,50 @@ export default function TeamManagementPage() {
           </tbody>
         </table>
       </div>
+
+      {/* 1v1 Draft Stats */}
+      {(() => {
+        const h2hYear = user.h2h?.[selectedYear];
+        const wins = h2hYear?.totalWins || 0;
+        const losses = h2hYear?.totalLosses || 0;
+        const ties = h2hYear?.totalTies || 0;
+        const bonusPoints = h2hYear?.totalBonusPoints || 0;
+        const totalMatches = wins + losses + ties;
+        const winRate = totalMatches > 0 ? ((wins / totalMatches) * 100).toFixed(1) : "0.0";
+
+        return (
+          <div className="glass" style={{ borderRadius: "var(--radius-lg)" }}>
+            <div style={{ padding: "1.5rem", borderBottom: "1px solid var(--surface-border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h2 style={{ fontSize: "1.25rem", color: "white" }}>1v1 Draft</h2>
+              <button
+                className="btn-secondary"
+                onClick={() => router.push("/h2h")}
+                style={{ padding: "6px 16px", fontSize: "0.85rem" }}
+              >
+                View Matchups &rarr;
+              </button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", padding: "1.5rem" }}>
+              <div style={{ textAlign: "center" }}>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginBottom: "0.25rem" }}>Bonus Points</p>
+                <p style={{ fontSize: "2rem", color: "var(--accent)", fontWeight: "bold" }}>+{bonusPoints}</p>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginBottom: "0.25rem" }}>Record</p>
+                <p style={{ fontSize: "2rem", color: "white", fontWeight: "bold" }}>{wins}-{losses}-{ties}</p>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginBottom: "0.25rem" }}>Win Rate</p>
+                <p style={{ fontSize: "2rem", color: "white", fontWeight: "bold" }}>{winRate}%</p>
+              </div>
+              <div style={{ textAlign: "center" }}>
+                <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginBottom: "0.25rem" }}>Matches Played</p>
+                <p style={{ fontSize: "2rem", color: "white", fontWeight: "bold" }}>{totalMatches}</p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
     </div>
   );

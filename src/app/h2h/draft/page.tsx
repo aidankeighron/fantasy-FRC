@@ -413,16 +413,11 @@ export default function H2HDraftPage() {
 
       {/* Instructions */}
       <div className={`glass ${styles.instructions}`}>
-        <h3>
-          {H2H_CONFIG.LABEL}
-          <span className={styles.slotCounter}>{H2H_CONFIG.PICKS_PER_USER} picks</span>
-        </h3>
-        <ul className={styles.rulesList}>
-          <li>{H2H_CONFIG.DESCRIPTION}</li>
-          <li>Pick {H2H_CONFIG.PICKS_PER_USER} teams from this week&apos;s events, ordered by preference (1 = most wanted).</li>
-          <li>An alternating draft will assign {H2H_CONFIG.TEAMS_PER_USER} teams to each player after the deadline.</li>
-          <li>The player whose {H2H_CONFIG.TEAMS_PER_USER} teams score more points wins +{H2H_CONFIG.WIN_POINTS} bonus points.</li>
-        </ul>
+        <p className={styles.instructionsText}>
+          Pick {H2H_CONFIG.PICKS_PER_USER} teams from this week&apos;s events, ordered by preference.
+          After the draft closes, a simulated draft will occur, which will pick teams based on your preferences.
+          The player whose {H2H_CONFIG.TEAMS_PER_USER} teams score the most points wins +{H2H_CONFIG.WIN_POINTS} bonus points.
+        </p>
       </div>
 
       {/* Main grid: preferences + available teams */}
@@ -447,7 +442,6 @@ export default function H2HDraftPage() {
                         <span className={styles.prefSlotTeamNum}>{team.number}</span>
                         <span className={styles.prefSlotTeamName}>{team.name}</span>
                       </div>
-                      <span className={styles.prefSlotEvent}>{team.eventName}</span>
                       <div className={styles.moveButtons}>
                         <button className={styles.moveBtn} onClick={() => handleMoveUp(i)} disabled={i === 0}>
                           &uarr;
@@ -519,11 +513,6 @@ export default function H2HDraftPage() {
                     <th onClick={() => handleSort("eventName")}>
                       Event{getSortIndicator("eventName")}
                     </th>
-                    <th style={{ textAlign: "center", width: "40px" }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "middle" }}>
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                    </th>
                     <th onClick={() => handleSort("score")} style={{ textAlign: "right" }}>
                       Score{getSortIndicator("score")}
                     </th>
@@ -565,23 +554,6 @@ export default function H2HDraftPage() {
                           {team.eventName.length > 20
                             ? team.eventName.substring(0, 20) + "..."
                             : team.eventName}
-                        </td>
-                        <td style={{ textAlign: "center" }}>
-                          {team.webcastUrl ? (
-                            <a
-                              href={team.webcastUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={styles.streamIcon}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="5 3 19 12 5 21 5 3" />
-                              </svg>
-                            </a>
-                          ) : (
-                            <span style={{ color: "var(--text-muted)", fontSize: "0.75rem" }}>-</span>
-                          )}
                         </td>
                         <td style={{ textAlign: "right", color: "var(--accent)", fontWeight: "bold" }}>
                           {team.score.toFixed(1)}

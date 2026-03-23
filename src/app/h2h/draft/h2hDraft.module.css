@@ -84,26 +84,10 @@
   gap: 0.5rem;
 }
 
-.rulesList {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.rulesList li {
-  font-size: 0.85rem;
+.instructionsText {
+  font-size: 0.9rem;
   color: var(--text-muted);
-  padding-left: 1rem;
-  position: relative;
-}
-
-.rulesList li::before {
-  content: "\2022";
-  position: absolute;
-  left: 0;
-  color: var(--accent);
-  font-weight: bold;
+  line-height: 1.5;
 }
 
 /* Main layout */
@@ -179,33 +163,33 @@
 .prefSlotTeam {
   flex: 1;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .prefSlotTeamNum {
   font-size: 0.9rem;
   font-weight: 600;
   color: white;
+  flex-shrink: 0;
 }
 
 .prefSlotTeamName {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .prefSlotEmpty {
   font-size: 0.8rem;
   color: var(--text-muted);
   font-style: italic;
-}
-
-.prefSlotEvent {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .removeButton {

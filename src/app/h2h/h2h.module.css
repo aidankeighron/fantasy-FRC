@@ -18,6 +18,17 @@
   color: var(--text-heading);
 }
 
+/* Intro blurb */
+.introBlurb {
+  padding: 1rem 1.25rem;
+}
+
+.introBlurb p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 .weekTabs {
   display: flex;
   gap: 0.5rem;

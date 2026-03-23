@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { useH2HTimers, formatCountdown, type H2HWeekTimestamps } from "@/lib/useH2HTimers";
+import { H2H_CONFIG } from "@/lib/h2hConfig";
 import styles from "./h2h.module.css";
 
 interface H2HEvent {
@@ -308,6 +309,15 @@ export default function H2HPage() {
             );
           })}
         </div>
+      </div>
+
+      {/* Intro blurb */}
+      <div className={`glass ${styles.introBlurb}`}>
+        <p>
+          Welcome to the 1v1 Draft! Each week, you will be randomly matched against another player based on your
+          current points in the season. You each will pick {H2H_CONFIG.PICKS_PER_USER} teams that are competing
+          that week, and the player who wins gets +{H2H_CONFIG.WIN_POINTS} bonus points towards their overall score.
+        </p>
       </div>
 
       {/* Timer Bar */}
