@@ -27,10 +27,20 @@ function getPlayoffDepth(status: any): number {
   }
 }
 
-async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise<Map<string, any>> {
+interface StatsRanges {
+  minOpr: number;
+  maxOpr: number;
+  minCcwm: number;
+  maxCcwm: number;
+}
+
+async function fetchYearlyStats(year: string, teamFilter?: Set<string>, overrideRanges?: StatsRanges): Promise<{ stats: Map<string, any>; ranges: StatsRanges }> {
   const events = await tbaRequest(`/events/${year}`, { useCache: true });
   if (!Array.isArray(events)) {
-    return new Map();
+    return {
+      stats: new Map(),
+      ranges: overrideRanges || { minOpr: 0, maxOpr: 0, minCcwm: 0, maxCcwm: 0 }
+    };
   }
 
   const teamStats = new Map<string, TeamAccumulator>();
@@ -141,13 +151,21 @@ async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise
     if (ccwm > maxCcwm) maxCcwm = ccwm;
   }
   
-  const oprRange = maxOpr - minOpr || 1;
-  const ccwmRange = maxCcwm - minCcwm || 1;
+  // Use override ranges if provided (essential for partial updates to stay normalized)
+  const statsRanges: StatsRanges = overrideRanges || {
+    minOpr,
+    maxOpr,
+    minCcwm,
+    maxCcwm,
+  };
+
+  const oprRange = statsRanges.maxOpr - statsRanges.minOpr || 1;
+  const ccwmRange = statsRanges.maxCcwm - statsRanges.minCcwm || 1;
   
   const finalStats = new Map<string, any>();
   for (const [teamNum, raw] of rawStats.entries()) {
-    const normOpr = (raw.opr - minOpr) / oprRange;
-    const normCcwm = (raw.ccwm - minCcwm) / ccwmRange;
+    const normOpr = (raw.opr - statsRanges.minOpr) / oprRange;
+    const normCcwm = (raw.ccwm - statsRanges.minCcwm) / ccwmRange;
     
     const score = (
       (0.35 * normOpr) +
@@ -166,14 +184,28 @@ async function fetchYearlyStats(year: string, teamFilter?: Set<string>): Promise
     });
   }
   
-  return finalStats;
+  return { stats: finalStats, ranges: statsRanges };
 }
 
 export async function performTeamPointsUpdate(year: string, teamFilter?: Set<string>): Promise<void> {
-  console.log("Running Daily Point Updates");
+  console.log(`Running Point Updates for year ${year} (filter: ${!!teamFilter})`);
   
-  const yearlyStats = await fetchYearlyStats(year, teamFilter);
+  // Try to load cached ranges if this is a filtered update
+  let overrideRanges: StatsRanges | undefined;
+  if (teamFilter) {
+    const statsDoc = await db.collection("draft_stats").doc(year).get();
+    if (statsDoc.exists) {
+      overrideRanges = statsDoc.data() as StatsRanges;
+    }
+  }
+
+  const { stats: yearlyStats, ranges } = await fetchYearlyStats(year, teamFilter, overrideRanges);
   
+  // Save ranges globally if this was a full update (no filter)
+  if (!teamFilter) {
+    await db.collection("draft_stats").doc(year).set(ranges);
+  }
+
   const batches: FirebaseFirestore.WriteBatch[] = [];
   let currentBatch = db.batch();
   let bCount = 0;
@@ -199,7 +231,7 @@ export async function performTeamPointsUpdate(year: string, teamFilter?: Set<str
   await Promise.all(batches.map(b => b.commit()));
   
   const updatedUsersSnap = await db.collection("users").get();
-  const userScores: { uid: string, score: number }[] = [];
+  const userScores: { uid: string, score: number, oldScore: number, oldRank: number }[] = [];
   
   const teamsCache = new Map<string, number>();
   const updatedTeamsSnap = await db.collection("teams").get();
@@ -217,7 +249,12 @@ export async function performTeamPointsUpdate(year: string, teamFilter?: Set<str
     });
     // Include H2H bonus points
     uScore += uData.h2h?.[year]?.totalBonusPoints || 0;
-    userScores.push({ uid: u.id, score: uScore });
+    userScores.push({ 
+      uid: u.id, 
+      score: Number(uScore.toFixed(2)), 
+      oldScore: uData.score || 0,
+      oldRank: uData.rank || 0
+    });
   }
 
   userScores.sort((a, b) => b.score - a.score);
@@ -227,17 +264,23 @@ export async function performTeamPointsUpdate(year: string, teamFilter?: Set<str
   let ubCount = 0;
   
   userScores.forEach((ms, idx) => {
+    const rank = idx + 1;
+    // Only update if score or rank changed to save on Firestore writes
+    if (ms.score === ms.oldScore && rank === ms.oldRank) {
+      return;
+    }
+
     const docRef = db.collection("users").doc(ms.uid);
     const userDoc = updatedUsersSnap.docs.find(d => d.id === ms.uid);
     const userTeams = userDoc?.data().teams || [];
 
     currentUserBatch.set(docRef, {
       score: ms.score,
-      rank: idx + 1,
+      rank: rank,
       seasons: {
         [year]: {
           score: ms.score,
-          rank: idx + 1,
+          rank: rank,
           teams: userTeams
         }
       }
@@ -257,13 +300,13 @@ export async function performTeamPointsUpdate(year: string, teamFilter?: Set<str
   
   await Promise.all(userBatches.map(b => b.commit()));
   
-  console.log("Daily point updates completed.");
+  console.log(`Point updates completed. Updated ${ubCount} user documents.`);
 }
 
 async function performTeamDataSync(year: string): Promise<{ success: boolean, total: number, year: string }> {
   await db.collection("draft_state").doc("global").set({ active_year: year }, { merge: true });
   
-  const allTeamStats = await fetchYearlyStats(year);
+  const { stats: allTeamStats } = await fetchYearlyStats(year);
   
   let pageNum = 0;
   let fetching = true;
