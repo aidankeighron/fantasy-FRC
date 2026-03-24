@@ -37,7 +37,7 @@
 
 .weekTab {
   padding: 6px 16px;
-  border-radius: 20px;
+  border-radius: var(--radius-pill);
   font-size: 0.85rem;
   font-weight: 500;
   background: var(--surface);
@@ -52,12 +52,12 @@
 
 .weekTab:hover {
   background: var(--surface-hover);
-  color: white;
+  color: var(--text-main);
 }
 
 .weekTabActive {
   background: var(--accent);
-  color: #050505;
+  color: var(--bg-color);
   border-color: var(--accent);
   font-weight: 600;
 }
@@ -73,11 +73,11 @@
 
 .weekStatusDrafting {
   background: var(--accent);
-  color: #050505;
+  color: var(--bg-color);
 }
 
 .weekTabActive .weekStatusDrafting {
-  background: #050505;
+  background: var(--bg-color);
   color: var(--accent);
 }
 
@@ -89,19 +89,19 @@
 
 .weekTabActive .weekStatusActive {
   background: rgba(0, 0, 0, 0.2);
-  color: #050505;
+  color: var(--bg-color);
   border-color: transparent;
 }
 
 .weekStatusScoring {
-  background: var(--warning-bg, rgba(255, 193, 7, 0.15));
-  color: var(--warning, #ffc107);
-  border: 1px solid var(--warning-border, rgba(255, 193, 7, 0.3));
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
 }
 
 .weekTabActive .weekStatusScoring {
   background: rgba(0, 0, 0, 0.2);
-  color: #050505;
+  color: var(--bg-color);
   border-color: transparent;
 }
 
@@ -113,7 +113,7 @@
 
 .weekTabActive .weekStatusCompleted {
   background: rgba(0, 0, 0, 0.15);
-  color: #050505;
+  color: var(--bg-color);
   border-color: transparent;
 }
 
@@ -205,7 +205,7 @@
 .matchupUsername {
   font-size: 1.25rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-main);
 }
 
 .matchupScore {
@@ -317,7 +317,7 @@
 }
 
 .draftTracePickTeam {
-  color: white;
+  color: var(--text-main);
 }
 
 /* All matchups table */
@@ -350,7 +350,7 @@
 .eventName {
   font-size: 0.95rem;
   font-weight: 600;
-  color: white;
+  color: var(--text-main);
 }
 
 .eventDates {
@@ -424,7 +424,7 @@
 .statValue {
   font-size: 1.75rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-main);
 }
 
 .statValueAccent {

@@ -149,7 +149,7 @@
   gap: 0.75rem;
   background: var(--surface-hover);
   padding: 0.6rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   min-height: 44px;
 }
 
@@ -173,7 +173,7 @@
 .prefSlotTeamNum {
   font-size: 0.9rem;
   font-weight: 600;
-  color: white;
+  color: var(--text-main);
   flex-shrink: 0;
 }
 
@@ -329,7 +329,7 @@
 .opponentName {
   font-size: 1rem;
   font-weight: 700;
-  color: white;
+  color: var(--text-main);
 }
 
 /* Event filter tabs */
@@ -359,7 +359,7 @@
 
 .eventFilterActive {
   background: var(--accent);
-  color: #050505;
+  color: var(--bg-color);
   border-color: var(--accent);
   font-weight: 600;
 }

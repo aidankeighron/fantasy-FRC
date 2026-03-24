@@ -109,7 +109,7 @@
   align-items: center;
   background: var(--surface-hover);
   padding: 0.5rem 1rem;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font-size: 0.875rem;
 }
 
@@ -120,7 +120,7 @@
 }
 
 .pickedTeamNumber {
-  color: white;
+  color: var(--text-main);
   font-weight: bold;
 }
 
