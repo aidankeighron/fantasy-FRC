@@ -1,4 +1,4 @@
-import { collection, getDocs, Firestore } from "firebase/firestore";
+import { collection, getDocs, Firestore, query, where } from "firebase/firestore";
 
 const CACHE_KEY = "frc_teams_cache";
 const CACHE_DURATION_MS = 12 * 60 * 60 * 1000; // 12 hours
@@ -30,8 +30,13 @@ export async function getCachedRawTeams(db: Firestore, activeYear?: string): Pro
   }
 
   // Fetch from Firestore
-  console.log("Fetching teams data from Firestore...");
-  const teamsSnap = await getDocs(collection(db, "teams"));
+  console.log(`Fetching teams data from Firestore for year: ${activeYear || "all"}...`);
+  const teamsCollection = collection(db, "teams");
+  const q = activeYear 
+    ? query(teamsCollection, where("activeYears", "array-contains", activeYear))
+    : teamsCollection;
+  
+  const teamsSnap = await getDocs(q);
   const rawData = teamsSnap.docs.map(doc => {
     return {
       id: doc.id,
