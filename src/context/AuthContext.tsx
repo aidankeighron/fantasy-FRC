@@ -25,6 +25,8 @@ interface AppUser {
   username: string;
   isAdmin: boolean;
   teams: string[];
+  score: number;
+  rank: number;
   seasons?: Record<string, SeasonData>;
   h2h?: Record<string, H2HYearData>;
 }
@@ -74,6 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             username: userData?.username || firebaseUser.email?.split("@")[0] || "Unknown",
             isAdmin: userData?.isAdmin || false,
             teams: userData?.teams || [],
+            score: userData?.score || 0,
+            rank: userData?.rank || 0,
             seasons: userData?.seasons || {},
             h2h: userData?.h2h || {},
           });
@@ -86,6 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             username: firebaseUser.email?.split("@")[0] || "Unknown",
             isAdmin: false,
             teams: [],
+            score: 0,
+            rank: 0,
           });
         }
       } 
@@ -112,6 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           username: userData.username || currentUser.email?.split("@")[0] || "Unknown",
           isAdmin: userData.isAdmin || false,
           teams: userData.teams || [],
+          score: userData.score || 0,
+          rank: userData.rank || 0,
           seasons: userData.seasons || {},
           h2h: userData.h2h || {},
         });

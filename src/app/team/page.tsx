@@ -3,9 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, documentId, where, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { getCachedRawTeams } from "@/lib/teamsCache";
-import { H2H_CONFIG } from "@/lib/h2hConfig";
 import { useRouter } from "next/navigation";
 
 interface Team {
@@ -45,12 +44,10 @@ export default function TeamManagementPage() {
 
     const fetchTeamData = async () => {
       try {
-        // Fetch rank by getting all users and sorting
-        const usersSnap = await getDocs(collection(db, "users"));
-        const allUsers = usersSnap.docs.map(d => ({ id: d.id, score: d.data().score || 0 }));
-        allUsers.sort((a, b) => b.score - a.score);
-        const rankIndex = allUsers.findIndex(u => u.id === user.uid);
-        setUserRank(rankIndex !== -1 ? rankIndex + 1 : 0);
+        // Rank is already stored on the user document from backend updates
+        if (!selectedYear || selectedYear === activeYear) {
+           setUserRank(user.rank || 0);
+        }
 
         const dsRef = doc(db, "draft_state", "global");
         const dsSnap = await getDoc(dsRef);
@@ -78,11 +75,7 @@ export default function TeamManagementPage() {
         const teamIds = (yearToFetch === activeYearStr) ? (user.teams || []) : (seasonData?.teams || []);
         
         if (yearToFetch === activeYearStr) {
-          const usersSnap = await getDocs(collection(db, "users"));
-          const allUsers = usersSnap.docs.map(d => ({ id: d.id, score: d.data().score || 0 }));
-          allUsers.sort((a, b) => b.score - a.score);
-          const rankIndex = allUsers.findIndex(u => u.id === user.uid);
-          setUserRank(rankIndex !== -1 ? rankIndex + 1 : 0);
+          setUserRank(user.rank || 0);
         } 
         else {
           setUserRank(seasonData?.rank || 0);
@@ -119,7 +112,7 @@ export default function TeamManagementPage() {
     };
 
     fetchTeamData();
-  }, [user]);
+  }, [user, activeYear, selectedYear, db]);
 
   const handleSort = (key: keyof Team) => {
     let direction: "asc" | "desc" = "desc";
