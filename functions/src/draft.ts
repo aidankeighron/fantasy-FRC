@@ -33,9 +33,13 @@ export const submitDraft = functions.https.onCall(async (data: any, context: fun
     throw new functions.https.HttpsError("invalid-argument", "Duplicate teams are not allowed.");
   }
 
-  // Check draft lock
+  // Check draft lock and active year
   const dsSnap = await db.collection("draft_state").doc("global").get();
   const dsData = dsSnap.data();
+  const activeYear = dsData?.active_year;
+  if (!activeYear) {
+    throw new functions.https.HttpsError("failed-precondition", "No active year/season set.");
+  }
   if (dsData?.team_picking_locked === true) {
     throw new functions.https.HttpsError("failed-precondition", "Team picking is currently locked.");
   }
@@ -66,6 +70,11 @@ export const submitDraft = functions.https.onCall(async (data: any, context: fun
     }
 
     const teamData = doc.data()!;
+    const activeYears = teamData.activeYears || [];
+    if (!activeYears.includes(activeYear)) {
+      throw new functions.https.HttpsError("invalid-argument", `Team ${standardTeams[i]} is not active in the ${activeYear} season.`);
+    }
+
     const country = teamData.country || "";
     const state = teamData.state || "";
     const isUS = country === "USA" || country === "United States";
@@ -88,8 +97,14 @@ export const submitDraft = functions.https.onCall(async (data: any, context: fun
     wildcardTeams.map(t => db.collection("teams").doc(t).get())
   );
   for (let i = 0; i < wildcardTeams.length; i++) {
-    if (!wildcardDocs[i].exists) {
+    const doc = wildcardDocs[i];
+    if (!doc.exists) {
       throw new functions.https.HttpsError("not-found", `Team ${wildcardTeams[i]} does not exist.`);
+    }
+    const teamData = doc.data()!;
+    const activeYears = teamData.activeYears || [];
+    if (!activeYears.includes(activeYear)) {
+      throw new functions.https.HttpsError("invalid-argument", `Team ${wildcardTeams[i]} is not active in the ${activeYear} season.`);
     }
   }
 
