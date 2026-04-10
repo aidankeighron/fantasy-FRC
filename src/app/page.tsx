@@ -162,6 +162,14 @@ export default function Home() {
     return sorted;
   }, [users, userSortConfig]);
 
+  const teamMap = useMemo(() => {
+    const map: Record<string, Team> = {};
+    teams.forEach((t) => {
+      map[t.number] = t;
+    });
+    return map;
+  }, [teams]);
+
   const filteredAndSortedTeams = useMemo(() => {
     let filtered = teams;
     if (teamSearch) {
@@ -253,30 +261,40 @@ export default function Home() {
             <table className="data-table">
               <thead>
                 <tr>
-                  <th onClick={() => handleUserSort("rank")}>Rank {userSortConfig.key === 'rank' && (userSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
-                  <th onClick={() => handleUserSort("name")}>Player {userSortConfig.key === 'name' && (userSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
-                  <th onClick={() => handleUserSort("score")}>Score {userSortConfig.key === 'score' && (userSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedUsers.map((user, idx) => (
-                  <tr key={user.id} className={styles.userRow}>
-                    <td>
-                      <span className={`${styles.rankBadge} ${user.rank === 1 ? styles.rank1 : user.rank === 2 ? styles.rank2 : user.rank === 3 ? styles.rank3 : ""}`}>
-                        {user.rank === 0 ? "-" : user.rank}
-                      </span>
-                    </td>
-                    <td>{user.name}</td>
-                    <td>{user.score.toFixed(2)}</td>
-                  </tr>
-                ))}
-                {sortedUsers.length === 0 && (
-                  <tr>
-                    <td colSpan={3} className="text-center text-muted" style={{ padding: "2rem" }}>
-                      No players drafted yet.
-                    </td>
-                  </tr>
-                )}
+                   <th onClick={() => handleUserSort("rank")}>Rank {userSortConfig.key === 'rank' && (userSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+                   <th onClick={() => handleUserSort("name")}>Player {userSortConfig.key === 'name' && (userSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+                   <th onClick={() => handleUserSort("score")}>Score {userSortConfig.key === 'score' && (userSortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+                   <th>Teams</th>
+                 </tr>
+               </thead>
+               <tbody>
+                 {sortedUsers.map((user) => (
+                   <tr key={user.id} className={styles.userRow}>
+                     <td>
+                       <span className={`${styles.rankBadge} ${user.rank === 1 ? styles.rank1 : user.rank === 2 ? styles.rank2 : user.rank === 3 ? styles.rank3 : ""}`}>
+                         {user.rank === 0 ? "-" : user.rank}
+                       </span>
+                     </td>
+                     <td>{user.name}</td>
+                     <td>{user.score.toFixed(2)}</td>
+                     <td>
+                       <div className={styles.teamBadgeList}>
+                         {user.teams.map((tNum) => (
+                           <span key={tNum} className={styles.teamBadge} title={teamMap[tNum]?.name || "Unknown Team"}>
+                             {tNum}
+                           </span>
+                         ))}
+                       </div>
+                     </td>
+                   </tr>
+                 ))}
+                 {sortedUsers.length === 0 && (
+                   <tr>
+                     <td colSpan={4} className="text-center text-muted" style={{ padding: "2rem" }}>
+                       No players drafted yet.
+                     </td>
+                   </tr>
+                 )}
               </tbody>
             </table>
           </div>
