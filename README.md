@@ -1,103 +1,70 @@
 # Fantasy FRC
 
-Fantasy sports application for the FIRST Robotics Competition (FRC).
-
-This project allows users to participate in a fantasy draft of FRC teams, tracking their performance and calculating scores based on real-time data from The Blue Alliance (TBA) and Statbotics.
-
-## Features
-
-- **Next.js Framework**: Modern, fast, and SEO-friendly.
-- **Firebase Backend**: Real-time database (Firestore), scalable serverless functions, and secure authentication.
-- **Dynamic Drafting**: Real-time drafting system for FRC teams.
-- **Stat Tracking**: Automatic scoring using data from TBA and Statbotics APIs.
-
----
+A fantasy app for FRC: draft teams, track performance, and score based on live data.
 
 ## Getting Started
 
 ### Prerequisites
 
-- **Node.js** (v20+ recommended)
-- **Firebase CLI** (`npm install -g firebase-tools`)
-- **Git**
-
-### 1. Clone the Repository
+### Install
 
 ```bash
 git clone https://github.com/aidankeighron/fantasy-FRC.git
 cd fantasy-FRC
-```
-
-### 2. Install Dependencies
-
-```bash
 npm install
-cd functions
-npm install
-cd ..
+cd functions && npm install && cd ..
 ```
 
-### 3. Setup Firebase
+### Configure Environment
 
-Detailed setup instructions, including Firestore rules, Firebase Functions, and environment variables, can be found in [instructions.md](file:///c:/Users/aidan/OneDrive/Documents/fantasy-FRC/instructions.md).
+Create `.env.local` in the project root:
 
-1. Create a Firebase project at the [Firebase Console](https://console.firebase.google.com/).
-2. Enable Authentication (Email/Password), Firestore, and Functions.
-3. Configure your `.env.local` with your Firebase project credentials (see `instructions.md` for the template).
-
-### 4. Local Development
-
-To run the Next.js development server:
-
-```bash
-npm run dev
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
+NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000).
-
----
-
-## Deployment & Updating
-
-### Deploying the Web App
-
-We recommend using **Firebase App Hosting** for Next.js projects. It handles SSR and API routes automatically.
-
-1. Connect your GitHub repository in the Firebase Console under **App Hosting**.
-2. Push your changes to the main branch for automatic deployment.
-
-### Deploying Firebase Functions
-
-When you update code in the `functions/` directory:
+### Firebase Setup
 
 ```bash
+firebase login
+firebase deploy --only firestore:rules
+firebase functions:secrets:set TBA_API_KEY
 firebase deploy --only functions
 ```
 
-### Updating Rules and Indexes
+### Run
 
 ```bash
-firebase deploy --only firestore
+npm run dev       # http://localhost:3000
+npm run build     # production build
+npm run start     # serve production build
 ```
 
----
+### Deploy
 
-## Project Structure
+Push to `main` — Firebase App Hosting deploys automatically.
 
-- `src/`: Next.js application source code (components, pages, styles).
-- `functions/`: Firebase Cloud Functions (backend logic, data syncing).
-- `public/`: Static assets (images, icons).
-- `legacy/`: Contains the previous Node.js/MySQL/Docker version of the project.
-- `instructions.md`: Comprehensive setup and technical configuration guide.
+```bash
+firebase deploy --only functions   # update cloud functions
+firebase deploy --only firestore   # update rules/indexes
+```
 
-## Contributing
+## Screenshots
 
-1. Create a new branch for your feature or bugfix.
-2. Ensure your code follows the project's linting and type-checking rules.
-3. Submit a pull request for review.
+### Home
 
----
+![home page](images/home.PNG)
 
-## License
+### Team
 
-This project is licensed under the MIT License - see the [LICENSE](file:///c:/Users/aidan/OneDrive/Documents/fantasy-FRC/LICENSE) file for details.
+![team page](images/team.PNG)
+
+### 1 v 1
+
+![1 v 1 page](images/1v1.PNG)
