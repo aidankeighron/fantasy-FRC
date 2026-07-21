@@ -35,9 +35,17 @@ service cloud.firestore {
         && (!request.resource.data.keys().hasAny(['rank']) || request.resource.data.rank == 0)
         && !request.resource.data.keys().hasAny(['seasons']);
       allow update: if (request.auth.uid == userId
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'rank', 'score', 'seasons', 'teams', 'h2h']))
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username', 'email']))
         || isAdmin();
       allow delete: if isAdmin();
+    }
+
+    // `draftedTeams`: tracks which user owns each drafted team number.
+    // Written exclusively by the submitDraft Cloud Function (admin SDK).
+    // Public read allows the frontend to show which teams are already taken.
+    match /draftedTeams/{teamNumber} {
+      allow read: if true;
+      allow write: if false;
     }
 
     // H2H weeks: everyone can read, only backend/admin writes

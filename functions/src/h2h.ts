@@ -87,8 +87,15 @@ function runAlternatingDraft(
           bucket.push(team);
           drafted.add(team);
           draftOrder.push({ round, pick: pickNum, user: userId, team });
+          picked = true;
           break;
         }
+      }
+      if (!picked) {
+        console.error(
+          `Draft fallback exhausted: no available team for user ${userId} at round ${round}, pick ${pickNum}. ` +
+          `Competing team pool may be too small for the number of picks.`
+        );
       }
     }
   }
@@ -243,12 +250,12 @@ export const h2hCreateMatchups = functions
 
       if (weekData.matchups && weekData.matchups.length > 0) continue;
 
-      // Get users with main draft
+      // Get users with main draft (skip deactivated/banned accounts)
       const usersSnap = await db.collection("users").get();
       const eligibleUsers: { uid: string; username: string }[] = [];
       for (const u of usersSnap.docs) {
         const data = u.data();
-        if (data.teams && data.teams.length > 0) {
+        if (data.teams && data.teams.length > 0 && data.isActive !== false) {
           eligibleUsers.push({ uid: u.id, username: data.username || "Unknown" });
         }
       }
@@ -440,6 +447,15 @@ export const submitH2HPicks = functions.https.onCall(
       throw new functions.https.HttpsError(
         "failed-precondition",
         "You are not assigned a matchup this week."
+      );
+    }
+
+    // Prevent re-submission: once picks are in they are final.
+    const existingPicksSnap = await weekRef.collection("picks").doc(uid).get();
+    if (existingPicksSnap.exists) {
+      throw new functions.https.HttpsError(
+        "already-exists",
+        "You have already submitted your picks for this week."
       );
     }
 
@@ -911,7 +927,7 @@ export const h2hInitialize = functions
         const eligibleUsers: { uid: string; username: string }[] = [];
         for (const u of usersSnap.docs) {
           const data = u.data();
-          if (data.teams && data.teams.length > 0) {
+          if (data.teams && data.teams.length > 0 && data.isActive !== false) {
             eligibleUsers.push({ uid: u.id, username: data.username || "Unknown" });
           }
         }

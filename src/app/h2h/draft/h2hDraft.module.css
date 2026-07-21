@@ -228,6 +228,11 @@
   background: var(--surface);
 }
 
+.moveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* Teams table (right column) */
 .tablePanel {
   display: flex;
