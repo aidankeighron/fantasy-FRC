@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { db, tbaKey } from "./config";
+import { db, tbaKey, isInSeason } from "./config";
 import { requireAdmin, tbaRequest, rateLimit } from "./utils";
 import { H2H_CONFIG } from "./h2hConfig";
 import { performTeamPointsUpdate } from "./teams";
@@ -108,6 +108,11 @@ export const h2hSyncWeeklyEvents = functions
   .pubsub.schedule("0 3 * * *")
   .timeZone("America/New_York")
   .onRun(async () => {
+    if (!isInSeason()) {
+      console.log("Off-season, skipping.");
+      return;
+    }
+
     const ds = await db.collection("draft_state").doc("global").get();
     const year = ds.data()?.active_year;
     if (!year) {
@@ -227,9 +232,14 @@ export const h2hSyncWeeklyEvents = functions
 
 export const h2hCreateMatchups = functions
   .runWith({ timeoutSeconds: 120, memory: "256MB" })
-  .pubsub.schedule("0 * * * *")
+  .pubsub.schedule("0 */3 * * *")
   .timeZone("America/New_York")
   .onRun(async () => {
+    if (!isInSeason()) {
+      console.log("Off-season, skipping.");
+      return;
+    }
+
     const now = admin.firestore.Timestamp.now();
     const weeksSnap = await db
       .collection("h2h_weeks")
@@ -472,9 +482,14 @@ export const submitH2HPicks = functions.https.onCall(
 
 export const h2hRunDrafts = functions
   .runWith({ timeoutSeconds: 300, memory: "512MB" })
-  .pubsub.schedule("0 * * * *")
+  .pubsub.schedule("0 */3 * * *")
   .timeZone("America/New_York")
   .onRun(async () => {
+    if (!isInSeason()) {
+      console.log("Off-season, skipping.");
+      return;
+    }
+
     const now = admin.firestore.Timestamp.now();
 
     const weeksSnap = await db
@@ -566,9 +581,14 @@ export const h2hRunDrafts = functions
 
 export const h2hScoreWeek = functions
   .runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" })
-  .pubsub.schedule("15 * * * *")
+  .pubsub.schedule("15 */3 * * *")
   .timeZone("America/New_York")
   .onRun(async () => {
+    if (!isInSeason()) {
+      console.log("Off-season, skipping.");
+      return;
+    }
+
     const now = admin.firestore.Timestamp.now();
 
     const weeksSnap = await db
@@ -1304,9 +1324,14 @@ export const h2hRecalcScores = functions.https.onCall(
 
 export const updateH2HTeamsPoints = functions
   .runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" })
-  .pubsub.schedule("0 */3 * * *")
+  .pubsub.schedule("0 */6 * * *")
   .timeZone("America/New_York")
   .onRun(async () => {
+    if (!isInSeason()) {
+      console.log("Off-season, skipping.");
+      return;
+    }
+
     const ds = await db.collection("draft_state").doc("global").get();
     const activeYear = ds.data()?.active_year;
     if (!activeYear) return;

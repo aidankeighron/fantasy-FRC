@@ -1,6 +1,6 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { db, tbaKey } from "./config";
+import { db, tbaKey, isInSeason } from "./config";
 import { requireAdmin, tbaRequest, TeamAccumulator, rateLimit } from "./utils";
 
 function getPlayoffDepth(status: any): number {
@@ -375,7 +375,12 @@ export const syncTeamData = functions.runWith({ secrets: [tbaKey], timeoutSecond
   return result;
 });
 
-export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" }).pubsub.schedule("0 * * * *").timeZone("America/New_York").onRun(async () => {
+export const updateDraftedTeamsPoints = functions.runWith({ secrets: [tbaKey], timeoutSeconds: 540, memory: "1GB" }).pubsub.schedule("0 */3 * * *").timeZone("America/New_York").onRun(async () => {
+  if (!isInSeason()) {
+    console.log("Off-season, skipping.");
+    return;
+  }
+
   const ds = await db.collection("draft_state").doc("global").get();
   const activeYear = ds.data()?.active_year;
   if (!activeYear) return;
