@@ -94,7 +94,7 @@ function runAlternatingDraft(
       if (!picked) {
         console.error(
           `Draft fallback exhausted: no available team for user ${userId} at round ${round}, pick ${pickNum}. ` +
-          `Competing team pool may be too small for the number of picks.`
+          "Competing team pool may be too small for the number of picks."
         );
       }
     }
